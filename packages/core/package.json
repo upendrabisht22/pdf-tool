@@ -1,0 +1,14 @@
+{
+  "name": "@doc-platform/core",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Core domain types, schemas, error taxonomy, and validators for the Document Platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": ["domain", "types", "pdf", "validation", "errors"],
+  "license": "MIT"
+}

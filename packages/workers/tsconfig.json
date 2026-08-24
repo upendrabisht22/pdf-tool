@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@doc-platform/core": ["../core/dist/index.d.ts"],
+      "@doc-platform/providers": ["../providers/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

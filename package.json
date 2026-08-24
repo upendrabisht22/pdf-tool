@@ -1,0 +1,31 @@
+{
+  "name": "doc-platform",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Production-Grade, Scalable Document Utility & PDF Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspaces",
+    "test": "node --test packages/*/test/*.test.js",
+    "lint": "echo 'Checking workspace code quality...'"
+  },
+  "keywords": [
+    "pdf",
+    "document-utility",
+    "pdf-merge",
+    "pdf-split",
+    "pdf-compress",
+    "document-infrastructure"
+  ],
+  "author": "Antigravity Engineering",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@doc-platform/web",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Production Experience Layer for DocPlatform with Local-First Processing and Programmatic SEO",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@doc-platform/core": "*",
+    "@doc-platform/providers": "*",
+    "@doc-platform/workers": "*",
+    "pdf-lib": "^1.17.1"
+  },
+  "license": "MIT"
+}

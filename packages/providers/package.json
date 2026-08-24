@@ -1,0 +1,16 @@
+{
+  "name": "@doc-platform/providers",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Provider abstraction layer for Storage, Queue, Auth, and Document Processing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@doc-platform/core": "*"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test test/*.test.js"
+  },
+  "license": "MIT"
+}
