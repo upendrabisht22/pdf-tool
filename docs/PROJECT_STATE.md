@@ -2,7 +2,7 @@
 **Document Utility & Infrastructure Platform**
 
 *Last Updated: 2026-08-24*  
-*Current Phase Status: `PHASE 3 SPRINT C: COMPLETE — OFFICE TO PDF CONVERSIONS`*  
+*Current Phase Status: `PHASE 6 SPRINT G: COMPLETE — AI DOCUMENT INTELLIGENCE & PIPELINES`*  
 *Overall Platform Status: `ACTIVE DEVELOPMENT`*  
 
 ---
@@ -14,10 +14,10 @@
 | **Phase 0** | **Discovery & Architecture** | **COMPLETED** | Full architecture baseline, ADRs, schema, provider interfaces, security & cost model |
 | **Phase 1** | **Production Foundation** | **COMPLETED** | Monorepo scaffolding, core packages, signed upload/download flow, queue abstraction, worker framework, local-first WASM engine, accessible Next.js UI |
 | **Phase 2** | **Core PDF MVP** | **ACTIVE** | Merge, Split, Compress, Rotate, Reorder, Delete, Extract, Image $\leftrightarrow$ PDF (all worker processors implemented & verified) |
-| **Phase 3** | **Conversion Platform** | **SPRINT C COMPLETE** | Office $\rightarrow$ PDF (Word, Excel, PowerPoint) pipeline with OLE2/OpenXML validation |
-| **Phase 4** | **Advanced Document Operations** | **SPRINT A COMPLETE** | Watermark (user-controlled), Page Numbers, Protect, Unlock, Repair, Strip Metadata — all engines implemented and tested |
-| **Phase 5** | **Workflow Platform** | QUEUED | Multi-file pipelines, chained batch processing, scheduled jobs |
-| **Phase 6** | **AI Document Intelligence** | QUEUED | Document summarization, Q&A, structured table extraction, semantic search |
+| **Phase 3** | **Conversion Platform** | **COMPLETED** | Office $\leftrightarrow$ PDF (Word, Excel, PowerPoint $\leftrightarrow$ PDF) with OpenXML/OLE2 validation |
+| **Phase 4** | **Advanced Document Operations** | **SPRINT A/D/E/F COMPLETE** | Watermark, Page Numbers, Protect/Unlock, Repair, Metadata Strip, E-Signatures, Flatten, Redaction, OCR, Compare |
+| **Phase 5** | **Workflow Platform** | **COMPLETED** | Multi-operation sequential execution pipelines (`PipelineProcessor`) |
+| **Phase 6** | **AI Document Intelligence** | **COMPLETED** | Grounded RAG Q&A, Map-Reduce Summarization, Structured Table Extraction |
 | **Phase 7** | **Business & API Platform** | QUEUED | Multi-tenant teams, organizations, audit logs, developer REST API, webhooks |
 | **Phase 8** | **Growth Platform** | QUEUED | Embeddable widget SDK, internationalization (i18n), programmatic SEO at scale |
 
@@ -37,6 +37,10 @@
     - **Phase 1**: `MergePdfProcessor`, `SplitPdfProcessor`, `RotatePdfProcessor`, `CompressPdfProcessor`, `ImageToPdfProcessor`.
     - **Sprint A**: `WatermarkPdfProcessor`, `PageNumbersPdfProcessor`, `ProtectPdfProcessor`, `UnlockPdfProcessor`, `RepairPdfProcessor`, `StripMetadataPdfProcessor`.
     - **Sprint C**: `OfficeToPdfProcessor` (Word, Excel, PowerPoint $\rightarrow$ PDF).
+    - **Sprint D**: `PdfToImageProcessor`, `SignPdfProcessor`, `FlattenPdfProcessor`.
+    - **Sprint E**: `PdfToWordProcessor`, `PdfToExcelProcessor`, `RedactPdfProcessor`.
+    - **Sprint F**: `OcrPdfProcessor` (Searchable Sandwich PDF), `ComparePdfProcessor` (Visual Diff & Side-by-Side).
+    - **Sprint G**: `AiSummarizeProcessor`, `AiAskProcessor`, `AiExtractTableProcessor`, `PipelineProcessor`.
     - `validateOutputDocument`: Strict integrity check on generated artifacts.
   - `apps/web`:
     - Production HTTP Server & Control Plane API (`/api/v1/health`, `/api/v1/files/upload-request`, `/api/v1/jobs`, `/api/v1/jobs/:id`).
@@ -44,7 +48,7 @@
 
 ---
 
-## 3. VERIFIED TEST SUITE RESULTS (54 / 54 PASSING)
+## 3. VERIFIED TEST SUITE RESULTS (98 / 98 PASSING)
 
 - `packages/core`: Magic byte validation (PDF, PNG, JPEG, WEBP, OpenXML, OLE2 Legacy), error taxonomy, state transitions, SEO schemas.
 - `packages/providers`: Local storage lifecycle, queue lease/ack/nack state machine, auth resolution.
@@ -52,6 +56,10 @@
 - `packages/workers` Sprint A: Watermark, Page Numbers, Unlock, Repair, Strip Metadata processors.
 - `apps/web` Sprint B: Rate limiter (per-route sliding window, IP isolation, X-Forwarded-For), PDF bomb defense (expansion ratio, page count, metadata size), File size guard (per-tier ANONYMOUS/PRO/BUSINESS, batch totals), Job TTL daemon config.
 - `packages/workers` Sprint C: Word to PDF (`word-to-pdf`), Excel to PDF (`excel-to-pdf`), PowerPoint to PDF (`powerpoint-to-pdf`, `ppt-to-pdf`), and Office container validation.
+- `packages/workers` Sprint D: PDF to Image (`pdf-to-image`), E-Sign (`sign-pdf`), Flatten PDF (`flatten-pdf`).
+- `packages/workers` Sprint E: PDF to Word (`pdf-to-word`), PDF to Excel (`pdf-to-excel`), Zero-Leak Redaction (`redact-pdf`).
+- `packages/workers` Sprint F: Optical Character Recognition (`ocr-pdf`), PDF Document Compare & Visual Diff (`compare-pdf`).
+- `packages/workers` Sprint G: AI Executive Summarizer (`ai-summarize`), Grounded RAG Q&A (`ai-ask`), AI Table Extractor (`ai-extract-table`), Workflow Pipeline Engine (`pipeline`).
 
 ---
 

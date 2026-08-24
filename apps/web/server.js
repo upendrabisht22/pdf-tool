@@ -28,6 +28,15 @@ import {
   PdfToImageProcessor,
   SignPdfProcessor,
   FlattenPdfProcessor,
+  PdfToWordProcessor,
+  PdfToExcelProcessor,
+  RedactPdfProcessor,
+  OcrPdfProcessor,
+  ComparePdfProcessor,
+  AiSummarizeProcessor,
+  AiAskProcessor,
+  AiExtractTableProcessor,
+  PipelineProcessor,
   SandboxedWorkerHarness,
 } from '@doc-platform/workers';
 import { TOOL_REGISTRY, generateToolJsonLd } from '@doc-platform/core';
@@ -73,6 +82,18 @@ async function startWorkerLoop() {
     'pdf-to-image': new PdfToImageProcessor(),
     'sign-pdf': new SignPdfProcessor(),
     'flatten-pdf': new FlattenPdfProcessor(),
+    // Sprint E (PDF to Office + Redaction)
+    'pdf-to-word': new PdfToWordProcessor(),
+    'pdf-to-excel': new PdfToExcelProcessor(),
+    'redact-pdf': new RedactPdfProcessor(),
+    // Sprint F (OCR + PDF Compare)
+    'ocr-pdf': new OcrPdfProcessor(),
+    'compare-pdf': new ComparePdfProcessor(),
+    // Sprint G (AI Document Intelligence & Pipeline)
+    'ai-summarize': new AiSummarizeProcessor(),
+    'ai-ask': new AiAskProcessor(),
+    'ai-extract-table': new AiExtractTableProcessor(),
+    'pipeline': new PipelineProcessor(),
   };
 
   while (true) {

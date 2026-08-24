@@ -25,7 +25,9 @@ export type OperationType =
   | 'ppt-to-pdf'
   | 'sign-pdf'
   | 'flatten-pdf'
+  | 'redact-pdf'
   | 'ocr-pdf'
+  | 'compare-pdf'
   | 'watermark-pdf'
   | 'page-numbers-pdf'
   | 'protect-pdf'
@@ -33,7 +35,9 @@ export type OperationType =
   | 'repair-pdf'
   | 'strip-metadata-pdf'
   | 'ai-summarize'
-  | 'ai-ask';
+  | 'ai-ask'
+  | 'ai-extract-table'
+  | 'pipeline';
 
 // ============================================================================
 // 2. JOB STATE MACHINE
@@ -312,6 +316,145 @@ export interface FlattenPdfOptions {
   flattenSignatures?: boolean;
 }
 
+// ============================================================================
+// Sprint E Operation Options (PDF to Word/Excel, Redaction)
+// ============================================================================
+
+export interface PdfToWordOptions {
+  /** Layout reconstruction mode: 'flowing' (editable text) or 'exact' (fixed frames). Default: 'flowing' */
+  preserveLayout?: 'flowing' | 'exact';
+  /** Whether to extract and embed vector graphics & images. Default: true */
+  includeImages?: boolean;
+  /** Specific page range or 'all'. Default: 'all' */
+  pages?: 'all' | number[];
+}
+
+export interface PdfToExcelOptions {
+  /** Table extraction algorithm: 'auto' | 'lines' | 'whitespace'. Default: 'auto' */
+  detectionMode?: 'auto' | 'lines' | 'whitespace';
+  /** Put each page into a separate worksheet tab. Default: true */
+  separateSheetsPerPage?: boolean;
+  /** Automatically format numerical/currency cells. Default: true */
+  formatNumbers?: boolean;
+  /** Specific page range or 'all'. Default: 'all' */
+  pages?: 'all' | number[];
+}
+
+export interface RedactionBox {
+  /** 1-indexed page number */
+  page: number;
+  /** X coordinate from bottom-left origin in points */
+  x: number;
+  /** Y coordinate from bottom-left origin in points */
+  y: number;
+  /** Box width in points */
+  width: number;
+  /** Box height in points */
+  height: number;
+  /** Overlay fill color. Default: '#000000' (solid black) */
+  color?: string;
+  /** Optional text replacement over redacted box e.g. '[REDACTED]'. Default: '' */
+  replacementLabel?: string;
+}
+
+export interface RedactPdfOptions {
+  /** Specific coordinate bounding boxes to permanently redact */
+  boxes: RedactionBox[];
+  /**
+   * Whether to sanitize metadata, search index, and outlines so redacted terms
+   * cannot be searched or copied from document properties.
+   * Default: true
+   */
+  sanitizeMetadata?: boolean;
+  /**
+   * Whether to scrub underlying text streams and vector glyphs beneath the box
+   * (Zero-leak production guarantee).
+   * Default: true
+   */
+  zeroLeakScrub?: boolean;
+}
+
+// ============================================================================
+// Sprint F Operation Options (OCR, PDF Compare / Diff)
+// ============================================================================
+
+export interface OcrPdfOptions {
+  /** Language model for optical character recognition. Default: 'eng' */
+  language?: 'eng' | 'hin' | 'spa' | 'fra' | 'deu' | 'ara' | 'chi_sim' | string;
+  /** Output type: 'searchable-pdf' (Sandwich PDF with invisible text), 'text', or 'json-hocr' */
+  outputType?: 'searchable-pdf' | 'text' | 'json';
+  /** Target resolution DPI for preprocessing rasterization. Default: 300 */
+  dpi?: number;
+  /** Automatically deskew and rotate pages before recognition. Default: true */
+  autoRotate?: boolean;
+  /** Clean speckles and background scanner artifacts. Default: true */
+  despeckle?: boolean;
+  /** Specific page numbers to OCR or 'all'. Default: 'all' */
+  pages?: 'all' | number[];
+}
+
+export interface ComparePdfOptions {
+  /** Comparison mode: 'visual-diff' (colored overlay) | 'side-by-side' | 'summary-only' */
+  mode?: 'visual-diff' | 'side-by-side' | 'summary-only';
+  /** Highlight color for added content in modified doc. Default: '#00E5FF' (cyan) */
+  colorAdded?: string;
+  /** Highlight color for removed content from base doc. Default: '#FF0055' (crimson) */
+  colorRemoved?: string;
+  /** Difference detection sensitivity threshold (0.01 - 1.0). Default: 0.1 */
+  sensitivityThreshold?: number;
+}
+
+// ============================================================================
+// Sprint G Operation Options (AI Intelligence & Workflow Pipeline)
+// ============================================================================
+
+export interface AiSummarizeOptions {
+  /** Target summary length: 'brief' (1 paragraph) | 'executive' (bullets + metrics) | 'deep' (full section analysis) */
+  mode?: 'brief' | 'executive' | 'deep';
+  /** Focus area: 'all' | 'financials' | 'legal-obligations' | 'action-items' */
+  focusArea?: 'all' | 'financials' | 'legal-obligations' | 'action-items';
+  /** Target language for summary. Default: 'en' */
+  targetLanguage?: string;
+  /** Max words in summary output. Default: 500 */
+  maxWordCount?: number;
+}
+
+export interface AiCitation {
+  pageNumber: number;
+  snippetText: string;
+  relevanceScore: number;
+}
+
+export interface AiAskOptions {
+  /** User question or query against document */
+  question: string;
+  /** Require grounded page citations in answer. Default: true */
+  requireCitations?: boolean;
+  /** Top-K relevant chunks to retrieve for context. Default: 4 */
+  topKChunks?: number;
+  /** Specific page range to restrict search to */
+  pageRange?: 'all' | number[];
+}
+
+export interface AiExtractTableOptions {
+  /** Target schema definition (field names and expected data types) */
+  schema?: Record<string, 'string' | 'number' | 'date' | 'boolean'>;
+  /** Output format: 'json' | 'csv' */
+  format?: 'json' | 'csv';
+}
+
+export interface PipelineStep {
+  operation: OperationType;
+  options: Record<string, unknown>;
+}
+
+export interface PipelineOptions {
+  /** Ordered list of operations to execute sequentially on the document */
+  steps: PipelineStep[];
+  /** Stop pipeline immediately if any intermediate step fails. Default: true */
+  stopOnError?: boolean;
+}
+
 export interface OperationOptionsMap {
   'merge-pdf': MergePdfOptions;
   'split-pdf': SplitPdfOptions;
@@ -334,6 +477,15 @@ export interface OperationOptionsMap {
   'ppt-to-pdf': PowerPointToPdfOptions;
   'sign-pdf': SignPdfOptions;
   'flatten-pdf': FlattenPdfOptions;
+  'pdf-to-word': PdfToWordOptions;
+  'pdf-to-excel': PdfToExcelOptions;
+  'redact-pdf': RedactPdfOptions;
+  'ocr-pdf': OcrPdfOptions;
+  'compare-pdf': ComparePdfOptions;
+  'ai-summarize': AiSummarizeOptions;
+  'ai-ask': AiAskOptions;
+  'ai-extract-table': AiExtractTableOptions;
+  'pipeline': PipelineOptions;
 }
 
 // ============================================================================

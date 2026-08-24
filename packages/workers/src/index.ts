@@ -32,3 +32,15 @@ export * from './processors/office-to-pdf.js';
 export * from './processors/pdf-to-image.js';
 export * from './processors/sign-pdf.js';
 export * from './processors/flatten-pdf.js';
+
+// Sprint E
+export * from './processors/pdf-to-office.js';
+export * from './processors/redact.js';
+
+// Sprint F
+export * from './processors/ocr.js';
+export * from './processors/compare.js';
+
+// Sprint G
+export * from './processors/ai-document.js';
+export * from './processors/pipeline.js';
