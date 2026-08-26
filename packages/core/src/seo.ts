@@ -166,6 +166,258 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
       { question: 'What is the maximum image resolution?', answer: 'We support standard 150 DPI for web and 300 DPI for high-resolution print reproduction.' },
     ],
   },
+  'word-to-pdf': {
+    slug: 'word-to-pdf',
+    title: 'Word to PDF Converter',
+    metaTitle: 'Word to PDF Converter — Convert DOCX & DOC to PDF Online Free | DocPlatform',
+    metaDescription: 'Convert Microsoft Word documents (DOCX, DOC, RTF) to flawless vector PDF files. 100% font fidelity, Hindi ligatures, Urdu RTL, and table borders preserved.',
+    canonicalUrl: 'https://docplatform.app/word-to-pdf',
+    keywords: ['word to pdf', 'convert docx to pdf', 'convert doc to pdf online', 'free word to pdf'],
+    features: [
+      'Universal font rendering with HarfBuzz engine (Devanagari, Arabic, Latin)',
+      'Preserves margins, headings, bullet lists, and complex table layouts',
+      'Supports DOCX, DOC, RTF, ODT, and TXT files',
+    ],
+    howToSteps: [
+      { name: 'Upload Word File', text: 'Select or drag your .docx or .doc file into the converter.' },
+      { name: 'Convert', text: 'Our engine compiles the document layout into clean vector PDF.' },
+      { name: 'Download PDF', text: 'Download your high-resolution PDF instantly.' },
+    ],
+    faqs: [
+      { question: 'Are non-English scripts supported?', answer: 'Yes! Our LibreOffice + HarfBuzz engine has universal Unicode fonts installed for Hindi, Urdu, Arabic, Spanish, French, and currencies.' },
+    ],
+  },
+  'excel-to-pdf': {
+    slug: 'excel-to-pdf',
+    title: 'Excel to PDF Converter',
+    metaTitle: 'Excel to PDF Converter — Convert XLSX & XLS Spreadsheets to PDF | DocPlatform',
+    metaDescription: 'Convert Excel spreadsheets (XLSX, XLS, CSV) into clean PDF tables with automatic column fitting, landscape orientation, and gridlines.',
+    canonicalUrl: 'https://docplatform.app/excel-to-pdf',
+    keywords: ['excel to pdf', 'convert xlsx to pdf', 'spreadsheet to pdf online'],
+    features: [
+      'Fit wide spreadsheets to page width automatically',
+      'Preserves currency symbols (₹, $, €, £) and number formatting',
+      'Renders cell borders, custom colors, and data tables perfectly',
+    ],
+    howToSteps: [
+      { name: 'Upload Excel', text: 'Upload your .xlsx or .xls spreadsheet.' },
+      { name: 'Choose Settings', text: 'Select orientation and fit-to-page options.' },
+      { name: 'Download PDF', text: 'Download your formatted tabular PDF report.' },
+    ],
+    faqs: [
+      { question: 'Will my table fit on a single page width?', answer: 'Yes, enable "Fit to Page Width" to scale wide columns into a clean printable page.' },
+    ],
+  },
+  'pdf-to-word': {
+    slug: 'pdf-to-word',
+    title: 'PDF to Word Converter',
+    metaTitle: 'PDF to Word Converter — Convert PDF to Editable DOCX Online Free | DocPlatform',
+    metaDescription: 'Convert PDF documents into fully editable Microsoft Word (.docx) files with flowing text, paragraph styles, and table reconstruction.',
+    canonicalUrl: 'https://docplatform.app/pdf-to-word',
+    keywords: ['pdf to word', 'convert pdf to docx', 'editable pdf to word', 'pdf to doc'],
+    features: [
+      'Reconstructs editable paragraph flows, bullet lists, and headings',
+      'Extracts tables into native Word table structures',
+      'Maintains document fonts and visual layout',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select your PDF document.' },
+      { name: 'Reconstruct', text: 'Our engine extracts text streams and rebuilds OpenXML DOCX.' },
+      { name: 'Download Word', text: 'Open and edit the converted .docx file in Microsoft Word or Google Docs.' },
+    ],
+    faqs: [
+      { question: 'Can I edit the converted Word file?', answer: 'Yes! The output is a standard OpenXML DOCX file compatible with Microsoft Word, LibreOffice, and Google Docs.' },
+    ],
+  },
+  'pdf-to-excel': {
+    slug: 'pdf-to-excel',
+    title: 'PDF to Excel Converter',
+    metaTitle: 'PDF to Excel Converter — Extract Tables from PDF to XLSX | DocPlatform',
+    metaDescription: 'Extract tabular data from PDF statements, receipts, and reports into clean Microsoft Excel (.xlsx) spreadsheets.',
+    canonicalUrl: 'https://docplatform.app/pdf-to-excel',
+    keywords: ['pdf to excel', 'extract tables from pdf', 'convert pdf to xlsx'],
+    features: [
+      'Smart gridline and cell boundary detection',
+      'Converts each page into an organized worksheet tab',
+      'Preserves financial numbers and decimal precision',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Drop your statement or table-heavy PDF.' },
+      { name: 'Extract Tables', text: 'The parser detects table structures and maps cell coordinates.' },
+      { name: 'Download Excel', text: 'Download your .xlsx workbook ready for analysis.' },
+    ],
+    faqs: [
+      { question: 'Does it support scanned tables?', answer: 'For scanned PDFs, run our OCR tool first or choose AI Table Extraction for unstructured invoices.' },
+    ],
+  },
+  'watermark-pdf': {
+    slug: 'watermark-pdf',
+    title: 'Watermark PDF Online',
+    metaTitle: 'Watermark PDF Online — Add Custom Text & Stamp Watermarks | DocPlatform',
+    metaDescription: 'Add custom text stamps and watermarks to your PDF pages with adjustable opacity, angle, color, and page range.',
+    canonicalUrl: 'https://docplatform.app/watermark-pdf',
+    keywords: ['watermark pdf', 'add watermark to pdf', 'stamp pdf online', 'pdf watermark free'],
+    features: [
+      'Custom opacity, font size, angle, and diagonal positioning',
+      'Apply to all pages or specific page ranges',
+      'Instant client-side visual preview',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select your document.' },
+      { name: 'Customize Watermark', text: 'Type your text (e.g. DRAFT, CONFIDENTIAL) and adjust opacity.' },
+      { name: 'Download', text: 'Download your watermarked document.' },
+    ],
+    faqs: [
+      { question: 'Can I choose which pages get watermarked?', answer: 'Yes, specify target pages like "1-3, 5" or choose "All Pages".' },
+    ],
+  },
+  'protect-pdf': {
+    slug: 'protect-pdf',
+    title: 'Protect PDF with Password',
+    metaTitle: 'Protect PDF Online — Password Protect & Encrypt PDF Files | DocPlatform',
+    metaDescription: 'Encrypt your PDF documents with AES-256 password protection and restrict printing, copying, or modification.',
+    canonicalUrl: 'https://docplatform.app/protect-pdf',
+    keywords: ['protect pdf', 'password protect pdf', 'encrypt pdf online', 'lock pdf'],
+    features: [
+      'Strong AES encryption standards',
+      'Granular permission locks for printing, copying, and editing',
+      '100% private in-browser encryption',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select the file to lock.' },
+      { name: 'Set Password', text: 'Enter a strong password to secure the document.' },
+      { name: 'Encrypt & Download', text: 'Download your encrypted PDF.' },
+    ],
+    faqs: [
+      { question: 'Can anyone open the file without the password?', answer: 'No. The document cannot be viewed or decrypted without entering the correct password.' },
+    ],
+  },
+  'unlock-pdf': {
+    slug: 'unlock-pdf',
+    title: 'Unlock PDF Online',
+    metaTitle: 'Unlock PDF Online — Remove Password from Protected PDF | DocPlatform',
+    metaDescription: 'Remove password security and permission restrictions from your authorized PDF files for unrestricted access.',
+    canonicalUrl: 'https://docplatform.app/unlock-pdf',
+    keywords: ['unlock pdf', 'remove pdf password', 'decrypt pdf online'],
+    features: [
+      'Removes viewing passwords and editing restrictions',
+      'Instant local browser decryption with zero server lag',
+      'Completely private and confidential',
+    ],
+    howToSteps: [
+      { name: 'Upload Locked PDF', text: 'Drop your password-protected PDF.' },
+      { name: 'Enter Password', text: 'Provide the document password to authorize decryption.' },
+      { name: 'Download Unlocked', text: 'Download the unrestricted PDF.' },
+    ],
+    faqs: [
+      { question: 'Can I unlock a PDF without knowing the password?', answer: 'No. To maintain legal compliance and privacy, you must provide the authorized password.' },
+    ],
+  },
+  'redact-pdf': {
+    slug: 'redact-pdf',
+    title: 'Redact PDF Online',
+    metaTitle: 'Redact PDF Online — Permanently Black Out Sensitive Data & PII | DocPlatform',
+    metaDescription: 'Permanently remove and blackout sensitive text, credit cards, SSNs, and confidential information with zero-leak security guarantees.',
+    canonicalUrl: 'https://docplatform.app/redact-pdf',
+    keywords: ['redact pdf', 'black out pdf text', 'sanitize pdf', 'pdf redaction tool'],
+    features: [
+      'True permanent redaction: underlying text & vector glyphs are scrubbed',
+      'Clears overlapping annotation popups and form fields',
+      'Sanitizes document metadata, search indexes, and XMP streams',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select your confidential document.' },
+      { name: 'Mark Areas', text: 'Highlight sensitive boxes to black out.' },
+      { name: 'Permanently Redact', text: 'Download your sanitized, leak-proof PDF.' },
+    ],
+    faqs: [
+      { question: 'Can someone copy the text underneath the black box?', answer: 'No! Our Zero-Leak engine completely purges the underlying vector text stream from the PDF byte structure.' },
+    ],
+  },
+  'ocr-pdf': {
+    slug: 'ocr-pdf',
+    title: 'OCR PDF Online',
+    metaTitle: 'OCR PDF Online — Convert Scanned PDFs to Searchable Documents | DocPlatform',
+    metaDescription: 'Convert scanned PDF documents and camera images into searchable vector PDFs with an invisible selectable text layer.',
+    canonicalUrl: 'https://docplatform.app/ocr-pdf',
+    keywords: ['ocr pdf', 'searchable pdf', 'scanned pdf to text', 'ocr online free'],
+    features: [
+      'Sandwich PDF generation: original visual clarity with invisible searchable text',
+      'Multilingual OCR models (English, Hindi, Spanish, French, German, Arabic)',
+      'Export to Searchable PDF, Plain Text, or structured JSON',
+    ],
+    howToSteps: [
+      { name: 'Upload Scanned PDF', text: 'Upload your scan or camera document.' },
+      { name: 'Select Language', text: 'Pick your document language for optimal recognition.' },
+      { name: 'Download Searchable PDF', text: 'Search, select, and copy text directly in your PDF.' },
+    ],
+    faqs: [
+      { question: 'What is a Searchable PDF?', answer: 'A Searchable PDF preserves the exact visual appearance of your scan while placing an invisible text layer behind the image, enabling Ctrl+F search and text selection.' },
+    ],
+  },
+  'compare-pdf': {
+    slug: 'compare-pdf',
+    title: 'Compare PDF Documents',
+    metaTitle: 'Compare PDF Online — Visual Diff & Side-by-Side Comparison | DocPlatform',
+    metaDescription: 'Compare two versions of a PDF document to highlight visual changes, removed clauses, and added text automatically.',
+    canonicalUrl: 'https://docplatform.app/compare-pdf',
+    keywords: ['compare pdf', 'pdf diff tool', 'compare two pdf files online', 'pdf visual difference'],
+    features: [
+      'Visual Diff Overlay: Removals in crimson (#FF0055), Additions in cyan (#00E5FF)',
+      'Side-by-Side dual-pane comparison report with synchronized page views',
+      'Automated change count and difference metric calculation',
+    ],
+    howToSteps: [
+      { name: 'Upload Two Files', text: 'Select Document A (Original) and Document B (Modified).' },
+      { name: 'Choose Diff Mode', text: 'Pick Visual Overlay or Side-by-Side dual-pane.' },
+      { name: 'View & Download', text: 'Review the comparison report with highlighted modifications.' },
+    ],
+    faqs: [
+      { question: 'How many files can I compare?', answer: 'Select exactly 2 PDF documents (Original vs Modified) to generate the comparison report.' },
+    ],
+  },
+  'ai-summarize': {
+    slug: 'ai-summarize',
+    title: 'AI PDF Summarizer',
+    metaTitle: 'AI PDF Summarizer — Instant Executive Summaries & Key Findings | DocPlatform',
+    metaDescription: 'Summarize 100+ page contracts, financial filings, and research papers with grounded AI map-reduce intelligence.',
+    canonicalUrl: 'https://docplatform.app/ai-summarize',
+    keywords: ['ai pdf summarizer', 'summarize pdf online', 'ai document summary', 'chat with pdf'],
+    features: [
+      'Hierarchical map-reduce: analyzes full long documents without truncation',
+      'Executive Overviews, Key Findings, Risk Liabilities, and Numerical Tables',
+      'Export summary as Markdown or structured text',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Upload any report, contract, or textbook.' },
+      { name: 'Choose Focus', text: 'Select Executive, Financial, or Legal focus area.' },
+      { name: 'Generate Summary', text: 'Get instant structured takeaways and action items.' },
+    ],
+    faqs: [
+      { question: 'Does it truncate large documents?', answer: 'No. Our hierarchical map-reduce engine processes every page independently before synthesizing the final executive summary.' },
+    ],
+  },
+  'ai-ask': {
+    slug: 'ai-ask',
+    title: 'AI Document Q&A (Chat with PDF)',
+    metaTitle: 'AI Document Q&A — Ask Questions with Grounded Page Citations | DocPlatform',
+    metaDescription: 'Ask any question to your document and receive accurate answers with verifiable [Page X] citations and zero hallucinations.',
+    canonicalUrl: 'https://docplatform.app/ai-ask',
+    keywords: ['chat with pdf', 'ask pdf ai', 'pdf question answering', 'ai document search'],
+    features: [
+      'Hybrid Vector + BM25 retrieval for high-precision fact retrieval',
+      'Grounded citations: every answer references exact page numbers and source quotes',
+      'Zero-hallucination constraint architecture',
+    ],
+    howToSteps: [
+      { name: 'Upload Document', text: 'Select your PDF document.' },
+      { name: 'Ask a Question', text: 'Type your query (e.g. "What are the termination penalties?").' },
+      { name: 'Get Answer', text: 'Receive verified answers with clickable page citations.' },
+    ],
+    faqs: [
+      { question: 'How does it prevent hallucinations?', answer: 'The model is strictly constrained to retrieved context chunks and must provide direct source quotes for every claim.' },
+    ],
+  },
 };
 
 /**
