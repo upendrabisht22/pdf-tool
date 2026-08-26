@@ -44,6 +44,15 @@ import { applyRateLimit } from './security/rate-limiter.js';
 import { scanForPdfBomb } from './security/pdf-bomb-defense.js';
 import { validateFileSize, validateTotalJobSize, TIER_SIZE_LIMITS } from './security/file-size-guard.js';
 import { startTtlCleanupDaemon } from './security/job-ttl.js';
+// ── Phase 7: Developer API Platform ─────────────────────────────────────────
+import { handleDeveloperRoutes } from './api/developer-routes.js';
+import { handleWebhookRoutes } from './api/webhook-routes.js';
+import { handleUsageRoutes } from './api/usage-routes.js';
+import { insertUsageEvent, appendAuditEntry } from './api/usage-store.js';
+import { dispatchWebhookEvent } from './api/webhook-store.js';
+// ── Phase 8: Growth Platform & i18n SEO ──────────────────────────────────────
+import { handleGrowthRoutes } from './api/growth-routes.js';
+// ────────────────────────────────────────────────────────────────────────────
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -131,6 +140,31 @@ async function startWorkerLoop() {
             }
 
             await queueProvider.ackJob(job.id, leaseToken, outputFileIds);
+
+            // ── Phase 7: Record usage event + dispatch webhook on job completion
+            const ownerId = job.userId || job.sessionId || 'anonymous';
+            insertUsageEvent({
+              ownerId,
+              apiKeyId: null, // populated if request came via API key (Phase 8)
+              operation: job.operation,
+              statusCode: 200,
+              inputBytes: result.metrics.inputSizeBytes,
+              outputBytes: result.metrics.outputSizeBytes,
+              durationMs: result.metrics.durationMs,
+              jobId: job.id,
+            });
+
+            // Dispatch webhook event (non-blocking, fire-and-forget)
+            dispatchWebhookEvent({
+              ownerId,
+              event: 'job.completed',
+              data: {
+                jobId: job.id,
+                operation: job.operation,
+                outputFileCount: outputFileIds.length,
+                metrics: result.metrics,
+              },
+            }).catch(() => {}); // Webhook failures MUST NOT crash the worker
           });
         }
       }
@@ -305,6 +339,28 @@ const server = http.createServer(async (req, res) => {
       error: job.error,
     });
   }
+
+  // ── Phase 7: Developer API Key Routes ──────────────────────────────────────
+  if (pathname.startsWith('/api/v1/developer')) {
+    const handled = await handleDeveloperRoutes(req, res, pathname, sendJson, authProvider);
+    if (handled) return;
+  }
+
+  // ── Phase 7: Webhook Management Routes ─────────────────────────────────────
+  if (pathname.startsWith('/api/v1/webhooks')) {
+    const handled = await handleWebhookRoutes(req, res, pathname, sendJson, authProvider);
+    if (handled) return;
+  }
+
+  // ── Phase 7: Usage Telemetry & Audit Log Routes ─────────────────────────────
+  if (pathname.startsWith('/api/v1/usage') || pathname.startsWith('/api/v1/audit-log')) {
+    const handled = await handleUsageRoutes(req, res, pathname, url, sendJson, authProvider);
+    if (handled) return;
+  }
+
+  // ── Phase 8: Growth Platform, Sitemap & Widget Routes ──────────────────────
+  const growthHandled = await handleGrowthRoutes(req, res, pathname, url, sendJson);
+  if (growthHandled) return;
 
   // Serve Static CSS
   if (pathname === '/styles.css') {
