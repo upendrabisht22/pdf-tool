@@ -77,9 +77,11 @@ const TOOL_DEFINITIONS = {
       </select>
       <select id="opt-rotate-pages" class="select-control">
         <option value="all">All Pages</option>
+        <option value="custom">Specific Pages (e.g. 1, 3-5)</option>
         <option value="odd">Odd Pages Only</option>
         <option value="even">Even Pages Only</option>
       </select>
+      <input type="text" id="opt-rotate-custom-pages" placeholder="e.g. 1, 3-5" class="select-control" style="display:none; width: 140px;" />
     `
   },
   'delete-pdf-pages': {
@@ -91,17 +93,29 @@ const TOOL_DEFINITIONS = {
     multiple: false,
     accept: '.pdf,application/pdf',
     optionsHtml: `
-      <input type="text" id="opt-delete-pages" placeholder="Pages to delete (e.g. 2, 4-6)" class="select-control" style="width: 220px;" />
+      <input type="text" id="opt-delete-pages" placeholder="Pages to delete (e.g. 2, 4-6)" class="select-control" style="width: 240px;" />
+    `
+  },
+  'extract-pages': {
+    category: 'core',
+    title: 'Extract PDF Pages',
+    badge: 'Select & Save Specific Pages',
+    subtitle: 'Extract specific pages or page ranges from your PDF into a clean, unified document.',
+    actionName: 'Extract Pages & Save',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <input type="text" id="opt-extract-pages" placeholder="Pages to extract (e.g. 1-3, 5)" class="select-control" style="width: 240px;" />
     `
   },
   'jpg-to-pdf': {
     category: 'core',
-    title: 'JPG / PNG to PDF Converter',
-    badge: 'Compile Photos to Document',
+    title: 'JPG / PNG / WebP to PDF Converter',
+    badge: 'Compile Images to PDF',
     subtitle: 'Convert images (JPG, PNG, WebP) into a high-resolution, organized PDF document.',
     actionName: 'Convert Images to PDF',
     multiple: true,
-    accept: 'image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp',
+    accept: 'image/png,image/jpeg,image/webp,image/*,.png,.jpg,.jpeg,.webp',
     optionsHtml: `
       <select id="opt-image-pagesize" class="select-control">
         <option value="A4">A4 Standard</option>
@@ -117,21 +131,23 @@ const TOOL_DEFINITIONS = {
   },
   'pdf-to-jpg': {
     category: 'core',
-    title: 'PDF to JPG / PNG Converter',
-    badge: 'High-DPI Image Extraction',
-    subtitle: 'Extract all pages from your PDF as crisp high-resolution images.',
+    title: 'PDF to JPG / PNG / WebP Converter',
+    badge: 'High-Resolution Image Extraction',
+    subtitle: 'Extract all pages from your PDF as crisp high-resolution PNG, JPEG, or WebP images.',
     actionName: 'Convert PDF to Images',
     multiple: false,
     accept: '.pdf,application/pdf',
     optionsHtml: `
       <select id="opt-img-format" class="select-control">
-        <option value="png">PNG (Lossless Vector Crispness)</option>
+        <option value="png">PNG (Lossless Vector Quality)</option>
         <option value="jpeg">JPEG (Compressed Web Photos)</option>
+        <option value="webp">WebP (Compact Modern Web)</option>
       </select>
       <select id="opt-img-dpi" class="select-control">
         <option value="150">150 DPI (Standard Quality)</option>
         <option value="300">300 DPI (High-Resolution Print)</option>
-        <option value="72">72 DPI (Web Preview)</option>
+        <option value="72">72 DPI (Web / Screen Preview)</option>
+        <option value="600">600 DPI (Ultra HD Print)</option>
       </select>
     `
   },
@@ -370,6 +386,7 @@ const TOOL_ICONS = {
   'compress-pdf': '⚡',
   'rotate-pdf': '🔄',
   'delete-pdf-pages': '🗑️',
+  'extract-pages': '📑',
   'jpg-to-pdf': '🖼️',
   'pdf-to-jpg': '📷',
   'word-to-pdf': '📄',
@@ -521,10 +538,30 @@ function setupEventListeners() {
   });
 }
 
+let perPageRotations = {};
+
+function parsePageRanges(rangeStr, totalPages) {
+  const pages = new Set();
+  const parts = (rangeStr || '').split(/[,;\s]+/).filter(Boolean);
+  for (const part of parts) {
+    if (part.includes('-')) {
+      const [startStr, endStr] = part.split('-');
+      const start = Math.max(1, parseInt(startStr, 10) || 1);
+      const end = Math.min(totalPages, parseInt(endStr, 10) || totalPages);
+      for (let p = start; p <= end; p++) pages.add(p);
+    } else {
+      const p = parseInt(part, 10);
+      if (p >= 1 && p <= totalPages) pages.add(p);
+    }
+  }
+  return Array.from(pages).sort((a, b) => a - b);
+}
+
 window.switchTool = function(toolKey) {
   if (!TOOL_DEFINITIONS[toolKey]) return;
   activeTool = toolKey;
   stagedFiles = [];
+  perPageRotations = {};
 
   document.querySelectorAll('.tool-tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tool === toolKey);
@@ -540,8 +577,45 @@ window.switchTool = function(toolKey) {
   fileInput.accept = config.accept;
   fileInput.multiple = config.multiple;
 
+  // Dynamic Dropzone Labels based on Tool Category
+  const dropTitle = document.getElementById('dropzone-title');
+  const dropDesc = document.getElementById('dropzone-desc');
+  const dropBtn = document.getElementById('dropzone-btn-text');
+
+  if (activeTool === 'jpg-to-pdf') {
+    if (dropTitle) dropTitle.textContent = 'Select Image files (JPG, PNG, WebP)';
+    if (dropDesc) dropDesc.textContent = 'or drop JPG, PNG, or WebP images here. Instant client-side PDF creation.';
+    if (dropBtn) dropBtn.textContent = 'Select Images';
+  } else if (config.category === 'convert' && (activeTool.includes('word') || activeTool.includes('excel') || activeTool.includes('powerpoint') || activeTool.includes('ppt'))) {
+    if (dropTitle) dropTitle.textContent = 'Select Office document';
+    if (dropDesc) dropDesc.textContent = 'or drop Word, Excel, or PowerPoint files here.';
+    if (dropBtn) dropBtn.textContent = 'Select Document';
+  } else {
+    if (dropTitle) dropTitle.textContent = 'Select PDF files';
+    if (dropDesc) dropDesc.textContent = 'or drop PDFs here. Instant client-side verification with zero data upload.';
+    if (dropBtn) dropBtn.textContent = 'Select PDF files';
+  }
+
   const optionsContainer = document.getElementById('tool-options-container');
   optionsContainer.innerHTML = config.optionsHtml;
+
+  // Dynamic handlers for split mode dropdown
+  const splitModeSelect = document.getElementById('opt-split-mode');
+  const splitRangesInput = document.getElementById('opt-split-ranges');
+  if (splitModeSelect && splitRangesInput) {
+    splitModeSelect.addEventListener('change', () => {
+      splitRangesInput.style.display = splitModeSelect.value === 'ranges' ? 'inline-block' : 'none';
+    });
+  }
+
+  // Dynamic handlers for rotate pages dropdown
+  const rotatePagesSelect = document.getElementById('opt-rotate-pages');
+  const rotateCustomInput = document.getElementById('opt-rotate-custom-pages');
+  if (rotatePagesSelect && rotateCustomInput) {
+    rotatePagesSelect.addEventListener('change', () => {
+      rotateCustomInput.style.display = rotatePagesSelect.value === 'custom' ? 'inline-block' : 'none';
+    });
+  }
 
   resetWorkspace();
 };
@@ -552,6 +626,7 @@ window.resetWorkspace = function resetWorkspace() {
     pollInterval = null;
   }
   stagedFiles = [];
+  perPageRotations = {};
   document.getElementById('dropzone').style.display = 'block';
   document.getElementById('staging-area').style.display = 'none';
   document.getElementById('progress-container').style.display = 'none';
@@ -563,33 +638,76 @@ window.resetWorkspace = function resetWorkspace() {
   renderFileList();
 };
 
+function detectFileType(file, bytes) {
+  if (!bytes || bytes.length < 4) return 'unknown';
+
+  // 1. PDF Signature: %PDF
+  if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
+    return 'pdf';
+  }
+
+  // 2. PNG Signature: \x89PNG
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+    return 'png';
+  }
+  if (bytes[0] === 0x89 && bytes[1] === 0x50) {
+    return 'png';
+  }
+
+  // 3. JPEG Signature: \xFF\xD8
+  if (bytes[0] === 0xff && bytes[1] === 0xd8) {
+    return 'jpeg';
+  }
+
+  // 4. WebP Signature: RIFF....WEBP
+  if (bytes.length >= 12 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+      bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) {
+    return 'webp';
+  }
+  if (bytes.length >= 4 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+    return 'webp';
+  }
+
+  // 5. OpenXML Office (DOCX, XLSX, PPTX): PK\x03\x04
+  if (bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04) {
+    return 'docx';
+  }
+
+  // 6. Legacy Office OLE2: \xD0\xCF\x11\xE0
+  if (bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0) {
+    return 'office-legacy';
+  }
+
+  // 7. Fallback to MIME and extension
+  const ext = (file.name || '').split('.').pop().toLowerCase();
+  if (['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif', 'svg'].includes(ext) || (file.type && file.type.startsWith('image/'))) {
+    return ext === 'png' ? 'png' : (ext === 'webp' ? 'webp' : 'jpeg');
+  }
+  if (ext === 'pdf' || file.type === 'application/pdf') {
+    return 'pdf';
+  }
+  if (['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'rtf', 'odt'].includes(ext)) {
+    return 'docx';
+  }
+
+  return 'unknown';
+}
+
 async function handleFilesSelected(files, isAppend = false) {
   const validFiles = [];
 
   for (const file of files) {
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
+    const detected = detectFileType(file, bytes);
 
-    // Client-side zero-trust format validation
     let isValid = false;
-    if (activeTool === 'jpg-to-pdf' || file.type.startsWith('image/')) {
-      if ((bytes[0] === 0x89 && bytes[1] === 0x50) || // PNG
-          (bytes[0] === 0xff && bytes[1] === 0xd8) || // JPEG
-          (bytes[0] === 0x52 && bytes[1] === 0x49)) { // WEBP
-        isValid = true;
-      }
-    } else if (activeTool.includes('word') || activeTool.includes('excel')) {
-      // OpenXML (PK..) or OLE2
-      if ((bytes[0] === 0x50 && bytes[1] === 0x4b) ||
-          (bytes[0] === 0xd0 && bytes[1] === 0xcf) ||
-          (bytes[0] === 0x25 && bytes[1] === 0x50)) {
-        isValid = true;
-      }
+    if (activeTool === 'jpg-to-pdf') {
+      isValid = ['png', 'jpeg', 'webp'].includes(detected);
+    } else if (activeTool.includes('word') || activeTool.includes('excel') || activeTool.includes('powerpoint') || activeTool.includes('ppt')) {
+      isValid = ['docx', 'office-legacy', 'pdf'].includes(detected);
     } else {
-      // PDF (%PDF)
-      if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
-        isValid = true;
-      }
+      isValid = (detected === 'pdf');
     }
 
     if (isValid) {
@@ -598,10 +716,11 @@ async function handleFilesSelected(files, isAppend = false) {
         name: file.name,
         size: file.size,
         fileObject: file,
-        bytes: bytes
+        bytes: bytes,
+        detectedFormat: detected
       });
     } else {
-      alert(`File "${file.name}" was rejected because its header format does not match ${activeTool}.`);
+      alert(`File "${file.name}" was rejected. Please select a valid ${activeTool === 'jpg-to-pdf' ? 'Image (JPG, PNG, WebP)' : 'PDF document'}.`);
     }
   }
 
@@ -614,11 +733,11 @@ async function handleFilesSelected(files, isAppend = false) {
   if (stagedFiles.length > 0) {
     document.getElementById('dropzone').style.display = 'none';
     document.getElementById('staging-area').style.display = 'block';
-    renderFileList();
+    await renderFileList();
   }
 }
 
-function renderFileList() {
+async function renderFileList() {
   const container = document.getElementById('files-grid');
   container.innerHTML = '';
 
@@ -638,20 +757,106 @@ function renderFileList() {
     container.appendChild(card);
   });
 
+  // If Rotate PDF tool is active, render interactive visual page rotation grid
+  if (activeTool === 'rotate-pdf' && stagedFiles.length === 1 && typeof PDFLib !== 'undefined') {
+    try {
+      const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0));
+      const totalPages = doc.getPageCount();
+
+      const rotateContainer = document.createElement('div');
+      rotateContainer.style.gridColumn = '1 / -1';
+      rotateContainer.style.marginTop = '0.75rem';
+
+      let pagesHtml = `
+        <div style="padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-hero); display: flex; align-items: center; gap: 0.4rem;">
+              <span>📑</span> Rotate Single Pages (${totalPages} page${totalPages > 1 ? 's' : ''})
+            </div>
+            <div style="display: flex; gap: 0.4rem;">
+              <button type="button" class="select-control" style="padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer;" onclick="rotateAllVisualPages(90)">🔄 Rotate All +90°</button>
+              <button type="button" class="select-control" style="padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer;" onclick="resetAllVisualRotations()">↺ Reset</button>
+            </div>
+          </div>
+          <div class="rotate-pages-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.85rem;">
+      `;
+
+      for (let i = 0; i < totalPages; i++) {
+        const pageNum = i + 1;
+        const rot = perPageRotations[i] || 0;
+        pagesHtml += `
+          <div class="page-rotate-card" id="page-card-${i}" style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.75rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s ease;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); display: flex; justify-content: space-between; width: 100%;">
+              <span>Page ${pageNum}</span>
+              <span id="page-angle-${i}" style="font-family: 'JetBrains Mono', monospace; color: var(--brand-primary); font-size: 0.75rem; font-weight: 800;">${rot}°</span>
+            </div>
+            <div style="width: 60px; height: 78px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin: 0.3rem 0; overflow: hidden;">
+              <div id="page-preview-box-${i}" style="transform: rotate(${rot}deg); transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: #64748b;">
+                <span style="font-size: 1.3rem;">📄</span>
+                <span style="font-size: 0.65rem; font-weight: 700;">P${pageNum}</span>
+              </div>
+            </div>
+            <button type="button" class="select-control" style="width: 100%; padding: 0.35rem 0.4rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.25rem;" onclick="rotateSingleVisualPage(${i}, 90)">
+              🔄 Rotate 90°
+            </button>
+          </div>
+        `;
+      }
+      pagesHtml += `</div></div>`;
+      rotateContainer.innerHTML = pagesHtml;
+      container.appendChild(rotateContainer);
+    } catch {
+      // Best-effort preview
+    }
+  }
+
   const addMoreBtn = document.getElementById('add-more-btn');
   if (addMoreBtn) {
     addMoreBtn.style.display = TOOL_DEFINITIONS[activeTool].multiple ? 'inline-flex' : 'none';
   }
 }
 
+window.rotateSingleVisualPage = function(pageIndex, deg = 90) {
+  perPageRotations[pageIndex] = ((perPageRotations[pageIndex] || 0) + deg) % 360;
+  const newRot = perPageRotations[pageIndex];
+  const box = document.getElementById(`page-preview-box-${pageIndex}`);
+  const angleBadge = document.getElementById(`page-angle-${pageIndex}`);
+  if (box) box.style.transform = `rotate(${newRot}deg)`;
+  if (angleBadge) angleBadge.textContent = `${newRot}°`;
+};
+
+window.rotateAllVisualPages = function(deg = 90) {
+  const cards = document.querySelectorAll('[id^="page-preview-box-"]');
+  cards.forEach((_, i) => {
+    window.rotateSingleVisualPage(i, deg);
+  });
+};
+
+window.resetAllVisualRotations = function() {
+  perPageRotations = {};
+  renderFileList();
+};
+
 window.removeStagedFile = function(index) {
   stagedFiles.splice(index, 1);
+  perPageRotations = {};
   if (stagedFiles.length === 0) {
     resetWorkspace();
   } else {
     renderFileList();
   }
 };
+
+function getBaseName(filename) {
+  if (!filename) return 'document';
+  return filename.replace(/\.[^/.]+$/, '');
+}
+
+function getDerivedOutputFilename(actionSuffix = 'processed', ext = 'pdf') {
+  if (!stagedFiles || stagedFiles.length === 0) return `document_${actionSuffix}.${ext}`;
+  const base = getBaseName(stagedFiles[0].name);
+  return `${base}_${actionSuffix}.${ext}`;
+}
 
 // ── Execution Router ──────────────────────────────────────────────────────────
 
@@ -682,24 +887,344 @@ async function executeDocumentOperation() {
     }
 
     // ── Route 1: Local In-Browser Processing (Zero-Latency, Zero-Cloud) ─────
-    if (activeTool === 'merge-pdf' && typeof PDFLib !== 'undefined') {
-      updateProgress(40, 'Merging documents locally in your browser...');
-      const mergedPdf = await PDFLib.PDFDocument.create();
+    if (typeof PDFLib !== 'undefined') {
+      // 1. Merge PDF
+      if (activeTool === 'merge-pdf') {
+        updateProgress(40, 'Merging documents locally in your browser...');
+        const mergedPdf = await PDFLib.PDFDocument.create();
 
-      for (const file of stagedFiles) {
-        const doc = await PDFLib.PDFDocument.load(file.bytes);
-        const copiedPages = await mergedPdf.copyPages(doc, doc.getPageIndices());
-        copiedPages.forEach(p => mergedPdf.addPage(p));
+        for (const file of stagedFiles) {
+          const doc = await PDFLib.PDFDocument.load(file.bytes);
+          const copiedPages = await mergedPdf.copyPages(doc, doc.getPageIndices());
+          copiedPages.forEach(p => mergedPdf.addPage(p));
+        }
+
+        updateProgress(90, 'Finalizing merged vector output...');
+        const pdfBytes = await mergedPdf.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const outName = getDerivedOutputFilename('merged', 'pdf');
+        renderSuccessDownload(URL.createObjectURL(blob), outName);
+        return;
       }
 
-      updateProgress(90, 'Finalizing merged vector output...');
-      const pdfBytes = await mergedPdf.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      renderSuccessDownload(URL.createObjectURL(blob), 'merged_document.pdf');
-      return;
+      // 2. Rotate PDF
+      if (activeTool === 'rotate-pdf' && stagedFiles.length === 1) {
+        updateProgress(40, 'Rotating PDF pages locally in browser...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes);
+        const baseAngle = parseInt(document.getElementById('opt-rotate-angle')?.value || '90', 10);
+        const targetPagesOpt = document.getElementById('opt-rotate-pages')?.value || 'all';
+        const customInput = document.getElementById('opt-rotate-custom-pages')?.value || '';
+        const pages = doc.getPages();
+        const totalPages = pages.length;
+        const customPages = new Set(parsePageRanges(customInput, totalPages));
+
+        const hasManualClicks = Object.keys(perPageRotations).some(k => (perPageRotations[k] || 0) > 0);
+
+        for (let i = 0; i < totalPages; i++) {
+          const pageNum = i + 1;
+          let addedAngle = 0;
+
+          if (hasManualClicks) {
+            addedAngle = perPageRotations[i] || 0;
+          } else {
+            let shouldRotate = false;
+            if (targetPagesOpt === 'all') shouldRotate = true;
+            else if (targetPagesOpt === 'odd' && pageNum % 2 !== 0) shouldRotate = true;
+            else if (targetPagesOpt === 'even' && pageNum % 2 === 0) shouldRotate = true;
+            else if (targetPagesOpt === 'custom' && customPages.has(pageNum)) shouldRotate = true;
+
+            if (shouldRotate) addedAngle = baseAngle;
+          }
+
+          if (addedAngle > 0) {
+            const page = pages[i];
+            const currentRotation = page.getRotation().angle;
+            page.setRotation(PDFLib.degrees((currentRotation + addedAngle) % 360));
+          }
+        }
+
+        updateProgress(90, 'Saving rotated document...');
+        const pdfBytes = await doc.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('rotated', 'pdf'));
+        return;
+      }
+
+      // 3. Delete PDF Pages
+      if (activeTool === 'delete-pdf-pages' && stagedFiles.length === 1) {
+        updateProgress(40, 'Removing specified pages locally...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes);
+        const totalPages = doc.getPageCount();
+        const deleteInput = document.getElementById('opt-delete-pages')?.value || '';
+        const pagesToDelete = new Set(parsePageRanges(deleteInput, totalPages));
+
+        const pagesToKeep = [];
+        for (let p = 1; p <= totalPages; p++) {
+          if (!pagesToDelete.has(p)) pagesToKeep.push(p - 1);
+        }
+
+        if (pagesToKeep.length === 0) {
+          throw new Error('You cannot delete all pages in the document. At least 1 page must remain.');
+        }
+
+        const newPdf = await PDFLib.PDFDocument.create();
+        const copied = await newPdf.copyPages(doc, pagesToKeep);
+        copied.forEach(p => newPdf.addPage(p));
+
+        updateProgress(90, 'Saving trimmed document...');
+        const pdfBytes = await newPdf.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('trimmed', 'pdf'));
+        return;
+      }
+
+      // 4. Extract PDF Pages
+      if (activeTool === 'extract-pages' && stagedFiles.length === 1) {
+        updateProgress(40, 'Extracting selected pages locally...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes);
+        const totalPages = doc.getPageCount();
+        const extractInput = document.getElementById('opt-extract-pages')?.value || '1';
+        const pageNumbers = parsePageRanges(extractInput, totalPages);
+        const targetIndices = pageNumbers.map(p => p - 1);
+
+        if (targetIndices.length === 0) {
+          throw new Error('Please specify valid page numbers to extract (e.g. 1-3, 5).');
+        }
+
+        const newPdf = await PDFLib.PDFDocument.create();
+        const copied = await newPdf.copyPages(doc, targetIndices);
+        copied.forEach(p => newPdf.addPage(p));
+
+        updateProgress(90, 'Saving extracted pages...');
+        const pdfBytes = await newPdf.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('extracted', 'pdf'));
+        return;
+      }
+
+      // 5. Split PDF (Ranges or Split Every Page)
+      if (activeTool === 'split-pdf' && stagedFiles.length === 1) {
+        const mode = document.getElementById('opt-split-mode')?.value || 'all-pages';
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes);
+        const totalPages = doc.getPageCount();
+        const base = getBaseName(stagedFiles[0].name);
+
+        if (mode === 'ranges') {
+          updateProgress(40, 'Extracting custom page ranges locally...');
+          const rangesInput = document.getElementById('opt-split-ranges')?.value || '1';
+          const targetIndices = parsePageRanges(rangesInput, totalPages).map(p => p - 1);
+
+          if (targetIndices.length === 0) {
+            throw new Error('Please specify a valid page range (e.g. 1-3, 5).');
+          }
+
+          const newPdf = await PDFLib.PDFDocument.create();
+          const copied = await newPdf.copyPages(doc, targetIndices);
+          copied.forEach(p => newPdf.addPage(p));
+
+          updateProgress(90, 'Saving split range...');
+          const pdfBytes = await newPdf.save({ useObjectStreams: true });
+          const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+          const cleanSuffix = rangesInput.replace(/[^a-zA-Z0-9_-]/g, '_');
+          renderSuccessDownload(URL.createObjectURL(blob), `${base}_split_${cleanSuffix}.pdf`);
+          return;
+        } else {
+          // Split Every Page
+          updateProgress(35, `Separating all ${totalPages} pages into individual files...`);
+
+          if (totalPages === 1) {
+            const blob = new Blob([stagedFiles[0].bytes], { type: 'application/pdf' });
+            renderSuccessDownload(URL.createObjectURL(blob), `${base}_page_1.pdf`);
+            return;
+          }
+
+          if (typeof JSZip !== 'undefined') {
+            const zip = new JSZip();
+            for (let i = 0; i < totalPages; i++) {
+              const singlePdf = await PDFLib.PDFDocument.create();
+              const [copiedPage] = await singlePdf.copyPages(doc, [i]);
+              singlePdf.addPage(copiedPage);
+              const singleBytes = await singlePdf.save({ useObjectStreams: true });
+              zip.file(`${base}_page_${i + 1}.pdf`, singleBytes);
+              const progress = Math.round(35 + ((i + 1) / totalPages) * 50);
+              updateProgress(progress, `Compiled page ${i + 1} of ${totalPages}...`);
+            }
+            updateProgress(90, 'Archiving split documents into ZIP...');
+            const zipContent = await zip.generateAsync({ type: 'blob' });
+            renderSuccessDownload(URL.createObjectURL(zipContent), `${base}_all_pages.zip`);
+            return;
+          } else {
+            const singlePdf = await PDFLib.PDFDocument.create();
+            const [copiedPage] = await singlePdf.copyPages(doc, [0]);
+            singlePdf.addPage(copiedPage);
+            const singleBytes = await singlePdf.save({ useObjectStreams: true });
+            const blob = new Blob([singleBytes], { type: 'application/pdf' });
+            renderSuccessDownload(URL.createObjectURL(blob), `${base}_page_1.pdf`);
+            return;
+          }
+        }
+      }
+
+      // 6. Compress PDF (In-Browser Object Stream Optimization)
+      if (activeTool === 'compress-pdf' && stagedFiles.length === 1) {
+        updateProgress(40, 'Optimizing stream objects and dictionary trees locally...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes, { updateMetadata: false });
+        const level = document.getElementById('opt-compress-level')?.value || 'recommended';
+
+        if (level === 'extreme') {
+          doc.setTitle('');
+          doc.setAuthor('');
+          doc.setSubject('');
+          doc.setKeywords([]);
+          doc.setProducer('DocPlatform Optimizer');
+          doc.setCreator('DocPlatform Optimizer');
+        }
+
+        updateProgress(85, 'Compacting cross-reference table...');
+        const pdfBytes = await doc.save({
+          useObjectStreams: true,
+          addDefaultPage: false,
+          objectsPerTick: 50,
+        });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('compressed', 'pdf'));
+        return;
+      }
+
+      // 7. JPG / PNG / WebP to PDF
+      if (activeTool === 'jpg-to-pdf' && stagedFiles.length > 0) {
+        updateProgress(30, 'Compiling images to PDF in browser...');
+        const newPdf = await PDFLib.PDFDocument.create();
+        const pageSizeOpt = document.getElementById('opt-image-pagesize')?.value || 'A4';
+        const orientation = document.getElementById('opt-image-orientation')?.value || 'auto';
+        const margin = 20;
+
+        for (let i = 0; i < stagedFiles.length; i++) {
+          const file = stagedFiles[i];
+          const detected = detectFileType(file, file.bytes);
+          let embeddedImage;
+
+          if (detected === 'png') {
+            embeddedImage = await newPdf.embedPng(file.bytes);
+          } else if (detected === 'jpeg') {
+            embeddedImage = await newPdf.embedJpg(file.bytes);
+          } else {
+            // WebP or custom image: draw to canvas and convert to PNG bytes
+            const blob = new Blob([file.bytes], { type: file.fileObject?.type || 'image/webp' });
+            const bitmap = await createImageBitmap(blob);
+            const canvas = document.createElement('canvas');
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(bitmap, 0, 0);
+            const pngBlob = await new Promise(res => canvas.toBlob(res, 'image/png', 1.0));
+            const pngBuf = await pngBlob.arrayBuffer();
+            embeddedImage = await newPdf.embedPng(new Uint8Array(pngBuf));
+          }
+
+          const { width: imgWidth, height: imgHeight } = embeddedImage;
+          let pageWidth = 595.28; // A4
+          let pageHeight = 841.89;
+
+          if (pageSizeOpt === 'FIT_IMAGE') {
+            pageWidth = imgWidth + margin * 2;
+            pageHeight = imgHeight + margin * 2;
+          } else if (pageSizeOpt === 'LETTER') {
+            pageWidth = 612;
+            pageHeight = 792;
+          }
+
+          if (orientation === 'landscape' || (orientation === 'auto' && imgWidth > imgHeight)) {
+            if (pageWidth < pageHeight) {
+              const tmp = pageWidth;
+              pageWidth = pageHeight;
+              pageHeight = tmp;
+            }
+          }
+
+          const page = newPdf.addPage([pageWidth, pageHeight]);
+          const maxW = pageWidth - margin * 2;
+          const maxH = pageHeight - margin * 2;
+          const scale = Math.min(maxW / imgWidth, maxH / imgHeight, 1);
+          const dw = imgWidth * scale;
+          const dh = imgHeight * scale;
+          const dx = (pageWidth - dw) / 2;
+          const dy = (pageHeight - dh) / 2;
+
+          page.drawImage(embeddedImage, { x: dx, y: dy, width: dw, height: dh });
+          const progress = Math.round(30 + ((i + 1) / stagedFiles.length) * 60);
+          updateProgress(progress, `Embedded image ${i + 1} of ${stagedFiles.length}...`);
+        }
+
+        updateProgress(95, 'Finalizing PDF output...');
+        const pdfBytes = await newPdf.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('compiled', 'pdf'));
+        return;
+      }
+
+      // 8. PDF to JPG / PNG / WebP Converter (with configurable DPI 72, 150, 300, 600)
+      if (activeTool === 'pdf-to-jpg' && stagedFiles.length === 1 && typeof pdfjsLib !== 'undefined') {
+        const format = document.getElementById('opt-img-format')?.value || 'png';
+        const dpi = parseInt(document.getElementById('opt-img-dpi')?.value || '150', 10);
+        const scale = dpi / 72;
+        const mimeType = format === 'jpeg' ? 'image/jpeg' : (format === 'webp' ? 'image/webp' : 'image/png');
+        const ext = format === 'jpeg' ? 'jpg' : (format === 'webp' ? 'webp' : 'png');
+        const base = getBaseName(stagedFiles[0].name);
+
+        updateProgress(20, `Rendering PDF pages at ${dpi} DPI (${format.toUpperCase()})...`);
+        
+        // Configure PDF.js Worker properly
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        // Pass a fresh cloned copy of the ArrayBuffer to avoid detached ArrayBuffer errors
+        const dataCopy = new Uint8Array(stagedFiles[0].bytes.slice(0));
+        const loadingTask = pdfjsLib.getDocument({ data: dataCopy });
+        const pdf = await loadingTask.promise;
+        const totalPages = pdf.numPages;
+
+        if (totalPages === 1) {
+          const page = await pdf.getPage(1);
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
+
+          const imgBlob = await new Promise(res => canvas.toBlob(res, mimeType, 0.95));
+          renderSuccessDownload(URL.createObjectURL(imgBlob), `${base}_page_1.${ext}`);
+          return;
+        }
+
+        if (typeof JSZip !== 'undefined') {
+          const zip = new JSZip();
+          for (let i = 1; i <= totalPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            const imgBlob = await new Promise(res => canvas.toBlob(res, mimeType, 0.95));
+            const imgBuf = await imgBlob.arrayBuffer();
+            zip.file(`${base}_page_${i}.${ext}`, imgBuf);
+
+            const progress = Math.round(20 + (i / totalPages) * 70);
+            updateProgress(progress, `Rendered page ${i} of ${totalPages} at ${dpi} DPI...`);
+          }
+
+          updateProgress(95, 'Packaging high-resolution images into ZIP...');
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          renderSuccessDownload(URL.createObjectURL(zipBlob), `${base}_${dpi}dpi_images.zip`);
+          return;
+        }
+      }
     }
 
-    // ── Route 2: Asynchronous Distributed Worker Pipeline ──────────────────
+    // ── Route 2: Asynchronous Distributed Worker Pipeline Fallback ──────────
     updateProgress(25, 'Submitting job to isolated worker pool...');
 
     const options = collectActiveToolOptions();
@@ -761,7 +1286,20 @@ function collectActiveToolOptions() {
     opts.level = document.getElementById('opt-compress-level')?.value || 'recommended';
   } else if (activeTool === 'rotate-pdf') {
     opts.rotation = parseInt(document.getElementById('opt-rotate-angle')?.value || '90', 10);
-    opts.targetPages = document.getElementById('opt-rotate-pages')?.value || 'all';
+    const targetPages = document.getElementById('opt-rotate-pages')?.value || 'all';
+    if (targetPages === 'custom') {
+      const customInput = document.getElementById('opt-rotate-custom-pages')?.value || '1';
+      opts.targetPages = parsePageRanges(customInput, 1000);
+    } else {
+      opts.targetPages = targetPages;
+    }
+  } else if (activeTool === 'delete-pdf-pages') {
+    opts.deleteInput = document.getElementById('opt-delete-pages')?.value || '';
+  } else if (activeTool === 'extract-pages') {
+    opts.pages = parsePageRanges(document.getElementById('opt-extract-pages')?.value || '1', 1000);
+  } else if (activeTool === 'jpg-to-pdf') {
+    opts.pageSize = document.getElementById('opt-image-pagesize')?.value || 'A4';
+    opts.orientation = document.getElementById('opt-image-orientation')?.value || 'auto';
   } else if (activeTool === 'watermark-pdf') {
     opts.text = document.getElementById('opt-watermark-text')?.value || 'CONFIDENTIAL';
     opts.opacity = parseFloat(document.getElementById('opt-watermark-opacity')?.value || '0.3');

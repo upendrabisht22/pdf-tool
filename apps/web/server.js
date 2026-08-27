@@ -19,6 +19,8 @@ import {
   RotatePdfProcessor,
   CompressPdfProcessor,
   ImageToPdfProcessor,
+  ReorderDeletePagesProcessor,
+  ExtractPagesProcessor,
   WatermarkPdfProcessor,
   PageNumbersPdfProcessor,
   ProtectPdfProcessor,
@@ -69,12 +71,17 @@ const sandbox = new SandboxedWorkerHarness({ defaultTimeoutMs: 60000 });
 // Worker loop to consume background jobs
 async function startWorkerLoop() {
   const processors = {
-    // Phase 1
+    // Phase 1 (Core PDF)
     'merge-pdf': new MergePdfProcessor(),
     'split-pdf': new SplitPdfProcessor(),
     'rotate-pdf': new RotatePdfProcessor(),
     'compress-pdf': new CompressPdfProcessor(),
     'image-to-pdf': new ImageToPdfProcessor(),
+    'jpg-to-pdf': new ImageToPdfProcessor(),
+    'extract-pages': new ExtractPagesProcessor(),
+    'delete-pdf-pages': new ReorderDeletePagesProcessor(),
+    'delete-pages': new ReorderDeletePagesProcessor(),
+    'reorder-pdf': new ReorderDeletePagesProcessor(),
     // Sprint A
     'watermark-pdf': new WatermarkPdfProcessor(),
     'page-numbers-pdf': new PageNumbersPdfProcessor(),
@@ -89,6 +96,7 @@ async function startWorkerLoop() {
     'ppt-to-pdf': new OfficeToPdfProcessor('powerpoint-to-pdf'),
     // Sprint D (Output Formats + Signatures)
     'pdf-to-image': new PdfToImageProcessor(),
+    'pdf-to-jpg': new PdfToImageProcessor(),
     'sign-pdf': new SignPdfProcessor(),
     'flatten-pdf': new FlattenPdfProcessor(),
     // Sprint E (PDF to Office + Redaction)
@@ -1054,6 +1062,8 @@ const server = http.createServer(async (req, res) => {
   <link rel="canonical" href="${toolConfig.canonicalUrl}">
   <link rel="stylesheet" href="/styles.css?v=2.2">
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script type="application/ld+json">
     ${JSON.stringify(jsonLd.webAppSchema)}
   </script>
@@ -1098,10 +1108,10 @@ const server = http.createServer(async (req, res) => {
             <line x1="9" y1="15" x2="15" y2="15"></line>
           </svg>
         </div>
-        <h2 class="dropzone-title">Select PDF files</h2>
-        <p class="dropzone-desc">or drop PDFs here. Instant client-side verification with zero data upload.</p>
+        <h2 class="dropzone-title" id="dropzone-title">Select PDF files</h2>
+        <p class="dropzone-desc" id="dropzone-desc">or drop PDFs here. Instant client-side verification with zero data upload.</p>
         <button class="upload-btn">
-          <span>Select PDF files</span>
+          <span id="dropzone-btn-text">Select PDF files</span>
         </button>
       </div>
 
