@@ -341,9 +341,9 @@ const TOOL_DEFINITIONS = {
     accept: '.pdf,application/pdf',
     optionsHtml: `
       <select id="opt-table-format" class="select-control">
-        <option value="json">Structured JSON Records</option>
-        <option value="csv">Standard CSV Spreadsheet</option>
-        <option value="markdown">Markdown Table</option>
+        <option value="csv" selected>Standard CSV Spreadsheet (.csv)</option>
+        <option value="json">Structured JSON Records (.json)</option>
+        <option value="markdown">Markdown Table (.md)</option>
       </select>
     `
   }
@@ -546,14 +546,22 @@ window.switchTool = function(toolKey) {
   resetWorkspace();
 };
 
-function resetWorkspace() {
-  if (pollInterval) clearInterval(pollInterval);
+window.resetWorkspace = function resetWorkspace() {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+  stagedFiles = [];
   document.getElementById('dropzone').style.display = 'block';
   document.getElementById('staging-area').style.display = 'none';
   document.getElementById('progress-container').style.display = 'none';
   document.getElementById('result-card').style.display = 'none';
+  const fileInput = document.getElementById('file-input');
+  if (fileInput) fileInput.value = '';
+  const addMoreInput = document.getElementById('add-more-input');
+  if (addMoreInput) addMoreInput.value = '';
   renderFileList();
-}
+};
 
 async function handleFilesSelected(files, isAppend = false) {
   const validFiles = [];
@@ -650,7 +658,9 @@ window.removeStagedFile = function(index) {
 async function executeDocumentOperation() {
   if (stagedFiles.length === 0) return;
 
+  document.getElementById('dropzone').style.display = 'none';
   document.getElementById('staging-area').style.display = 'none';
+  document.getElementById('result-card').style.display = 'none';
   document.getElementById('progress-container').style.display = 'block';
 
   updateProgress(15, 'Preparing document canvas...');
@@ -789,8 +799,9 @@ function pollJobStatus(jobId) {
         updateProgress(Math.max(30, data.progress || 50), 'Processing in isolated worker container...');
       } else if (data.status === 'COMPLETED') {
         clearInterval(pollInterval);
+        pollInterval = null;
         updateProgress(100, 'Processing complete!');
-        renderSuccessDownload(data.downloadUrl, `processed_${activeTool}.pdf`);
+        renderSuccessDownload(data.downloadUrl, data.filename || `processed_${activeTool}`);
       } else if (data.status === 'FAILED') {
         clearInterval(pollInterval);
         alert(`Worker error: ${data.error?.message || 'Processing failed.'}`);
@@ -809,7 +820,14 @@ function updateProgress(percent, text) {
 }
 
 function renderSuccessDownload(url, filename) {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+  document.getElementById('dropzone').style.display = 'none';
+  document.getElementById('staging-area').style.display = 'none';
   document.getElementById('progress-container').style.display = 'none';
+  
   const resultCard = document.getElementById('result-card');
   resultCard.style.display = 'block';
 

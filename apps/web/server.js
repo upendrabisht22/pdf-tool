@@ -1,6 +1,6 @@
 /**
  * @file server.js
- * @description Production HTTP Server & Control Plane API for DocPlatform.
+ * @description Production HTTP Server & Control Plane API for DocPlatform (v2.3).
  */
 
 import * as http from 'node:http';
@@ -358,9 +358,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     let downloadUrl = null;
+    let filename = `processed_${job.operation}.pdf`;
     if (job.status === 'COMPLETED' && job.outputFileIds && job.outputFileIds.length > 0) {
       const presigned = await storageProvider.createPresignedDownloadUrl(job.outputFileIds[0]);
       downloadUrl = presigned.url;
+      filename = path.basename(job.outputFileIds[0]);
     }
 
     return sendJson(200, {
@@ -368,6 +370,7 @@ const server = http.createServer(async (req, res) => {
       status: job.status,
       progress: job.progressPercent,
       downloadUrl,
+      filename,
       error: job.error,
     });
   }
@@ -744,7 +747,7 @@ const server = http.createServer(async (req, res) => {
   <title>100% Free Document Tools & Community Support — DocPlatform</title>
   <meta name="description" content="DocPlatform is 100% free with zero login and complete in-browser privacy. Use AI tools with your own free Gemini key (BYOK) or support the project with a tip.">
   <link rel="canonical" href="https://docplatform.app/pricing">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=2.2">
 </head>
 <body>
   ${renderNavbar('pricing')}
@@ -1026,7 +1029,7 @@ const server = http.createServer(async (req, res) => {
   </main>
 
   ${renderFooter()}
-  <script src="/app.js"></script>
+  <script src="/app.js?v=2.2"></script>
 </body>
 </html>`;
 
@@ -1049,7 +1052,7 @@ const server = http.createServer(async (req, res) => {
   <meta name="description" content="${toolConfig.metaDescription}">
   <meta name="keywords" content="${toolConfig.keywords.join(', ')}">
   <link rel="canonical" href="${toolConfig.canonicalUrl}">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=2.2">
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script type="application/ld+json">
     ${JSON.stringify(jsonLd.webAppSchema)}
@@ -1235,7 +1238,7 @@ const server = http.createServer(async (req, res) => {
   </main>
 
   ${renderFooter()}
-  <script src="/app.js"></script>
+  <script src="/app.js?v=2.2"></script>
 </body>
 </html>`;
 

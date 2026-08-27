@@ -439,8 +439,8 @@ export interface AiAskOptions {
 export interface AiExtractTableOptions {
   /** Target schema definition (field names and expected data types) */
   schema?: Record<string, 'string' | 'number' | 'date' | 'boolean'>;
-  /** Output format: 'json' | 'csv' */
-  format?: 'json' | 'csv';
+  /** Output format: 'json' | 'csv' | 'markdown' */
+  format?: 'json' | 'csv' | 'markdown';
 }
 
 export interface PipelineStep {
