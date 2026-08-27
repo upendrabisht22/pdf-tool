@@ -66,15 +66,11 @@ export interface UiTranslations {
   pricing: {
     title: string;
     subtitle: string;
-    monthly: string;
-    yearly: string;
-    saveBadge: string;
-    freeTierName: string;
-    proTierName: string;
-    enterpriseTierName: string;
-    getStartedFree: string;
-    getStartedPro: string;
-    contactSales: string;
+    freeCoreName: string;
+    byokAiName: string;
+    supporterName: string;
+    supportBtn: string;
+    faqTitle: string;
   };
   tools: Record<string, ToolI18nEntry>;
 }
@@ -99,17 +95,13 @@ export const TRANSLATIONS: Record<SupportedLocale, UiTranslations> = {
       restartBtn: 'Process Another Document',
     },
     pricing: {
-      title: 'Simple, transparent pricing for everyone',
-      subtitle: 'Free forever for everyday document tasks. Upgrade when you need massive batch power, advanced AI, or developer APIs.',
-      monthly: 'Monthly',
-      yearly: 'Yearly (Save 50%)',
-      saveBadge: 'Save 50%',
-      freeTierName: 'Free Forever',
-      proTierName: 'Pro Creator',
-      enterpriseTierName: 'Enterprise & API',
-      getStartedFree: 'Start Free — No Card Needed',
-      getStartedPro: 'Upgrade to Pro',
-      contactSales: 'Contact Sales',
+      title: '100% Free Forever & Community Supported',
+      subtitle: 'Zero paywalls, zero subscriptions, and zero forced signups. All core tools run in your browser for free.',
+      freeCoreName: 'Free Core PDF ($0 Forever)',
+      byokAiName: 'AI Intelligence (BYOK — Free)',
+      supporterName: 'Community Supporter ($3+ Tip)',
+      supportBtn: '☕ Support / Tip',
+      faqTitle: 'Frequently Asked Questions',
     },
     tools: {
       'merge-pdf': {
@@ -248,17 +240,13 @@ export const TRANSLATIONS: Record<SupportedLocale, UiTranslations> = {
       restartBtn: 'Procesar Otro Documento',
     },
     pricing: {
-      title: 'Precios simples y transparentes para todos',
-      subtitle: 'Gratis para siempre para tareas diarias. Actualiza cuando necesites procesamiento masivo o API.',
-      monthly: 'Mensual',
-      yearly: 'Anual (Ahorra 50%)',
-      saveBadge: 'Ahorra 50%',
-      freeTierName: 'Gratis Siempre',
-      proTierName: 'Pro Creador',
-      enterpriseTierName: 'Empresarial y API',
-      getStartedFree: 'Empezar Gratis — Sin Tarjeta',
-      getStartedPro: 'Actualizar a Pro',
-      contactSales: 'Contactar Ventas',
+      title: '100% Gratis Para Siempre y Apoyado por la Comunidad',
+      subtitle: 'Sin muros de pago, sin suscripciones y sin registros obligatorios. Todas las herramientas funcionan gratis.',
+      freeCoreName: 'Herramientas PDF Básicas ($0)',
+      byokAiName: 'Inteligencia IA (BYOK — Gratis)',
+      supporterName: 'Apoyo a la Comunidad ($3+)',
+      supportBtn: '☕ Apoyar / Propina',
+      faqTitle: 'Preguntas Frecuentes',
     },
     tools: {
       'merge-pdf': {
@@ -397,17 +385,13 @@ export const TRANSLATIONS: Record<SupportedLocale, UiTranslations> = {
       restartBtn: 'Traiter un Autre Document',
     },
     pricing: {
-      title: 'Tarification simple et transparente pour tous',
-      subtitle: 'Gratuit pour toujours pour vos tâches quotidiennes. Passez à Pro pour un traitement massif et l’API.',
-      monthly: 'Mensuel',
-      yearly: 'Annuel (Économisez 50%)',
-      saveBadge: 'Économisez 50%',
-      freeTierName: 'Gratuit pour Toujours',
-      proTierName: 'Pro Créateur',
-      enterpriseTierName: 'Entreprise & API',
-      getStartedFree: 'Commencer Gratuitement — Sans Carte',
-      getStartedPro: 'Passer à Pro',
-      contactSales: 'Contacter l’Équipe',
+      title: '100% Gratuit pour Toujours et Soutenu par la Communauté',
+      subtitle: 'Aucun abonnement, aucun paiement caché, aucune inscription requise. Tous les outils PDF s’exécutent gratuitement.',
+      freeCoreName: 'Outils PDF de Base ($0)',
+      byokAiName: 'Intelligence IA (BYOK — Gratuit)',
+      supporterName: 'Soutien Communautaire ($3+)',
+      supportBtn: '☕ Soutenir / Pourboire',
+      faqTitle: 'Foire Aux Questions',
     },
     tools: {
       'merge-pdf': {
@@ -546,17 +530,13 @@ export const TRANSLATIONS: Record<SupportedLocale, UiTranslations> = {
       restartBtn: 'Anderes Dokument Verarbeiten',
     },
     pricing: {
-      title: 'Einfache, transparente Preise für alle',
-      subtitle: 'Dauerhaft kostenlos für alltägliche Aufgaben. Upgrade für Massenverarbeitung und Entwickler-API.',
-      monthly: 'Monatlich',
-      yearly: 'Jährlich (50% Sparen)',
-      saveBadge: '50% Sparen',
-      freeTierName: 'Dauerhaft Kostenlos',
-      proTierName: 'Pro Creator',
-      enterpriseTierName: 'Enterprise & API',
-      getStartedFree: 'Kostenlos Starten — Keine Karte Nötig',
-      getStartedPro: 'Auf Pro Upgraden',
-      contactSales: 'Vertrieb Kontaktieren',
+      title: '100% Dauerhaft Kostenlos & Community-Unterstützt',
+      subtitle: 'Keine Abos, keine versteckten Kosten und kein Registrierungszwang. Alle PDF-Tools laufen kostenlos im Browser.',
+      freeCoreName: 'Kostenlose PDF-Basiswerkzeuge ($0)',
+      byokAiName: 'KI-Dokumentenintelligenz (BYOK — Gratis)',
+      supporterName: 'Community-Unterstützer ($3+)',
+      supportBtn: '☕ Unterstützen / Trinkgeld',
+      faqTitle: 'Häufig Gestellte Fragen',
     },
     tools: {
       'merge-pdf': {
@@ -695,17 +675,13 @@ export const TRANSLATIONS: Record<SupportedLocale, UiTranslations> = {
       restartBtn: 'दूसरा दस्तावेज़ प्रोसेस करें',
     },
     pricing: {
-      title: 'सभी के लिए सरल और पारदर्शी मूल्य निर्धारण',
-      subtitle: 'दैनिक कार्यों के लिए हमेशा मुफ्त। भारी बैच प्रोसेसिंग या डेवलपर API के लिए अपग्रेड करें।',
-      monthly: 'मासिक',
-      yearly: 'वार्षिक (50% छूट)',
-      saveBadge: '50% छूट',
-      freeTierName: 'हमेशा मुफ्त',
-      proTierName: 'प्रो क्रिएटर',
-      enterpriseTierName: 'एंटरप्राइज और API',
-      getStartedFree: 'मुफ्त शुरू करें — कार्ड की जरूरत नहीं',
-      getStartedPro: 'प्रो में अपग्रेड करें',
-      contactSales: 'सेल्स टीम से संपर्क करें',
+      title: '100% हमेशा मुफ्त और समुदाय द्वारा समर्थित',
+      subtitle: 'कोई सब्सक्रिप्शन नहीं, कोई छिपा हुआ शुल्क नहीं, कोई लॉगिन अनिवार्य नहीं। सभी टूल्स आपके ब्राउज़र में मुफ्त चलते हैं।',
+      freeCoreName: 'मुफ्त कोर PDF टूल्स ($0)',
+      byokAiName: 'AI इंटेलिजेंस (BYOK — मुफ्त)',
+      supporterName: 'कम्युनिटी सपोर्टर ($3+ टिप)',
+      supportBtn: '☕ सहयोग / टिप दें',
+      faqTitle: 'अक्सर पूछे जाने वाले सवाल (FAQ)',
     },
     tools: {
       'merge-pdf': {
@@ -844,17 +820,13 @@ export const TRANSLATIONS: Record<SupportedLocale, UiTranslations> = {
       restartBtn: '別のドキュメントを処理',
     },
     pricing: {
-      title: 'すべての人に向けたシンプルで明確な料金プラン',
-      subtitle: '日常的な作業は永久に無料。大容量一括処理や開発者向けAPIが必要なときにアップグレード。',
-      monthly: '月払い',
-      yearly: '年払い（50%お得）',
-      saveBadge: '50%お得',
-      freeTierName: '永久無料',
-      proTierName: 'Pro クリエイター',
-      enterpriseTierName: 'エンタープライズ & API',
-      getStartedFree: '無料で試す — カード登録不要',
-      getStartedPro: 'Proにアップグレード',
-      contactSales: '営業チームにお問い合わせ',
+      title: '100% 永久無料 & コミュニティ支援型',
+      subtitle: 'サブスクリプション不要、登録不要、隠し料金なし。すべてのコアPDFツールがブラウザ内で完全無料で動作します。',
+      freeCoreName: '無料コアPDF機能（$0）',
+      byokAiName: 'AIドキュメント機能（BYOK — 無料）',
+      supporterName: 'コミュニティサポーター（$3+）',
+      supportBtn: '☕ 開発を応援 / チップ',
+      faqTitle: 'よくある質問（FAQ）',
     },
     tools: {
       'merge-pdf': {

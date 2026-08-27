@@ -282,3 +282,43 @@ All API and worker errors must return a standardized JSON error envelope:
 ```
 
 Never expose raw stack traces, internal database schema details, or server directory paths to the client.
+
+---
+
+## 11. DATABASE SECURITY, INJECTION DEFENSE & SESSION PROTECTION MANDATES
+
+All database interactions, authentication mechanisms, and session lifecycles MUST strictly comply with these zero-compromise security protocols:
+
+### 11.1 Absolute Ban on Raw String SQL (Zero SQL Injection Invariant)
+1. **Parameterized Queries Only**:
+   - Raw string concatenation (e.g., `SELECT * FROM users WHERE email = '` + email + `'`) is **STRICTLY PROHIBITED** across the entire codebase.
+   - All database queries must use parameterized placeholders (`$1, $2, ...`) or type-safe ORM query builders (Drizzle ORM / Prisma).
+2. **Strict Schema & Type Validation**:
+   - Every input variable passed to a query must first pass strict runtime validation (e.g., email format, UUID regex, string length caps, sanitized text).
+
+### 11.2 Session Hijacking & Fixation Defenses
+1. **Cookie Hardening Standards**:
+   - All session and authentication cookies MUST be set with:
+     * `HttpOnly`: True (prevents JavaScript/XSS extraction of session tokens).
+     * `Secure`: True in production (enforces HTTPS transmission).
+     * `SameSite=Lax` or `Strict` (mitigates Cross-Site Request Forgery / CSRF).
+2. **Session Token Entropy**:
+   - Session identifiers must be generated using cryptographically secure random bytes with at least 256 bits of entropy (`crypto.randomBytes(32).toString('base64url')`).
+3. **Session Rotation & Invalidation**:
+   - Session tokens must be regenerated upon privilege changes (e.g., post-login, password update, tier upgrade).
+   - Old sessions must be immediately revoked and purged from the database/session store.
+
+### 11.3 Timing Attack & Side-Channel Defenses
+1. **Constant-Time Verification**:
+   - All password verification, API key hashes (`dpk_*`), and webhook signatures (`whsec_*`) must use constant-time comparison via `crypto.timingSafeEqual` or `bcrypt.compare`.
+   - Never use standard `===` or `==` for secrets or HMAC hashes.
+
+### 11.4 Multi-Tenant Data Isolation (Tenant Leakage Prevention)
+1. **Enforced Tenant Filtering**:
+   - Every query retrieving API keys, webhooks, jobs, documents, or usage logs MUST explicitly include the authenticated `ownerId` / `userId` in the `WHERE` clause.
+   - Cross-tenant data access is strictly blocked at both the repository layer and database row-level security (RLS) policies.
+
+### 11.5 Brute-Force & Credential Stuffing Defenses
+1. **Auth Route Rate Limiting**:
+   - Sign-in, Sign-up, and Password Reset routes are protected by dedicated sliding-window rate limiters (maximum 5 failed attempts per IP / email per 15 minutes before temporary lockout).
+

@@ -65,18 +65,51 @@ async function extractDocumentChunks(pdfDoc: PDFDocument): Promise<DocumentChunk
 }
 
 /**
+ * Prompt Injection Guard:
+ * Filters adversarial overrides, jailbreak phrases, and system prompt delimiters.
+ */
+export function sanitizePromptInput(input: string): { clean: string; detectedInjection: boolean } {
+  if (!input) return { clean: '', detectedInjection: false };
+
+  const injectionPatterns = [
+    /ignore\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts|rules)/i,
+    /system\s*:\s*you\s+are\s+now/i,
+    /you\s+are\s+now\s+(in\s+)?(dan|developer|unrestricted)\s+mode/i,
+    /forget\s+(all\s+)?(rules|guidelines|safety|instructions)/i,
+    /disregard\s+(all\s+)?(previous|prior|system)/i,
+    /reveal\s+(your\s+)?(system\s+prompt|initial\s+instructions)/i,
+    /<\|im_start\|>/i,
+    /<\|im_end\|>/i,
+    /\[system\]/i,
+    /\[INST\]/i,
+  ];
+
+  let detected = false;
+  let clean = input.trim().slice(0, 800);
+
+  for (const pattern of injectionPatterns) {
+    if (pattern.test(clean)) {
+      detected = true;
+      clean = clean.replace(pattern, '[SECURITY_SCRUBBED]');
+    }
+  }
+
+  return { clean, detectedInjection: detected };
+}
+
+/**
  * Hybrid Vector & Keyword Retrieval: scores chunks against user question
  * using BM25-style term frequency + position weights.
  */
 function retrieveRelevantChunks(chunks: DocumentChunk[], question: string, topK = 4): DocumentChunk[] {
-  const queryTokens = question.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+  const { clean } = sanitizePromptInput(question);
+  const queryTokens = clean.toLowerCase().split(/\W+/).filter(w => w.length > 2);
 
   const scored = chunks.map(chunk => {
     let score = 0;
     for (const q of queryTokens) {
       if (chunk.tokens.includes(q)) {
         score += 1.0;
-        // Exact match bonus
         if (chunk.text.toLowerCase().includes(q)) score += 0.5;
       }
     }

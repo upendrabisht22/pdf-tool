@@ -15,6 +15,9 @@ The platform is architected as a **strictly decoupled 5-tier topology**. No tier
 ┌────────────────────────────────────────────────────────────────────────────────┐
 │ 1. EXPERIENCE LAYER                                                           │
 │  - Web Application UI (Clean Light Mode, Floating Capsule Navbar, Bento Grids) │
+│  - 100% Zero-Login Architecture (Zero forced signup, instant usage)            │
+│  - BYOK (Bring Your Own Key) Engine: Client localStorage AI key management     │
+│  - Community Support & Voluntary Tip Jar (BuyMeACoffee / UPI integration)      │
 │  - Embeddable Widget SDK (<script src=".../widget.js"> iframe / shadow DOM)    │
 │  - Multilingual Localized Routes (/es/merge-pdf, /fr/compress-pdf, etc.)      │
 │  - Local-First Browser WASM Engine (PDF-lib client-side execution)             │
@@ -23,9 +26,9 @@ The platform is architected as a **strictly decoupled 5-tier topology**. No tier
 ┌──────────────────────────────────────▼─────────────────────────────────────────┐
 │ 2. CONTROL PLANE API (`apps/web/server.js`)                                   │
 │  - Security Guards: Rate Limiter (Sliding Window), PDF Bomb Defense, TTL Daemon│
-│  - Auth & Scope Middleware: Bearer JWT & HMAC-SHA256 API Keys (dpk_*)         │
 │  - File Upload Presigner: Direct-to-Storage presigned URL generation          │
 │  - Job Orchestrator: Idempotency keys, lifecycle state machine               │
+│  - AI Gateway: BYOK forwarding of user Gemini keys to isolated AI processors   │
 │  - Telemetry: Append-only usage events & immutable audit logs                 │
 │  - Webhook Dispatcher: Signed event publisher with exponential backoff        │
 └──────────────────────────────────────┬─────────────────────────────────────────┘
@@ -84,7 +87,8 @@ c:\Users\Upendra\Desktop\pdff\
 │       └── test/                           # Web application test suites
 │           ├── sprint-b.test.js            # Security guards test suite
 │           ├── sprint-h.test.js            # Phase 7 Developer API & Webhooks test suite
-│           └── sprint-i.test.js            # Phase 8 Growth & i18n test suite
+│           ├── sprint-i.test.js            # Phase 8 Growth & i18n test suite
+│           └── sprint-j.test.js            # Phase 9 Zero-Login & BYOK test suite
 │
 ├── docs/                                   # Architecture & Project Documentation
 │   ├── PROJECT_STATE.md                    # Master execution roadmap & current status
@@ -93,7 +97,8 @@ c:\Users\Upendra\Desktop\pdff\
 │       └── adr/                            # Architecture Decision Records
 │           ├── ADR-0001-initial-architecture-baseline.md
 │           ├── ADR-0002-developer-api-and-webhook-platform.md
-│           └── ADR-0003-growth-platform-and-widget-sdk.md
+│           ├── ADR-0003-growth-platform-and-widget-sdk.md
+│           └── ADR-0004-user-auth-and-database-schema.md
 │
 ├── packages/
 │   ├── core/                               # Canonical Domain Models & Types

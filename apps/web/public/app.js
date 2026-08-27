@@ -330,6 +330,22 @@ const TOOL_DEFINITIONS = {
     optionsHtml: `
       <input type="text" id="opt-ask-query" placeholder="Ask a question (e.g. What are the payment deadlines?)" class="select-control" style="width: 320px;" />
     `
+  },
+  'ai-extract-table': {
+    category: 'ai',
+    title: 'AI Table & Financial Record Extractor',
+    badge: 'Structured Data Extraction',
+    subtitle: 'Extract financial statements, invoices, and data tables from PDFs into clean CSV, JSON, or Markdown tables.',
+    actionName: 'Extract Structured Tables',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <select id="opt-table-format" class="select-control">
+        <option value="json">Structured JSON Records</option>
+        <option value="csv">Standard CSV Spreadsheet</option>
+        <option value="markdown">Markdown Table</option>
+      </select>
+    `
   }
 };
 
@@ -366,8 +382,10 @@ const TOOL_ICONS = {
   'redact-pdf': '🛡️',
   'ocr-pdf': '👁️',
   'compare-pdf': '⚖️',
-  'ai-summarize': '🧠',
-  'ai-ask': '💬',
+  'ai-summarize': '💡',
+  'ai-ask': '🤖',
+  'ai-extract-table': '📋',
+  'pipeline': '⚡'
 };
 
 function renderToolTabs() {
@@ -638,6 +656,21 @@ async function executeDocumentOperation() {
   updateProgress(15, 'Preparing document canvas...');
 
   try {
+    // ── Check BYOK Key for AI LLM Tools (Ask PDF & Summarizer) ─────────────
+    if (activeTool === 'ai-ask' || activeTool === 'ai-summarize') {
+      const userApiKey = (typeof getStoredGeminiKey === 'function') ? getStoredGeminiKey() : localStorage.getItem('dp_user_gemini_key');
+      if (!userApiKey || userApiKey.length < 5) {
+        document.getElementById('progress-container').style.display = 'none';
+        document.getElementById('staging-area').style.display = 'block';
+        if (typeof openApiKeyModal === 'function') {
+          openApiKeyModal();
+        } else {
+          alert('Please enter your free Google Gemini API Key to run AI Q&A / Summarizer.');
+        }
+        return;
+      }
+    }
+
     // ── Route 1: Local In-Browser Processing (Zero-Latency, Zero-Cloud) ─────
     if (activeTool === 'merge-pdf' && typeof PDFLib !== 'undefined') {
       updateProgress(40, 'Merging documents locally in your browser...');
@@ -660,13 +693,22 @@ async function executeDocumentOperation() {
     updateProgress(25, 'Submitting job to isolated worker pool...');
 
     const options = collectActiveToolOptions();
+    if (activeTool.startsWith('ai-')) {
+      options.apiKey = (typeof getStoredGeminiKey === 'function') ? getStoredGeminiKey() : localStorage.getItem('dp_user_gemini_key');
+    }
+
+    const filesPayload = stagedFiles.map(f => ({
+      name: f.name,
+      size: f.size,
+      base64Data: arrayBufferToBase64(f.bytes)
+    }));
 
     const jobResponse = await fetch('/api/v1/jobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         operation: activeTool,
-        files: stagedFiles.map(f => ({ name: f.name, size: f.size })),
+        files: filesPayload,
         options
       })
     });
@@ -683,6 +725,19 @@ async function executeDocumentOperation() {
     alert(`Processing error: ${err.message}`);
     resetWorkspace();
   }
+}
+
+function arrayBufferToBase64(buffer) {
+  if (!buffer) return '';
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const len = bytes.byteLength;
+  const chunkSize = 8192;
+  for (let i = 0; i < len; i += chunkSize) {
+    const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return btoa(binary);
 }
 
 function collectActiveToolOptions() {
@@ -717,6 +772,8 @@ function collectActiveToolOptions() {
     opts.focusArea = document.getElementById('opt-sum-focus')?.value || 'all';
   } else if (activeTool === 'ai-ask') {
     opts.question = document.getElementById('opt-ask-query')?.value || 'What are the main key points of this document?';
+  } else if (activeTool === 'ai-extract-table') {
+    opts.format = document.getElementById('opt-table-format')?.value || 'json';
   }
 
   return opts;
