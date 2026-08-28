@@ -1,19 +1,18 @@
 /**
  * @file processors/pdf-to-office.ts
- * @description Production-grade PDF to Office document reconstruction engine supporting:
- *   - PDF to Word (DOCX): Structural paragraph and layout reconstruction
- *   - PDF to Excel (XLSX): Table detection and tabular data extraction
+ * @description Production-grade PDF to Office document reconstruction engine.
  *
  * Architecture:
- *   - Production Container: Uses LibreOffice / pdf2docx headless pipeline.
- *   - Dev / Test Fallback: Generates valid OpenXML (ZIP-based `.docx` / `.xlsx`)
- *     packages containing the document text streams and tables.
+ *   - Extracts real text content from PDFs using the `unpdf` library (PDF.js engine).
+ *   - Generates valid OpenXML ZIP packages (.docx / .xlsx) containing the extracted text.
+ *   - Production path: LibreOffice headless for full fidelity layout conversion.
+ *   - Dev/fallback path: Pure JS OpenXML package with real extracted text content.
  */
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import * as zlib from 'node:zlib';
 import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { PDFDocument } from 'pdf-lib';
 import {
   PdfToWordOptions,
@@ -26,14 +25,34 @@ import {
 } from '@doc-platform/core';
 import { DocumentProcessor, ResourceEstimate } from '@doc-platform/providers';
 
-const execFileAsync = promisify(execFile);
+/**
+ * Run soffice via callback-based execFile — resolves even when stderr has content.
+ */
+function runSoffice(
+  bin: string,
+  args: string[],
+  opts: { cwd?: string; timeout?: number; maxBuffer?: number }
+): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    execFile(bin, args, opts, (err, stdout, stderr) => {
+      if (err && (err as any).code === 'ENOENT') {
+        reject(new Error(`Binary not found: ${bin}`));
+      } else if (err && (err as any).killed) {
+        reject(new Error(`LibreOffice timed out after ${opts.timeout}ms`));
+      } else {
+        resolve({ stdout: stdout || '', stderr: stderr || '' });
+      }
+    });
+  });
+}
 
-// Candidate paths for LibreOffice binary
+// Candidate paths for LibreOffice binary (Windows absolute paths first)
 const LIBREOFFICE_PATHS = [
+  'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
+  'C:\\Program Files\\LibreOffice\\program\\soffice.com',
+  'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
   'soffice',
   'libreoffice',
-  'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
-  'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
   '/usr/bin/soffice',
   '/usr/bin/libreoffice',
   '/usr/local/bin/soffice',
@@ -46,7 +65,7 @@ async function getSoffice(): Promise<string | null> {
         await fs.access(candidate);
         return candidate;
       } else {
-        await execFileAsync(candidate, ['--version'], { timeout: 2000 });
+        await runSoffice(candidate, ['--version'], { timeout: 3000 });
         return candidate;
       }
     } catch {
@@ -57,85 +76,49 @@ async function getSoffice(): Promise<string | null> {
 }
 
 /**
- * Minimal OpenXML ZIP container builder for pure in-memory DOCX / XLSX output.
- * Creates standard PK ZIP archive containing required OpenXML XML streams.
+ * Extract all text from a PDF buffer using unpdf (PDF.js engine).
+ * Returns array of strings, one per page.
  */
-function createOpenXmlZip(files: Record<string, string>): Buffer {
-  // We use Node's built-in zlib for deflate and build standard ZIP records
-  // For dev/test synthesis: returns a valid PK\x03\x04 ZIP container
-  const entries: Buffer[] = [];
-  const cdEntries: Buffer[] = [];
-  let offset = 0;
+async function extractPdfTextByPage(inputBuffer: Buffer): Promise<string[]> {
+  try {
+    const { getDocumentProxy } = await import('unpdf');
+    const proxy = await getDocumentProxy(new Uint8Array(inputBuffer));
+    const pages: string[] = [];
+    const numPages = proxy.numPages;
 
-  for (const [filename, content] of Object.entries(files)) {
-    const nameBuf = Buffer.from(filename, 'utf8');
-    const dataBuf = Buffer.from(content, 'utf8');
-
-    // Local file header (30 bytes + name + data)
-    const lfh = Buffer.alloc(30);
-    lfh.writeUInt32LE(0x04034b50, 0); // PK\x03\x04
-    lfh.writeUInt16LE(20, 4);        // Version needed (2.0)
-    lfh.writeUInt16LE(0, 6);         // General purpose flag
-    lfh.writeUInt16LE(0, 8);         // Compression: Stored (0)
-    lfh.writeUInt16LE(0, 10);        // Mod time
-    lfh.writeUInt16LE(0, 12);        // Mod date
-    lfh.writeUInt32LE(crc32(dataBuf), 14); // CRC32
-    lfh.writeUInt32LE(dataBuf.length, 18); // Compressed size
-    lfh.writeUInt32LE(dataBuf.length, 22); // Uncompressed size
-    lfh.writeUInt16LE(nameBuf.length, 26); // Filename length
-    lfh.writeUInt16LE(0, 28);              // Extra field length
-
-    entries.push(lfh, nameBuf, dataBuf);
-
-    // Central directory header (46 bytes + name)
-    const cdh = Buffer.alloc(46);
-    cdh.writeUInt32LE(0x02014b50, 0); // PK\x01\x02
-    cdh.writeUInt16LE(20, 4);        // Version made by
-    cdh.writeUInt16LE(20, 6);        // Version needed
-    cdh.writeUInt16LE(0, 8);         // Flags
-    cdh.writeUInt16LE(0, 10);        // Compression (0)
-    cdh.writeUInt16LE(0, 12);        // Mod time
-    cdh.writeUInt16LE(0, 14);        // Mod date
-    cdh.writeUInt32LE(crc32(dataBuf), 16); // CRC32
-    cdh.writeUInt32LE(dataBuf.length, 20); // Comp size
-    cdh.writeUInt32LE(dataBuf.length, 24); // Uncomp size
-    cdh.writeUInt16LE(nameBuf.length, 28); // Name len
-    cdh.writeUInt16LE(0, 30);              // Extra len
-    cdh.writeUInt16LE(0, 32);              // Comment len
-    cdh.writeUInt16LE(0, 34);              // Disk #
-    cdh.writeUInt16LE(0, 36);              // Internal attrs
-    cdh.writeUInt32LE(0, 38);              // External attrs
-    cdh.writeUInt32LE(offset, 42);         // Offset to local header
-
-    cdEntries.push(cdh, nameBuf);
-    offset += lfh.length + nameBuf.length + dataBuf.length;
+    for (let i = 1; i <= numPages; i++) {
+      try {
+        const page = await proxy.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = (textContent.items as Array<{ str?: string }>)
+          .map(item => item.str || '')
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        pages.push(pageText);
+      } catch {
+        pages.push('');
+      }
+    }
+    return pages;
+  } catch {
+    return [];
   }
-
-  const cdOffset = offset;
-  const cdSize = cdEntries.reduce((sum, b) => sum + b.length, 0);
-
-  // End of Central Directory Record (22 bytes)
-  const eocd = Buffer.alloc(22);
-  eocd.writeUInt32LE(0x06054b50, 0);               // PK\x05\x06
-  eocd.writeUInt16LE(0, 4);                        // Disk #
-  eocd.writeUInt16LE(0, 6);                        // Start disk
-  eocd.writeUInt16LE(Object.keys(files).length, 8); // Entries this disk
-  eocd.writeUInt16LE(Object.keys(files).length, 10); // Total entries
-  eocd.writeUInt32LE(cdSize, 12);                  // Central directory size
-  eocd.writeUInt32LE(cdOffset, 16);                // Central directory offset
-  eocd.writeUInt16LE(0, 20);                       // Comment length
-
-  return Buffer.concat([...entries, ...cdEntries, eocd]);
 }
 
-function crc32(buf: Buffer): number {
-  let crc = 0xffffffff;
-  for (let i = 0; i < buf.length; i++) {
-    crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ buf[i]) & 0xff];
-  }
-  return (crc ^ 0xffffffff) >>> 0;
+/** Escape special XML characters in text content */
+function xmlEscape(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
+// ============================================================================
+// CRC32 for ZIP
+// ============================================================================
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
   for (let i = 0; i < 256; i++) {
@@ -148,15 +131,172 @@ const CRC_TABLE = (() => {
   return table;
 })();
 
+function crc32(buf: Buffer): number {
+  let crc = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) {
+    crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ buf[i]) & 0xff];
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
 /**
- * Builds a valid Microsoft Word OpenXML (.docx) structure.
+ * Minimal OpenXML ZIP container builder for pure in-memory DOCX / XLSX output.
  */
-function buildDocxPackage(pageCount: number, fileName: string): Buffer {
+function createOpenXmlZip(files: Record<string, string | Buffer>): Buffer {
+  const entries: Buffer[] = [];
+  const cdEntries: Buffer[] = [];
+  let offset = 0;
+
+  for (const [filename, content] of Object.entries(files)) {
+    const nameBuf = Buffer.from(filename, 'utf8');
+    const dataBuf = Buffer.isBuffer(content) ? content : Buffer.from(content, 'utf8');
+
+    const lfh = Buffer.alloc(30);
+    lfh.writeUInt32LE(0x04034b50, 0);
+    lfh.writeUInt16LE(20, 4);
+    lfh.writeUInt16LE(0, 6);
+    lfh.writeUInt16LE(0, 8);
+    lfh.writeUInt16LE(0, 10);
+    lfh.writeUInt16LE(0, 12);
+    lfh.writeUInt32LE(crc32(dataBuf), 14);
+    lfh.writeUInt32LE(dataBuf.length, 18);
+    lfh.writeUInt32LE(dataBuf.length, 22);
+    lfh.writeUInt16LE(nameBuf.length, 26);
+    lfh.writeUInt16LE(0, 28);
+
+    entries.push(lfh, nameBuf, dataBuf);
+
+    const cdh = Buffer.alloc(46);
+    cdh.writeUInt32LE(0x02014b50, 0);
+    cdh.writeUInt16LE(20, 4);
+    cdh.writeUInt16LE(20, 6);
+    cdh.writeUInt16LE(0, 8);
+    cdh.writeUInt16LE(0, 10);
+    cdh.writeUInt16LE(0, 12);
+    cdh.writeUInt16LE(0, 14);
+    cdh.writeUInt32LE(crc32(dataBuf), 16);
+    cdh.writeUInt32LE(dataBuf.length, 20);
+    cdh.writeUInt32LE(dataBuf.length, 24);
+    cdh.writeUInt16LE(nameBuf.length, 28);
+    cdh.writeUInt16LE(0, 30);
+    cdh.writeUInt16LE(0, 32);
+    cdh.writeUInt16LE(0, 34);
+    cdh.writeUInt16LE(0, 36);
+    cdh.writeUInt32LE(0, 38);
+    cdh.writeUInt32LE(offset, 42);
+
+    cdEntries.push(cdh, nameBuf);
+    offset += lfh.length + nameBuf.length + dataBuf.length;
+  }
+
+  const cdOffset = offset;
+  const cdSize = cdEntries.reduce((sum, b) => sum + b.length, 0);
+
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(0, 4);
+  eocd.writeUInt16LE(0, 6);
+  eocd.writeUInt16LE(Object.keys(files).length, 8);
+  eocd.writeUInt16LE(Object.keys(files).length, 10);
+  eocd.writeUInt32LE(cdSize, 12);
+  eocd.writeUInt32LE(cdOffset, 16);
+  eocd.writeUInt16LE(0, 20);
+
+  return Buffer.concat([...entries, ...cdEntries, eocd]);
+}
+
+/**
+ * Universal ZIP Central Directory parser to decompress entries from DOCX.
+ */
+function readZipEntries(buf: Buffer): Record<string, Buffer> {
+  const entries: Record<string, Buffer> = {};
+  if (buf.length < 22) return entries;
+
+  let eocdPos = -1;
+  for (let i = buf.length - 22; i >= 0; i--) {
+    if (buf.readUInt32LE(i) === 0x06054b50) {
+      eocdPos = i;
+      break;
+    }
+  }
+  if (eocdPos === -1) return entries;
+
+  const cdOffset = buf.readUInt32LE(eocdPos + 16);
+  const cdSize = buf.readUInt32LE(eocdPos + 12);
+  let pos = cdOffset;
+
+  while (pos < cdOffset + cdSize && pos < buf.length - 46) {
+    if (buf.readUInt32LE(pos) !== 0x02014b50) break;
+    const compMethod = buf.readUInt16LE(pos + 10);
+    const compSize = buf.readUInt32LE(pos + 20);
+    const nameLen = buf.readUInt16LE(pos + 28);
+    const extraLen = buf.readUInt16LE(pos + 30);
+    const commentLen = buf.readUInt16LE(pos + 32);
+    const localHeaderOffset = buf.readUInt32LE(pos + 42);
+    const filename = buf.subarray(pos + 46, pos + 46 + nameLen).toString('utf8');
+
+    if (localHeaderOffset + 30 <= buf.length) {
+      const localNameLen = buf.readUInt16LE(localHeaderOffset + 26);
+      const localExtraLen = buf.readUInt16LE(localHeaderOffset + 28);
+      const dataStart = localHeaderOffset + 30 + localNameLen + localExtraLen;
+      const compData = buf.subarray(dataStart, dataStart + compSize);
+
+      let decompressed: Buffer | null = null;
+      if (compMethod === 8) {
+        try { decompressed = zlib.inflateRawSync(compData); } catch {}
+      } else if (compMethod === 0) {
+        decompressed = Buffer.from(compData);
+      }
+
+      if (decompressed) {
+        entries[filename] = decompressed;
+      }
+    }
+    pos += 46 + nameLen + extraLen + commentLen;
+  }
+  return entries;
+}
+
+/**
+ * Optimizes the generated DOCX package so textboxes automatically expand to fit 100% of their text,
+ * preventing any character clipping while preserving original fonts, layout, and binary images.
+ */
+function optimizeDocxFontsAndLayout(docxBuf: Buffer): Buffer {
+  try {
+    const entries = readZipEntries(docxBuf);
+    if (!entries['word/document.xml']) return docxBuf;
+
+    let docXml = entries['word/document.xml'].toString('utf8');
+
+    // Replace noAutofit with spAutoFit across all text frames so text is never truncated
+    docXml = docXml.replace(/<a:noAutofit\/>/g, '<a:spAutoFit/>');
+
+    // Set wrap to none so text flows naturally without forced square boundary clipping
+    docXml = docXml.replace(/wrap="square"/g, 'wrap="none"');
+
+    entries['word/document.xml'] = Buffer.from(docXml, 'utf8');
+
+    // Rebuild zip preserving raw binary buffers for images
+    const zipFiles: Record<string, Buffer> = {};
+    for (const [k, v] of Object.entries(entries)) {
+      zipFiles[k] = v;
+    }
+    return createOpenXmlZip(zipFiles);
+  } catch {
+    return docxBuf;
+  }
+}
+
+/**
+ * Builds a valid Microsoft Word OpenXML (.docx) structure with real extracted text.
+ */
+function buildDocxPackage(pageTexts: string[], docTitle: string): Buffer {
   const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
 </Types>`;
 
   const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -164,41 +304,111 @@ function buildDocxPackage(pageCount: number, fileName: string): Buffer {
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
 </Relationships>`;
 
+  const wordRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:docDefaults>
+    <w:rPrDefault>
+      <w:rPr>
+        <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+        <w:sz w:val="22"/>
+        <w:lang w:val="en-IN"/>
+      </w:rPr>
+    </w:rPrDefault>
+  </w:docDefaults>
+  <w:style w:type="paragraph" w:styleId="Normal">
+    <w:name w:val="Normal"/>
+    <w:pPr><w:spacing w:after="160" w:line="259" w:lineRule="auto"/></w:pPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading1">
+    <w:name w:val="heading 1"/>
+    <w:basedOn w:val="Normal"/>
+    <w:rPr><w:b/><w:sz w:val="28"/><w:color w:val="2E4057"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="PageHeader">
+    <w:name w:val="Page Header"/>
+    <w:basedOn w:val="Normal"/>
+    <w:rPr><w:b/><w:color w:val="555555"/><w:sz w:val="18"/></w:rPr>
+  </w:style>
+</w:styles>`;
+
+  let bodyXml = '';
+
+  // Document title paragraph
+  bodyXml += `    <w:p>
+      <w:pPr><w:pStyle w:val="Heading1"/></w:pPr>
+      <w:r><w:t>${xmlEscape(docTitle)}</w:t></w:r>
+    </w:p>\n`;
+
+  for (let pageIdx = 0; pageIdx < pageTexts.length; pageIdx++) {
+    const pageText = pageTexts[pageIdx];
+
+    if (pageTexts.length > 1) {
+      bodyXml += `    <w:p>
+      <w:pPr><w:pStyle w:val="PageHeader"/></w:pPr>
+      <w:r><w:t>--- Page ${pageIdx + 1} of ${pageTexts.length} ---</w:t></w:r>
+    </w:p>\n`;
+    }
+
+    if (!pageText || pageText.trim() === '') {
+      bodyXml += `    <w:p>
+      <w:r><w:rPr><w:color w:val="999999"/><w:i/></w:rPr>
+        <w:t>[Page ${pageIdx + 1}: No extractable text. This may be a scanned image-based PDF. Use the OCR tool instead.]</w:t>
+      </w:r>
+    </w:p>\n`;
+      continue;
+    }
+
+    // Group text into paragraph chunks (~200 chars each for readability)
+    const words = pageText.split(/\s+/);
+    const paragraphs: string[] = [];
+    let current = '';
+    for (const word of words) {
+      if ((current + ' ' + word).length > 200) {
+        if (current) paragraphs.push(current.trim());
+        current = word;
+      } else {
+        current = current ? current + ' ' + word : word;
+      }
+    }
+    if (current.trim()) paragraphs.push(current.trim());
+
+    for (const para of paragraphs) {
+      bodyXml += `    <w:p>
+      <w:pPr><w:spacing w:after="120"/></w:pPr>
+      <w:r><w:t xml:space="preserve">${xmlEscape(para)}</w:t></w:r>
+    </w:p>\n`;
+    }
+  }
+
   const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:body>
-    <w:p>
-      <w:r>
-        <w:rPr><w:b/><w:sz w:val="32"/><w:color w:val="00E5FF"/></w:rPr>
-        <w:t>Converted Document: ${fileName}</w:t>
-      </w:r>
-    </w:p>
-    <w:p>
-      <w:r>
-        <w:rPr><w:sz w:val="22"/><w:color w:val="555555"/></w:rPr>
-        <w:t>Total Source Pages: ${pageCount}</w:t>
-      </w:r>
-    </w:p>
-    <w:p>
-      <w:r>
-        <w:rPr><w:sz w:val="20"/></w:rPr>
-        <w:t>This document was reconstructed using the DocPlatform conversion pipeline.</w:t>
-      </w:r>
-    </w:p>
+${bodyXml}
+    <w:sectPr>
+      <w:pgSz w:w="12240" w:h="15840"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
+    </w:sectPr>
   </w:body>
 </w:document>`;
 
   return createOpenXmlZip({
     '[Content_Types].xml': contentTypes,
     '_rels/.rels': rels,
+    'word/_rels/document.xml.rels': wordRels,
+    'word/styles.xml': stylesXml,
     'word/document.xml': documentXml,
   });
 }
 
 /**
- * Builds a valid Microsoft Excel OpenXML (.xlsx) structure with worksheet tabs.
+ * Builds a valid Microsoft Excel OpenXML (.xlsx) with extracted PDF text as table rows.
  */
-function buildXlsxPackage(pageCount: number): Buffer {
+function buildXlsxPackage(pageTexts: string[], docTitle: string): Buffer {
   const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -220,23 +430,50 @@ function buildXlsxPackage(pageCount: number): Buffer {
   const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheets>
-    <sheet name="Page 1 Data" sheetId="1" r:id="rId1"/>
+    <sheet name="Extracted Data" sheetId="1" r:id="rId1"/>
   </sheets>
 </workbook>`;
+
+  let rowIndex = 1;
+  let sheetRows = '';
+
+  // Header row
+  sheetRows += `    <row r="${rowIndex}">
+      <c r="A${rowIndex}" t="inlineStr"><is><t>Extracted Content</t></is></c>
+      <c r="B${rowIndex}" t="inlineStr"><is><t>Source Page</t></is></c>
+    </row>\n`;
+  rowIndex++;
+
+  // Source document name row
+  sheetRows += `    <row r="${rowIndex}">
+      <c r="A${rowIndex}" t="inlineStr"><is><t>${xmlEscape(docTitle)}</t></is></c>
+      <c r="B${rowIndex}" t="inlineStr"><is><t>Document</t></is></c>
+    </row>\n`;
+  rowIndex++;
+
+  for (let pageIdx = 0; pageIdx < pageTexts.length; pageIdx++) {
+    const pageText = pageTexts[pageIdx];
+    if (!pageText || pageText.trim() === '') continue;
+
+    // Split on spaces ≥3, tabs, or pipe chars for column-like segmentation
+    const lines = pageText
+      .split(/\s{3,}|\t|\|/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    for (const line of lines) {
+      sheetRows += `    <row r="${rowIndex}">
+      <c r="A${rowIndex}" t="inlineStr"><is><t>${xmlEscape(line)}</t></is></c>
+      <c r="B${rowIndex}"><v>${pageIdx + 1}</v></c>
+    </row>\n`;
+      rowIndex++;
+    }
+  }
 
   const sheet1Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetData>
-    <row r="1">
-      <c r="A1" t="inlineStr"><is><t>Item Description</t></is></c>
-      <c r="B1" t="inlineStr"><is><t>Extracted Value</t></is></c>
-      <c r="C1" t="inlineStr"><is><t>Status</t></is></c>
-    </row>
-    <row r="2">
-      <c r="A2" t="inlineStr"><is><t>Source Pages</t></is></c>
-      <c r="B2"><v>${pageCount}</v></c>
-      <c r="C2" t="inlineStr"><is><t>Processed</t></is></c>
-    </row>
+${sheetRows}
   </sheetData>
 </worksheet>`;
 
@@ -286,38 +523,61 @@ export class PdfToWordProcessor implements DocumentProcessor<PdfToWordOptions> {
     const pdfDoc = await PDFDocument.load(inputBuffer, { ignoreEncryption: true });
     const pageCount = pdfDoc.getPageCount();
 
-    await context.onProgress(35, 'Reconstructing Word layout and text flow...');
+    await context.onProgress(30, 'Extracting text content from PDF pages...');
+    const pageTexts = await extractPdfTextByPage(inputBuffer);
+
+    await context.onProgress(55, 'Reconstructing Word document layout and paragraphs...');
     const sofficePath = await getSoffice();
     let outputBuffer: Buffer;
 
     if (sofficePath) {
-      // Production path via headless LibreOffice Writer conversion
       const tempDir = context.tempWorkingDir || (await fs.mkdtemp(path.join(process.cwd(), 'scratch_wrd_')));
       const inPath = path.join(tempDir, `doc_${context.jobId}.pdf`);
+
       await fs.writeFile(inPath, inputBuffer);
 
       try {
-        await execFileAsync(sofficePath, [
+        await runSoffice(sofficePath, [
           '--headless',
           '--invisible',
           '--nologo',
           '--nodefault',
+          '--infilter=writer_pdf_import',
           '--convert-to',
           'docx',
           '--outdir',
           tempDir,
           inPath,
-        ], { timeout: 45000 });
-
-        const outPath = path.join(tempDir, `doc_${context.jobId}.docx`);
-        outputBuffer = await fs.readFile(outPath);
-      } catch {
-        outputBuffer = buildDocxPackage(pageCount, `document_${context.jobId}`);
-      } finally {
-        try { await fs.rm(tempDir, { recursive: true, force: true }); } catch { /* best effort */ }
+        ], { cwd: tempDir, timeout: 30000, maxBuffer: 10 * 1024 * 1024 });
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error(`[PdfToWord] soffice HARD FAIL: ${errMsg}`);
       }
+
+      const expectedOutPath = path.join(tempDir, `doc_${context.jobId}.docx`);
+      let foundDocxPath: string | null = null;
+
+      try {
+        await fs.access(expectedOutPath);
+        foundDocxPath = expectedOutPath;
+      } catch {
+        try {
+          const files = await fs.readdir(tempDir);
+          const docxFile = files.find(f => f.toLowerCase().endsWith('.docx'));
+          if (docxFile) foundDocxPath = path.join(tempDir, docxFile);
+        } catch { /* ignore */ }
+      }
+
+      if (foundDocxPath) {
+        outputBuffer = await fs.readFile(foundDocxPath);
+        outputBuffer = optimizeDocxFontsAndLayout(outputBuffer);
+      } else {
+        outputBuffer = buildDocxPackage(pageTexts, 'Converted Document');
+      }
+
+      try { await fs.rm(tempDir, { recursive: true, force: true }); } catch { /* best effort */ }
     } else {
-      outputBuffer = buildDocxPackage(pageCount, `document_${context.jobId}`);
+      outputBuffer = buildDocxPackage(pageTexts, 'Converted Document');
     }
 
     await context.onProgress(100, 'PDF converted to Word (.docx) successfully.');
@@ -374,21 +634,25 @@ export class PdfToExcelProcessor implements DocumentProcessor<PdfToExcelOptions>
     const inputBuffer = inputBuffers[0];
     validatePdfSafety(inputBuffer);
 
-    await context.onProgress(15, 'Detecting tabular structures and lines...');
+    await context.onProgress(15, 'Detecting tabular structures and text lines...');
     const pdfDoc = await PDFDocument.load(inputBuffer, { ignoreEncryption: true });
     const pageCount = pdfDoc.getPageCount();
 
-    await context.onProgress(40, 'Extracting cell rows and columns...');
+    await context.onProgress(30, 'Extracting text content from all PDF pages...');
+    const pageTexts = await extractPdfTextByPage(inputBuffer);
+
+    await context.onProgress(55, 'Structuring rows and columns into Excel worksheet...');
     const sofficePath = await getSoffice();
     let outputBuffer: Buffer;
 
     if (sofficePath) {
       const tempDir = context.tempWorkingDir || (await fs.mkdtemp(path.join(process.cwd(), 'scratch_xls_')));
       const inPath = path.join(tempDir, `calc_${context.jobId}.pdf`);
+
       await fs.writeFile(inPath, inputBuffer);
 
       try {
-        await execFileAsync(sofficePath, [
+        await runSoffice(sofficePath, [
           '--headless',
           '--invisible',
           '--nologo',
@@ -398,17 +662,35 @@ export class PdfToExcelProcessor implements DocumentProcessor<PdfToExcelOptions>
           '--outdir',
           tempDir,
           inPath,
-        ], { timeout: 45000 });
-
-        const outPath = path.join(tempDir, `calc_${context.jobId}.xlsx`);
-        outputBuffer = await fs.readFile(outPath);
-      } catch {
-        outputBuffer = buildXlsxPackage(pageCount);
-      } finally {
-        try { await fs.rm(tempDir, { recursive: true, force: true }); } catch { /* best effort */ }
+        ], { cwd: tempDir, timeout: 30000, maxBuffer: 10 * 1024 * 1024 });
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error(`[PdfToExcel] soffice HARD FAIL: ${errMsg}`);
       }
+
+      const expectedOutPath = path.join(tempDir, `calc_${context.jobId}.xlsx`);
+      let foundXlsxPath: string | null = null;
+
+      try {
+        await fs.access(expectedOutPath);
+        foundXlsxPath = expectedOutPath;
+      } catch {
+        try {
+          const files = await fs.readdir(tempDir);
+          const xlsxFile = files.find(f => f.toLowerCase().endsWith('.xlsx'));
+          if (xlsxFile) foundXlsxPath = path.join(tempDir, xlsxFile);
+        } catch { /* ignore */ }
+      }
+
+      if (foundXlsxPath) {
+        outputBuffer = await fs.readFile(foundXlsxPath);
+      } else {
+        outputBuffer = buildXlsxPackage(pageTexts, 'Extracted Data');
+      }
+
+      try { await fs.rm(tempDir, { recursive: true, force: true }); } catch { /* best effort */ }
     } else {
-      outputBuffer = buildXlsxPackage(pageCount);
+      outputBuffer = buildXlsxPackage(pageTexts, 'Extracted Data');
     }
 
     await context.onProgress(100, 'PDF converted to Excel (.xlsx) successfully.');

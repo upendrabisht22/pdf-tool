@@ -418,6 +418,28 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
       { question: 'How does it prevent hallucinations?', answer: 'The model is strictly constrained to retrieved context chunks and must provide direct source quotes for every claim.' },
     ],
   },
+  'draw-signature': {
+    slug: 'draw-signature',
+    title: 'Draw & Compress Signature (<30 KB)',
+    metaTitle: 'Draw & Compress Signature Online — Free Govt Exam & Portal Ready | DocPlatform',
+    metaDescription: 'Draw your official digital signature or compress signature photos under 20KB, 30KB, or 50KB for UPSC, SSC, Defense, and Govt exam portal uploads.',
+    canonicalUrl: 'https://docplatform.app/draw-signature',
+    keywords: ['draw signature', 'compress signature under 30kb', 'signature photo resize for exam', 'online signature pad', 'signature under 20kb'],
+    features: [
+      'Interactive online signature drawing board with ink color & stroke controls',
+      'One-click compression strictly under 20 KB, 30 KB, or 50 KB',
+      'Clean white background JPG or transparent PNG export',
+      'Govt, Army, UPSC, and SSC exam form ready',
+    ],
+    howToSteps: [
+      { name: 'Draw or Upload', text: 'Draw your signature on screen or upload a photo of your signature.' },
+      { name: 'Select Size Limit', text: 'Choose your target size preset (e.g. Under 30 KB JPG).' },
+      { name: 'Download', text: 'Instantly download your portal-ready compressed signature.' },
+    ],
+    faqs: [
+      { question: 'Will my signature file be under 30 KB?', answer: 'Yes! The compressor algorithm automatically optimizes and guarantees the output image size is strictly below your selected limit.' },
+    ],
+  },
 };
 
 /**

@@ -1,17 +1,3 @@
-/**
- * @file processors/unlock.ts
- * @description Removes password encryption from a PDF when the user provides the correct password.
- *
- * Security Rules:
- *  - We do NOT attempt brute-force or dictionary attacks on PDFs.
- *  - The user must provide their own password.
- *  - We are removing protection from documents users own.
- *  - If the password is wrong, we return FILE_ENCRYPTED with a clear error.
- *
- * Legal Note: Only unlock documents you own or have explicit authorization to decrypt.
- */
-
-import { PDFDocument } from 'pdf-lib';
 import {
   UnlockPdfOptions,
   PlatformError,
@@ -22,6 +8,8 @@ import {
 } from '@doc-platform/core';
 import { DocumentProcessor, ResourceEstimate } from '@doc-platform/providers';
 import { validateOutputDocument } from '../validator.js';
+import { decryptPDF } from '@pdfsmaller/pdf-decrypt';
+import { PDFDocument } from 'pdf-lib';
 
 export class UnlockPdfProcessor implements DocumentProcessor<UnlockPdfOptions> {
   readonly operation = 'unlock-pdf' as const;
@@ -59,40 +47,29 @@ export class UnlockPdfProcessor implements DocumentProcessor<UnlockPdfOptions> {
 
     await context.onProgress(20, 'Attempting to decrypt document...');
 
-    let pdfDoc: PDFDocument;
+    let decryptedBytes: Uint8Array;
     try {
-      // pdf-lib v1.x: password is passed via the undocumented `password` field
-      // which is not in the public TypeScript typings — use ts-ignore here.
-      // This is the only supported decryption path in pdf-lib v1.
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      pdfDoc = await PDFDocument.load(inputBuffer, { password: options.password });
+      decryptedBytes = await decryptPDF(new Uint8Array(inputBuffer), options.password);
     } catch (err: unknown) {
       const message = (err as Error).message || '';
-      // pdf-lib throws when wrong password is given
-      if (
-        message.toLowerCase().includes('password') ||
-        message.toLowerCase().includes('encrypted') ||
-        message.toLowerCase().includes('decrypt')
-      ) {
-        throw new PlatformError('FILE_ENCRYPTED', {
-          message: 'The provided password is incorrect or the document cannot be decrypted.',
-          userAction:
-            'Please verify you have the correct password for this document. Only documents you own can be unlocked here.',
-        });
-      }
-      throw new PlatformError('FILE_CORRUPTED', {
-        message: `Failed to parse PDF: ${message}`,
+      throw new PlatformError('FILE_ENCRYPTED', {
+        message: `Failed to unlock document: ${message}. Please check your password.`,
       });
     }
 
     await context.onProgress(60, 'Saving decrypted document...');
 
-    // Save without any encryption — this removes the password entirely
-    const bytes = await pdfDoc.save({ useObjectStreams: true });
-    const outputBuffer = Buffer.from(bytes);
-
+    const outputBuffer = Buffer.from(decryptedBytes);
     validateOutputDocument(outputBuffer, 'pdf');
+    
+    let pageCount = 1;
+    try {
+      const pdfDoc = await PDFDocument.load(outputBuffer);
+      pageCount = pdfDoc.getPageCount();
+    } catch {
+      // Continue
+    }
+
     await context.onProgress(100, 'Document unlocked successfully.');
 
     return {
@@ -101,7 +78,7 @@ export class UnlockPdfProcessor implements DocumentProcessor<UnlockPdfOptions> {
           filename: 'unlocked_document.pdf',
           mimeType: 'application/pdf',
           buffer: outputBuffer,
-          pageCount: pdfDoc.getPageCount(),
+          pageCount,
         },
       ],
       metrics: {

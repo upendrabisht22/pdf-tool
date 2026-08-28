@@ -125,15 +125,8 @@ async function startWorkerLoop() {
             // Load input buffers
             const inputBuffers = [];
             for (const file of job.inputFiles) {
-              try {
-                const buf = await storageProvider.getObject(file.storageKey);
-                inputBuffers.push(buf);
-              } catch (err) {
-                const fallbackDoc = await PDFDocument.create();
-                fallbackDoc.addPage([595, 842]);
-                const fallbackBytes = await fallbackDoc.save();
-                inputBuffers.push(Buffer.from(fallbackBytes));
-              }
+              const buf = await storageProvider.getObject(file.storageKey);
+              inputBuffers.push(buf);
             }
 
             ctx.onProgress = async (percent, msg) => {
@@ -236,6 +229,61 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  // ── Storage Download & Upload Endpoints for LocalStorageProvider ───────────
+  if (pathname === '/api/v1/storage/local/download') {
+    const key = url.searchParams.get('key');
+    const customFilename = url.searchParams.get('filename') || (key ? path.basename(key) : 'document.pdf');
+    if (!key) {
+      return sendJson(400, { error: { code: 'INVALID_INPUT', message: 'Missing key parameter.' } });
+    }
+    try {
+      const buffer = await storageProvider.getObject(key);
+      const ext = path.extname(customFilename).toLowerCase();
+      let contentType = 'application/pdf';
+      if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+      else if (ext === '.webp') contentType = 'image/webp';
+      else if (ext === '.zip') contentType = 'application/zip';
+      else if (ext === '.docx') contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      else if (ext === '.xlsx') contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      else if (ext === '.json') contentType = 'application/json';
+      else if (ext === '.txt') contentType = 'text/plain; charset=utf-8';
+
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Length': buffer.length,
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(customFilename)}"`,
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(buffer);
+      return;
+    } catch (err) {
+      return sendJson(404, { error: { code: 'NOT_FOUND', message: err.message } });
+    }
+  }
+
+  if (pathname === '/api/v1/storage/local/upload' && (req.method === 'PUT' || req.method === 'POST')) {
+    const key = url.searchParams.get('key');
+    if (!key) {
+      return sendJson(400, { error: { code: 'INVALID_INPUT', message: 'Missing key parameter.' } });
+    }
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', async () => {
+      try {
+        const buffer = Buffer.concat(chunks);
+        await storageProvider.putObject(key, buffer, {
+          contentType: req.headers['content-type'] || 'application/octet-stream',
+        });
+        sendJson(200, { success: true, key, sizeBytes: buffer.length });
+      } catch (err) {
+        sendJson(500, { error: { code: 'STORAGE_ERROR', message: err.message } });
+      }
+    });
+    return;
+  }
+
   // API Route: Upload Request
   if (pathname === '/api/v1/files/upload-request' && req.method === 'POST') {
     let bodyStr = '';
@@ -323,9 +371,12 @@ const server = http.createServer(async (req, res) => {
             fileId,
             storageKey,
             filename: f.name,
-            mimeType: 'application/pdf',
+            mimeType: f.name.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
+                      f.name.endsWith('.xlsx') ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+                      f.name.endsWith('.pptx') ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
+                      f.name.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream',
             sizeBytes: f.size || f.sizeBytes || 1024,
-            detectedFormat: 'pdf',
+            detectedFormat: f.name.split('.').pop() || 'pdf',
           });
         }
 
@@ -1097,6 +1148,84 @@ const server = http.createServer(async (req, res) => {
     <div class="workspace-card">
       <input type="file" id="file-input" style="display:none;" />
       <input type="file" id="add-more-input" style="display:none;" />
+
+      <!-- Dedicated Signature Creator Studio -->
+      <div id="signature-studio" style="display: none; padding: 0.5rem;">
+        <div style="display: flex; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+          <button type="button" id="sig-tab-draw" class="category-pill-btn active" onclick="switchSignatureTab('draw')">✍️ Draw Signature on Screen</button>
+          <button type="button" id="sig-tab-upload" class="category-pill-btn" onclick="switchSignatureTab('upload')">📁 Upload & Compress Photo</button>
+        </div>
+
+        <!-- Draw Mode Sub-view -->
+        <div id="sig-draw-view">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
+              <span>Ink Color:</span>
+              <button type="button" class="sig-color-btn" onclick="setSignatureInk('#0f172a')" style="width: 24px; height: 24px; border-radius: 50%; background: #0f172a; border: 2px solid #3b82f6; cursor: pointer;"></button>
+              <button type="button" class="sig-color-btn" onclick="setSignatureInk('#1d4ed8')" style="width: 24px; height: 24px; border-radius: 50%; background: #1d4ed8; border: 2px solid transparent; cursor: pointer;"></button>
+              <button type="button" class="sig-color-btn" onclick="setSignatureInk('#047857')" style="width: 24px; height: 24px; border-radius: 50%; background: #047857; border: 2px solid transparent; cursor: pointer;"></button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
+              <span>Pen Thickness:</span>
+              <select id="sig-studio-stroke" onchange="setSignatureStroke(this.value)" class="select-control">
+                <option value="2">Fine (2px)</option>
+                <option value="3" selected>Standard (3px)</option>
+                <option value="4.5">Bold (4.5px)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- In-Page Canvas -->
+          <div style="border: 2px dashed var(--border-subtle); border-radius: 12px; background: #ffffff; margin-bottom: 1rem; overflow: hidden; position: relative;">
+            <canvas id="sig-studio-canvas" width="600" height="200" style="touch-action: none; cursor: crosshair; display: block; width: 100%; height: 200px; background: #ffffff;"></canvas>
+          </div>
+
+          <!-- Optimization Preset Grid -->
+          <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">TARGET FILE SIZE</label>
+              <select id="sig-studio-maxkb" class="select-control" style="width: 100%; font-weight: 700;">
+                <option value="30" selected>&lt; 30 KB (Standard Defense / UPSC)</option>
+                <option value="20">&lt; 20 KB (Strict Govt Form)</option>
+                <option value="50">&lt; 50 KB (SSC / Banking)</option>
+                <option value="0">Original Resolution</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">IMAGE FORMAT</label>
+              <select id="sig-studio-format" class="select-control" style="width: 100%;">
+                <option value="jpeg" selected>JPG (Crisp White Background)</option>
+                <option value="png">PNG (Transparent / Lossless)</option>
+                <option value="webp">WebP (Ultra Compact)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <button type="button" class="select-control" onclick="clearStudioSignaturePad()" style="cursor: pointer; padding: 0.6rem 1.2rem;">↺ Clear Drawing Board</button>
+            <button type="button" class="process-btn" onclick="downloadStudioSignature()" style="padding: 0.7rem 1.8rem; font-size: 1rem; cursor: pointer;">
+              📥 Download Compressed Signature (&lt;30 KB)
+            </button>
+          </div>
+        </div>
+
+        <!-- Upload Mode Sub-view -->
+        <div id="sig-upload-view" style="display: none;">
+          <div class="dropzone" id="sig-upload-dropzone" onclick="document.getElementById('file-input').click()" style="border-style: dashed; padding: 2.5rem 1.5rem;">
+            <div class="dropzone-icon-box">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-hero); margin-bottom: 0.35rem;">Select Signature Photo from Phone / PC</h3>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Drop any phone camera photo of your handwritten signature here to auto-compress strictly under 30 KB.</p>
+            <button type="button" class="upload-btn"><span>Choose Signature Image</span></button>
+          </div>
+        </div>
+      </div>
 
       <!-- Drag and drop zone -->
       <div class="dropzone" id="dropzone">

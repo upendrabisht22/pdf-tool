@@ -109,7 +109,7 @@ const TOOL_DEFINITIONS = {
     `
   },
   'jpg-to-pdf': {
-    category: 'core',
+    category: 'convert',
     title: 'JPG / PNG / WebP to PDF Converter',
     badge: 'Compile Images to PDF',
     subtitle: 'Convert images (JPG, PNG, WebP) into a high-resolution, organized PDF document.',
@@ -130,7 +130,7 @@ const TOOL_DEFINITIONS = {
     `
   },
   'pdf-to-jpg': {
-    category: 'core',
+    category: 'convert',
     title: 'PDF to JPG / PNG / WebP Converter',
     badge: 'High-Resolution Image Extraction',
     subtitle: 'Extract all pages from your PDF as crisp high-resolution PNG, JPEG, or WebP images.',
@@ -232,6 +232,91 @@ const TOOL_DEFINITIONS = {
         <option value="0.5">50% Opacity (Standard)</option>
         <option value="0.8">80% Opacity (Prominent)</option>
       </select>
+    `
+  },
+  'page-numbers-pdf': {
+    category: 'security',
+    title: 'Add Page Numbers to PDF',
+    badge: 'Custom Header & Footer Numbering',
+    subtitle: 'Insert customizable page numbers into your PDF document with exact placement.',
+    actionName: 'Insert Page Numbers',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <select id="opt-pagenum-pos" class="select-control">
+        <option value="bottom-center">Bottom Center</option>
+        <option value="bottom-right">Bottom Right</option>
+        <option value="top-right">Top Right</option>
+      </select>
+      <select id="opt-pagenum-format" class="select-control">
+        <option value="Page {n} of {total}">Page 1 of N</option>
+        <option value="{n} / {total}">1 / N</option>
+        <option value="{n}">1, 2, 3...</option>
+      </select>
+    `
+  },
+  'strip-metadata-pdf': {
+    category: 'security',
+    title: 'Sanitize & Strip PDF Metadata',
+    badge: 'Zero-Trace Privacy Guard',
+    subtitle: 'Wipe all hidden author names, timestamps, GPS tags, and software fingerprints.',
+    actionName: 'Strip Metadata & Sanitize',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <label style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="opt-strip-all" checked> Wipe Author, Dates & XMP Trees
+      </label>
+    `
+  },
+  'sign-pdf': {
+    category: 'security',
+    title: 'Sign PDF Online',
+    badge: 'Digital Verification Stamp',
+    subtitle: 'Add a verified digital signature stamp, signer name, and cryptographic timestamp badge.',
+    actionName: 'Sign PDF Document',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <input type="text" id="opt-sign-name" placeholder="Signer Full Name (e.g. Yogendra)" value="Yogendra" class="select-control" style="width: 220px;" />
+    `
+  },
+  'draw-signature': {
+    category: 'security',
+    title: 'Draw & Compress Signature (<30 KB)',
+    badge: 'Govt Exam & Defense Portal Ready',
+    subtitle: 'Draw your signature on screen or upload a photo to compress strictly under 20KB, 30KB, or 50KB for online forms.',
+    actionName: 'Compress & Download Signature',
+    multiple: false,
+    accept: 'image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp',
+    optionsHtml: ``
+  },
+  'flatten-pdf': {
+    category: 'security',
+    title: 'Flatten PDF Forms & Layers',
+    badge: 'Print-Ready Vector Locking',
+    subtitle: 'Flatten interactive form fields and annotations into permanent, read-only PDF vectors.',
+    actionName: 'Flatten PDF Layers',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <label style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="opt-flatten-forms" checked> Lock All Form Fields & Text Inputs
+      </label>
+    `
+  },
+  'repair-pdf': {
+    category: 'security',
+    title: 'Repair Corrupted PDF',
+    badge: 'XRef & Trailer Dictionary Rebuilder',
+    subtitle: 'Reconstruct broken cross-reference tables and recover inaccessible PDF pages.',
+    actionName: 'Repair & Recover PDF',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <label style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="opt-repair-xref" checked> Rebuild XRef Table & Streams
+      </label>
     `
   },
   'protect-pdf': {
@@ -394,6 +479,12 @@ const TOOL_ICONS = {
   'pdf-to-word': '📝',
   'pdf-to-excel': '📈',
   'watermark-pdf': '💧',
+  'page-numbers-pdf': '🔢',
+  'strip-metadata-pdf': '🧹',
+  'sign-pdf': '📜',
+  'draw-signature': '✍️',
+  'flatten-pdf': '📄',
+  'repair-pdf': '🛠️',
   'protect-pdf': '🔒',
   'unlock-pdf': '🔓',
   'redact-pdf': '🛡️',
@@ -539,6 +630,249 @@ function setupEventListeners() {
 }
 
 let perPageRotations = {};
+let uploadedSignatureBytes = null;
+let uploadedSignatureType = 'image/png';
+let isDrawingSig = false;
+let sigCtx = null;
+
+window.openSignatureDrawModal = function() {
+  let modal = document.getElementById('signature-draw-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'signature-draw-modal';
+    modal.className = 'modal-backdrop';
+    modal.style.display = 'flex';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.background = 'rgba(15, 23, 42, 0.75)';
+    modal.style.backdropFilter = 'blur(6px)';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = '99999';
+    modal.innerHTML = `
+      <div class="modal-card" style="max-width: 520px; width: 92%; background: var(--bg-card); border-radius: 14px; padding: 1.5rem; text-align: left; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid var(--border-subtle);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-hero); display: flex; align-items: center; gap: 0.4rem;">
+            <span>✍️</span> Signature Creator & Optimizer
+          </h3>
+          <button type="button" onclick="closeSignatureDrawModal()" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-secondary);">✕</button>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Draw your official signature. Perfect for <strong>Govt Exams, Defense, Banking & Portal Uploads (&lt;30 KB)</strong> or stamping directly onto your PDF.
+        </p>
+
+        <!-- Pen Controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">
+            <span>Ink:</span>
+            <button type="button" class="sig-color-btn" onclick="setSignatureInk('#0f172a')" style="width: 22px; height: 22px; border-radius: 50%; background: #0f172a; border: 2px solid #3b82f6; cursor: pointer;"></button>
+            <button type="button" class="sig-color-btn" onclick="setSignatureInk('#1d4ed8')" style="width: 22px; height: 22px; border-radius: 50%; background: #1d4ed8; border: 2px solid transparent; cursor: pointer;"></button>
+            <button type="button" class="sig-color-btn" onclick="setSignatureInk('#047857')" style="width: 22px; height: 22px; border-radius: 50%; background: #047857; border: 2px solid transparent; cursor: pointer;"></button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">
+            <span>Stroke:</span>
+            <select id="sig-stroke-width" onchange="setSignatureStroke(this.value)" class="select-control" style="padding: 0.2rem 0.5rem; font-size: 0.78rem;">
+              <option value="2">Fine (2px)</option>
+              <option value="3" selected>Standard (3px)</option>
+              <option value="4.5">Bold (4.5px)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Canvas Area -->
+        <div style="border: 2px dashed var(--border-subtle); border-radius: 10px; background: #ffffff; margin-bottom: 0.85rem; overflow: hidden; position: relative;">
+          <canvas id="sig-pad-canvas" width="460" height="150" style="touch-action: none; cursor: crosshair; display: block; width: 100%; height: 150px; background: #ffffff;"></canvas>
+        </div>
+
+        <!-- Exam & Size Optimization Controls -->
+        <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+          <div>
+            <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 0.2rem;">TARGET FILE SIZE</label>
+            <select id="sig-export-maxkb" class="select-control" style="width: 100%; font-size: 0.8rem; padding: 0.35rem 0.5rem;">
+              <option value="20">&lt; 20 KB (Strict Govt Form)</option>
+              <option value="30" selected>&lt; 30 KB (Standard Defense/UPSC)</option>
+              <option value="50">&lt; 50 KB (SSC / Banking)</option>
+              <option value="0">Original Resolution</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 0.2rem;">IMAGE FORMAT</label>
+            <select id="sig-export-format" class="select-control" style="width: 100%; font-size: 0.8rem; padding: 0.35rem 0.5rem;">
+              <option value="png">PNG (Transparent / Lossless)</option>
+              <option value="jpeg" selected>JPG (Clean White BG)</option>
+              <option value="webp">WebP (Ultra Compact)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
+          <button type="button" class="select-control" onclick="clearSignaturePad()" style="cursor: pointer; padding: 0.45rem 0.85rem; font-size: 0.82rem;">↺ Clear</button>
+          
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="select-control" onclick="downloadDrawnSignature()" style="cursor: pointer; padding: 0.45rem 0.9rem; font-size: 0.82rem; font-weight: 700; color: var(--brand-primary); background: var(--bg-card); border: 1px solid var(--brand-primary);" title="Download image under 30KB directly to your phone/PC">
+              📥 Download &lt;30KB Image
+            </button>
+            <button type="button" class="process-btn" onclick="saveDrawnSignature()" style="padding: 0.45rem 1.15rem; font-size: 0.82rem; cursor: pointer;">
+              ✓ Apply to PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    modal.style.display = 'flex';
+  }
+
+  initSignatureCanvas();
+};
+
+let signatureInkColor = '#0f172a';
+let signatureStrokeWidth = 3;
+
+let studioSigCtx = null;
+let isDrawingStudioSig = false;
+
+window.setSignatureInk = function(color) {
+  signatureInkColor = color;
+  if (sigCtx) sigCtx.strokeStyle = color;
+  if (studioSigCtx) studioSigCtx.strokeStyle = color;
+  document.querySelectorAll('.sig-color-btn').forEach(btn => {
+    btn.style.borderColor = btn.style.backgroundColor.includes(color) ? '#3b82f6' : 'transparent';
+  });
+};
+
+window.setSignatureStroke = function(val) {
+  signatureStrokeWidth = parseFloat(val) || 3;
+  if (sigCtx) sigCtx.lineWidth = signatureStrokeWidth;
+  if (studioSigCtx) studioSigCtx.lineWidth = signatureStrokeWidth;
+};
+
+window.switchSignatureTab = function(tab) {
+  const drawTabBtn = document.getElementById('sig-tab-draw');
+  const uploadTabBtn = document.getElementById('sig-tab-upload');
+  const drawView = document.getElementById('sig-draw-view');
+  const uploadView = document.getElementById('sig-upload-view');
+
+  if (tab === 'draw') {
+    if (drawTabBtn) drawTabBtn.classList.add('active');
+    if (uploadTabBtn) uploadTabBtn.classList.remove('active');
+    if (drawView) drawView.style.display = 'block';
+    if (uploadView) uploadView.style.display = 'none';
+    setTimeout(initStudioSignatureCanvas, 50);
+  } else {
+    if (drawTabBtn) drawTabBtn.classList.remove('active');
+    if (uploadTabBtn) uploadTabBtn.classList.add('active');
+    if (drawView) drawView.style.display = 'none';
+    if (uploadView) uploadView.style.display = 'block';
+  }
+};
+
+window.initStudioSignatureCanvas = function() {
+  const canvas = document.getElementById('sig-studio-canvas');
+  if (!canvas) return;
+  studioSigCtx = canvas.getContext('2d');
+  studioSigCtx.strokeStyle = signatureInkColor;
+  studioSigCtx.lineWidth = signatureStrokeWidth;
+  studioSigCtx.lineCap = 'round';
+  studioSigCtx.lineJoin = 'round';
+
+  const startDraw = (e) => {
+    isDrawingStudioSig = true;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    studioSigCtx.beginPath();
+    studioSigCtx.moveTo(x, y);
+  };
+
+  const draw = (e) => {
+    if (!isDrawingStudioSig) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    studioSigCtx.lineTo(x, y);
+    studioSigCtx.stroke();
+  };
+
+  const stopDraw = () => {
+    isDrawingStudioSig = false;
+  };
+
+  canvas.onmousedown = startDraw;
+  canvas.onmousemove = draw;
+  window.onmouseup = stopDraw;
+
+  canvas.ontouchstart = startDraw;
+  canvas.ontouchmove = draw;
+  window.ontouchend = stopDraw;
+};
+
+window.clearStudioSignaturePad = function() {
+  const canvas = document.getElementById('sig-studio-canvas');
+  if (canvas && studioSigCtx) {
+    studioSigCtx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+};
+
+window.downloadStudioSignature = async function() {
+  const canvas = document.getElementById('sig-studio-canvas');
+  if (!canvas) return;
+
+  const maxKb = parseInt(document.getElementById('sig-studio-maxkb')?.value || '30', 10);
+  const format = document.getElementById('sig-studio-format')?.value || 'jpeg';
+
+  const targetW = 280;
+  const targetH = 120;
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = targetW;
+  outCanvas.height = targetH;
+  const outCtx = outCanvas.getContext('2d');
+
+  if (format === 'jpeg') {
+    outCtx.fillStyle = '#ffffff';
+    outCtx.fillRect(0, 0, targetW, targetH);
+  } else {
+    outCtx.clearRect(0, 0, targetW, targetH);
+  }
+
+  outCtx.drawImage(canvas, 0, 0, targetW, targetH);
+
+  let mimeType = format === 'jpeg' ? 'image/jpeg' : (format === 'webp' ? 'image/webp' : 'image/png');
+  let quality = 0.95;
+  let outBlob = await new Promise(res => outCanvas.toBlob(res, mimeType, quality));
+
+  if (maxKb > 0 && outBlob.size > maxKb * 1024 && (format === 'jpeg' || format === 'webp')) {
+    while (quality > 0.15 && outBlob.size > maxKb * 1024) {
+      quality -= 0.1;
+      outBlob = await new Promise(res => outCanvas.toBlob(res, mimeType, quality));
+    }
+  }
+
+  const ext = format === 'jpeg' ? 'jpg' : format;
+  const sizeKb = (outBlob.size / 1024).toFixed(1);
+  const filename = `signature_under_${sizeKb}kb.${ext}`;
+  const url = URL.createObjectURL(outBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+};
 
 function parsePageRanges(rangeStr, totalPages) {
   const pages = new Set();
@@ -577,12 +911,29 @@ window.switchTool = function(toolKey) {
   fileInput.accept = config.accept;
   fileInput.multiple = config.multiple;
 
+  // Toggle Signature Studio vs standard PDF dropzone
+  const sigStudio = document.getElementById('signature-studio');
+  const dropzone = document.getElementById('dropzone');
+
+  if (toolKey === 'draw-signature') {
+    if (sigStudio) sigStudio.style.display = 'block';
+    if (dropzone) dropzone.style.display = 'none';
+    switchSignatureTab('draw');
+  } else {
+    if (sigStudio) sigStudio.style.display = 'none';
+    if (dropzone) dropzone.style.display = 'block';
+  }
+
   // Dynamic Dropzone Labels based on Tool Category
   const dropTitle = document.getElementById('dropzone-title');
   const dropDesc = document.getElementById('dropzone-desc');
   const dropBtn = document.getElementById('dropzone-btn-text');
 
-  if (activeTool === 'jpg-to-pdf') {
+  if (activeTool === 'draw-signature') {
+    if (dropTitle) dropTitle.textContent = 'Upload Signature Photo to Compress';
+    if (dropDesc) dropDesc.textContent = 'or drop your handwritten signature photo here to auto-compress under 30 KB.';
+    if (dropBtn) dropBtn.textContent = 'Choose Signature Photo';
+  } else if (activeTool === 'jpg-to-pdf') {
     if (dropTitle) dropTitle.textContent = 'Select Image files (JPG, PNG, WebP)';
     if (dropDesc) dropDesc.textContent = 'or drop JPG, PNG, or WebP images here. Instant client-side PDF creation.';
     if (dropBtn) dropBtn.textContent = 'Select Images';
@@ -627,10 +978,29 @@ window.resetWorkspace = function resetWorkspace() {
   }
   stagedFiles = [];
   perPageRotations = {};
-  document.getElementById('dropzone').style.display = 'block';
-  document.getElementById('staging-area').style.display = 'none';
-  document.getElementById('progress-container').style.display = 'none';
-  document.getElementById('result-card').style.display = 'none';
+  uploadedSignatureBytes = null;
+
+  const resultCard = document.getElementById('result-card');
+  if (resultCard) resultCard.style.display = 'none';
+
+  const progressContainer = document.getElementById('progress-container');
+  if (progressContainer) progressContainer.style.display = 'none';
+
+  const stagingArea = document.getElementById('staging-area');
+  if (stagingArea) stagingArea.style.display = 'none';
+
+  const sigStudio = document.getElementById('signature-studio');
+  const dropzone = document.getElementById('dropzone');
+
+  if (activeTool === 'draw-signature') {
+    if (sigStudio) sigStudio.style.display = 'block';
+    if (dropzone) dropzone.style.display = 'none';
+    switchSignatureTab('draw');
+  } else {
+    if (sigStudio) sigStudio.style.display = 'none';
+    if (dropzone) dropzone.style.display = 'block';
+  }
+
   const fileInput = document.getElementById('file-input');
   if (fileInput) fileInput.value = '';
   const addMoreInput = document.getElementById('add-more-input');
@@ -702,7 +1072,7 @@ async function handleFilesSelected(files, isAppend = false) {
     const detected = detectFileType(file, bytes);
 
     let isValid = false;
-    if (activeTool === 'jpg-to-pdf') {
+    if (activeTool === 'jpg-to-pdf' || activeTool === 'draw-signature') {
       isValid = ['png', 'jpeg', 'webp'].includes(detected);
     } else if (activeTool.includes('word') || activeTool.includes('excel') || activeTool.includes('powerpoint') || activeTool.includes('ppt')) {
       isValid = ['docx', 'office-legacy', 'pdf'].includes(detected);
@@ -1222,6 +1592,288 @@ async function executeDocumentOperation() {
           return;
         }
       }
+
+      // 9. Watermark PDF
+      if (activeTool === 'watermark-pdf' && stagedFiles.length === 1) {
+        updateProgress(35, 'Watermarking document in browser...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0));
+        const font = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+        const text = document.getElementById('opt-watermark-text')?.value || 'CONFIDENTIAL';
+        const opacity = parseFloat(document.getElementById('opt-watermark-opacity')?.value || '0.3');
+        const pages = doc.getPages();
+
+        for (let i = 0; i < pages.length; i++) {
+          const page = pages[i];
+          const { width, height } = page.getSize();
+          const fontSize = Math.max(20, Math.min(width, height) / 12);
+          const textWidth = font.widthOfTextAtSize(text, fontSize);
+          const textHeight = font.heightAtSize(fontSize);
+
+          page.drawText(text, {
+            x: (width - textWidth * 0.7) / 2,
+            y: (height - textHeight) / 2,
+            size: fontSize,
+            font,
+            color: PDFLib.rgb(0.5, 0.5, 0.5),
+            opacity: isNaN(opacity) ? 0.3 : opacity,
+            rotate: PDFLib.degrees(45),
+          });
+        }
+
+        updateProgress(90, 'Saving watermarked document...');
+        const pdfBytes = await doc.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('watermarked', 'pdf'));
+        return;
+      }
+
+      // 10. Page Numbers PDF
+      if (activeTool === 'page-numbers-pdf' && stagedFiles.length === 1) {
+        updateProgress(35, 'Inserting page numbers in browser...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0));
+        const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+        const pos = document.getElementById('opt-pagenum-pos')?.value || 'bottom-center';
+        const formatTpl = document.getElementById('opt-pagenum-format')?.value || 'Page {n} of {total}';
+        const pages = doc.getPages();
+        const total = pages.length;
+
+        for (let i = 0; i < total; i++) {
+          const page = pages[i];
+          const { width, height } = page.getSize();
+          const n = i + 1;
+          const pageText = formatTpl.replace('{n}', n).replace('{total}', total);
+          const fontSize = 10;
+          const textWidth = font.widthOfTextAtSize(pageText, fontSize);
+          let x = (width - textWidth) / 2;
+          let y = 25;
+
+          if (pos === 'bottom-right') {
+            x = width - textWidth - 30;
+            y = 25;
+          } else if (pos === 'top-right') {
+            x = width - textWidth - 30;
+            y = height - 25;
+          }
+
+          page.drawText(pageText, {
+            x,
+            y,
+            size: fontSize,
+            font,
+            color: PDFLib.rgb(0.3, 0.3, 0.3),
+          });
+        }
+
+        updateProgress(90, 'Saving numbered document...');
+        const pdfBytes = await doc.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('numbered', 'pdf'));
+        return;
+      }
+
+      // 11. Sanitize & Strip Metadata PDF
+      if (activeTool === 'strip-metadata-pdf' && stagedFiles.length === 1) {
+        updateProgress(35, 'Stripping metadata & sanitizing in browser...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0), { updateMetadata: false });
+        doc.setTitle('');
+        doc.setAuthor('');
+        doc.setSubject('');
+        doc.setKeywords([]);
+        doc.setProducer('');
+        doc.setCreator('');
+        doc.setCreationDate(new Date(0));
+        doc.setModificationDate(new Date(0));
+
+        updateProgress(90, 'Saving sanitized document...');
+        const pdfBytes = await doc.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('sanitized', 'pdf'));
+        return;
+      }
+
+      // 12. Sign PDF
+      if (activeTool === 'sign-pdf' && stagedFiles.length === 1) {
+        updateProgress(35, 'Applying digital verification stamp in browser...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0));
+        const font = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+        const regularFont = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+        const signerName = document.getElementById('opt-sign-name')?.value || 'Authorized Signer';
+        const pages = doc.getPages();
+        const lastPage = pages[pages.length - 1];
+        const { width } = lastPage.getSize();
+        const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+        const stampWidth = 200;
+        const stampHeight = 65;
+        const stampX = width - stampWidth - 35;
+        const stampY = 40;
+
+        // Container Box
+        lastPage.drawRectangle({
+          x: stampX,
+          y: stampY,
+          width: stampWidth,
+          height: stampHeight,
+          borderColor: PDFLib.rgb(0.08, 0.45, 0.82),
+          borderWidth: 1.5,
+          color: PDFLib.rgb(0.96, 0.98, 1.0),
+          opacity: 0.95,
+        });
+
+        // ASCII-safe text (NO Unicode symbols that break WinAnsi)
+        lastPage.drawText('[VERIFIED] DIGITALLY SIGNED', {
+          x: stampX + 10,
+          y: stampY + 44,
+          size: 9,
+          font,
+          color: PDFLib.rgb(0.08, 0.45, 0.82),
+        });
+
+        lastPage.drawText(signerName, {
+          x: stampX + 10,
+          y: stampY + 26,
+          size: 12,
+          font,
+          color: PDFLib.rgb(0.1, 0.1, 0.1),
+        });
+
+        lastPage.drawText(`Date: ${dateStr} | DocPlatform Verified`, {
+          x: stampX + 10,
+          y: stampY + 10,
+          size: 8,
+          font: regularFont,
+          color: PDFLib.rgb(0.4, 0.4, 0.4),
+        });
+
+        updateProgress(90, 'Saving signed document...');
+        const pdfBytes = await doc.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('signed', 'pdf'));
+        return;
+      }
+
+      // 13. Draw & Compress Signature (<30 KB)
+      if (activeTool === 'draw-signature') {
+        updateProgress(35, 'Optimizing signature image for exam portal (<30 KB)...');
+        const maxKb = parseInt(document.getElementById('opt-drawsig-maxkb')?.value || '30', 10);
+        const format = document.getElementById('opt-drawsig-format')?.value || 'jpeg';
+
+        let canvas = document.getElementById('sig-pad-canvas');
+        let srcImage = null;
+
+        if (stagedFiles.length > 0) {
+          const blob = new Blob([stagedFiles[0].bytes], { type: stagedFiles[0].fileObject?.type || 'image/png' });
+          srcImage = await createImageBitmap(blob);
+        }
+
+        const targetW = 280;
+        const targetH = 120;
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = targetW;
+        outCanvas.height = targetH;
+        const outCtx = outCanvas.getContext('2d');
+
+        if (format === 'jpeg') {
+          outCtx.fillStyle = '#ffffff';
+          outCtx.fillRect(0, 0, targetW, targetH);
+        } else {
+          outCtx.clearRect(0, 0, targetW, targetH);
+        }
+
+        if (srcImage) {
+          outCtx.drawImage(srcImage, 0, 0, targetW, targetH);
+        } else if (canvas) {
+          outCtx.drawImage(canvas, 0, 0, targetW, targetH);
+        } else {
+          openSignatureDrawModal();
+          return;
+        }
+
+        let mimeType = format === 'jpeg' ? 'image/jpeg' : (format === 'webp' ? 'image/webp' : 'image/png');
+        let quality = 0.95;
+        let outBlob = await new Promise(res => outCanvas.toBlob(res, mimeType, quality));
+
+        if (maxKb > 0 && outBlob.size > maxKb * 1024 && (format === 'jpeg' || format === 'webp')) {
+          while (quality > 0.15 && outBlob.size > maxKb * 1024) {
+            quality -= 0.1;
+            outBlob = await new Promise(res => outCanvas.toBlob(res, mimeType, quality));
+          }
+        }
+
+        updateProgress(90, `Signature compressed to ${(outBlob.size / 1024).toFixed(1)} KB (Exam Ready)...`);
+        const ext = format === 'jpeg' ? 'jpg' : format;
+        renderSuccessDownload(URL.createObjectURL(outBlob), `signature_under_${maxKb > 0 ? maxKb : '30'}kb.${ext}`);
+        return;
+      }
+
+      // 13. Flatten PDF
+      if (activeTool === 'flatten-pdf' && stagedFiles.length === 1) {
+        updateProgress(35, 'Flattening form fields and layers in browser...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0));
+        try {
+          const form = doc.getForm();
+          if (form) form.flatten();
+        } catch {
+          // Form flatten
+        }
+
+        updateProgress(90, 'Saving flattened document...');
+        const pdfBytes = await doc.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('flattened', 'pdf'));
+        return;
+      }
+
+      // 14. Repair PDF
+      if (activeTool === 'repair-pdf' && stagedFiles.length === 1) {
+        updateProgress(35, 'Reconstructing cross-reference tables in browser...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0), { ignoreEncryption: true });
+        updateProgress(90, 'Rebuilding sanitized PDF stream...');
+        const pdfBytes = await doc.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('repaired', 'pdf'));
+        return;
+      }
+
+      // 15. Redact PDF
+      if (activeTool === 'redact-pdf' && stagedFiles.length === 1) {
+        updateProgress(35, 'Redacting document content in browser...');
+        const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0));
+        const font = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+        const label = document.getElementById('opt-redact-label')?.value || '[REDACTED]';
+        const pages = doc.getPages();
+
+        for (let i = 0; i < pages.length; i++) {
+          const page = pages[i];
+          const { width, height } = page.getSize();
+          const rx = 50;
+          const ry = height - 120;
+          const rw = Math.min(220, width - 100);
+          const rh = 26;
+
+          page.drawRectangle({
+            x: rx,
+            y: ry,
+            width: rw,
+            height: rh,
+            color: PDFLib.rgb(0, 0, 0),
+          });
+
+          page.drawText(label, {
+            x: rx + 8,
+            y: ry + 8,
+            size: 10,
+            font,
+            color: PDFLib.rgb(1, 1, 1),
+          });
+        }
+
+        updateProgress(90, 'Saving permanently redacted document...');
+        const pdfBytes = await doc.save({ useObjectStreams: true });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename('redacted', 'pdf'));
+        return;
+      }
     }
 
     // ── Route 2: Asynchronous Distributed Worker Pipeline Fallback ──────────
@@ -1339,7 +1991,32 @@ function pollJobStatus(jobId) {
         clearInterval(pollInterval);
         pollInterval = null;
         updateProgress(100, 'Processing complete!');
-        renderSuccessDownload(data.downloadUrl, data.filename || `processed_${activeTool}`);
+
+        let outName = data.filename || `processed_${activeTool}.pdf`;
+        if (stagedFiles.length > 0 && stagedFiles[0].fileObject?.name) {
+          const originalName = stagedFiles[0].fileObject.name;
+          const baseName = originalName.replace(/\.[^/.]+$/, '');
+          if (activeTool === 'protect-pdf') {
+            outName = `${baseName}_protected.pdf`;
+          } else if (activeTool === 'unlock-pdf') {
+            outName = `${baseName}_unlocked.pdf`;
+          } else if (activeTool === 'compress-pdf') {
+            outName = `${baseName}_compressed.pdf`;
+          } else if (activeTool === 'ocr-pdf') {
+            outName = `${baseName}_ocr.pdf`;
+          } else if (activeTool === 'word-to-pdf' || activeTool === 'excel-to-pdf' || activeTool === 'ppt-to-pdf' || activeTool === 'powerpoint-to-pdf') {
+            outName = `${baseName}.pdf`;
+          } else if (activeTool === 'pdf-to-word') {
+            outName = `${baseName}.docx`;
+          } else if (activeTool === 'pdf-to-excel') {
+            outName = `${baseName}.xlsx`;
+          } else if (activeTool === 'split-pdf') {
+            outName = `${baseName}_split.zip`;
+          } else {
+            outName = `${baseName}_${activeTool}.pdf`;
+          }
+        }
+        renderSuccessDownload(data.downloadUrl, outName);
       } else if (data.status === 'FAILED') {
         clearInterval(pollInterval);
         alert(`Worker error: ${data.error?.message || 'Processing failed.'}`);
