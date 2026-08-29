@@ -2,16 +2,21 @@
  * @file processors/pdf-to-office.ts
  * @description Production-grade PDF to Office document reconstruction engine.
  *
- * Architecture:
- *   - Extracts real text content from PDFs using the `unpdf` library (PDF.js engine).
- *   - Generates valid OpenXML ZIP packages (.docx / .xlsx) containing the extracted text.
- *   - Production path: LibreOffice headless for full fidelity layout conversion.
- *   - Dev/fallback path: Pure JS OpenXML package with real extracted text content.
+ * PDF→Word Architecture (3-Tier Priority Cascade):
+ *   Tier 1 (Best):  Python pdf2docx engine  → Exact fonts, native tables, barcodes as images
+ *   Tier 2 (Good):  LibreOffice soffice      → Headless conversion + layout optimization
+ *   Tier 3 (Basic): JS OpenXML builder       → Pure text extraction fallback
+ *
+ * PDF→Excel Architecture:
+ *   - LibreOffice headless or JS OpenXML fallback.
+ *
+ * The Word→PDF direction (office-to-pdf.ts) is a completely separate file and is NOT affected.
  */
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as zlib from 'node:zlib';
+import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { PDFDocument } from 'pdf-lib';
 import {
@@ -487,7 +492,139 @@ ${sheetRows}
 }
 
 // ============================================================================
-// PDF TO WORD PROCESSOR
+// TIER 1: PYTHON pdf2docx ENGINE
+// ============================================================================
+
+/** Cached Python binary path (null = not yet checked, '' = not found) */
+let _cachedPythonBin: string | null = null;
+
+/**
+ * Find a working Python 3 binary. Result is cached after first successful lookup.
+ */
+async function getPythonBin(): Promise<string | null> {
+  if (_cachedPythonBin !== null) return _cachedPythonBin || null;
+
+  const candidates = process.platform === 'win32'
+    ? ['python', 'python3', 'py -3']
+    : ['python3', 'python'];
+
+  for (const candidate of candidates) {
+    try {
+      const result = await new Promise<string>((resolve, reject) => {
+        execFile(candidate, ['--version'], { timeout: 5000 }, (err, stdout, stderr) => {
+          if (err) reject(err);
+          else resolve((stdout || stderr || '').trim());
+        });
+      });
+      // Verify it's Python 3.x
+      if (result.includes('Python 3')) {
+        _cachedPythonBin = candidate;
+        console.log(`[PdfToWord] Python binary found: ${candidate} (${result})`);
+        return candidate;
+      }
+    } catch {
+      // Continue to next candidate
+    }
+  }
+
+  _cachedPythonBin = ''; // Mark as "searched but not found"
+  console.warn('[PdfToWord] No Python 3 binary found — Tier 1 engine unavailable');
+  return null;
+}
+
+/**
+ * Resolve the path to pdf_to_docx_engine.py relative to this package.
+ */
+function getPythonScriptPath(): string {
+  // In compiled JS: packages/workers/dist/processors/pdf-to-office.js
+  // Script is at:   packages/workers/scripts/pdf_to_docx_engine.py
+  const thisFile = typeof __filename !== 'undefined'
+    ? __filename
+    : fileURLToPath(import.meta.url);
+  return path.resolve(path.dirname(thisFile), '..', '..', 'scripts', 'pdf_to_docx_engine.py');
+}
+
+/**
+ * Tier 1: Convert PDF→DOCX using the Python pdf2docx engine.
+ * Returns the DOCX buffer on success, null on failure.
+ *
+ * Production guards:
+ *   - 60s timeout with force-kill on Windows (taskkill /F /T /PID)
+ *   - Stderr captured and logged (not exposed to user)
+ *   - Returns null on any failure → falls through to Tier 2
+ */
+async function convertViaPython(
+  inputPdfPath: string,
+  outputDocxPath: string,
+  timeoutMs: number = 60000
+): Promise<Buffer | null> {
+  const pythonBin = await getPythonBin();
+  if (!pythonBin) return null;
+
+  const scriptPath = getPythonScriptPath();
+
+  // Check script exists
+  try {
+    await fs.access(scriptPath);
+  } catch {
+    console.warn(`[PdfToWord] Python script not found at: ${scriptPath}`);
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    const child = execFile(
+      pythonBin,
+      [scriptPath, inputPdfPath, outputDocxPath],
+      {
+        timeout: timeoutMs,
+        maxBuffer: 10 * 1024 * 1024,
+        cwd: path.dirname(inputPdfPath),
+      },
+      async (err, _stdout, stderr) => {
+        // Log Python stderr for debugging (never exposed to user)
+        if (stderr) {
+          const lines = stderr.trim().split('\n');
+          for (const line of lines) {
+            console.log(`[PdfToWord:Python] ${line}`);
+          }
+        }
+
+        if (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          console.error(`[PdfToWord] Python engine error: ${errMsg}`);
+
+          // Force-kill on Windows if timed out (taskkill for entire process tree)
+          if ((err as any).killed && child.pid && process.platform === 'win32') {
+            try {
+              execFile('taskkill', ['/F', '/T', '/PID', String(child.pid)], () => {});
+            } catch { /* best effort */ }
+          }
+
+          resolve(null);
+          return;
+        }
+
+        // Verify output file exists and has content
+        try {
+          const stat = await fs.stat(outputDocxPath);
+          if (stat.size > 0) {
+            const buf = await fs.readFile(outputDocxPath);
+            resolve(buf);
+          } else {
+            console.warn('[PdfToWord] Python engine produced empty output');
+            resolve(null);
+          }
+        } catch {
+          console.warn('[PdfToWord] Python engine output file not found');
+          resolve(null);
+        }
+      }
+    );
+  });
+}
+
+// ============================================================================
+// PDF TO WORD PROCESSOR (3-TIER CASCADE)
 // ============================================================================
 
 export class PdfToWordProcessor implements DocumentProcessor<PdfToWordOptions> {
@@ -519,68 +656,94 @@ export class PdfToWordProcessor implements DocumentProcessor<PdfToWordOptions> {
     const inputBuffer = inputBuffers[0];
     validatePdfSafety(inputBuffer);
 
-    await context.onProgress(15, 'Inspecting PDF document structure...');
+    await context.onProgress(10, 'Inspecting PDF document structure...');
     const pdfDoc = await PDFDocument.load(inputBuffer, { ignoreEncryption: true });
     const pageCount = pdfDoc.getPageCount();
 
-    await context.onProgress(30, 'Extracting text content from PDF pages...');
-    const pageTexts = await extractPdfTextByPage(inputBuffer);
+    // Create temp working directory for all conversion tiers
+    const tempDir = context.tempWorkingDir || (await fs.mkdtemp(path.join(process.cwd(), 'scratch_wrd_')));
+    const inPath = path.join(tempDir, `doc_${context.jobId}.pdf`);
+    await fs.writeFile(inPath, inputBuffer);
 
-    await context.onProgress(55, 'Reconstructing Word document layout and paragraphs...');
-    const sofficePath = await getSoffice();
-    let outputBuffer: Buffer;
+    let outputBuffer: Buffer | null = null;
+    let conversionTier = 'none';
 
-    if (sofficePath) {
-      const tempDir = context.tempWorkingDir || (await fs.mkdtemp(path.join(process.cwd(), 'scratch_wrd_')));
-      const inPath = path.join(tempDir, `doc_${context.jobId}.pdf`);
+    try {
+      // ── Tier 1: Python pdf2docx engine (best quality) ───────────────────
+      await context.onProgress(20, 'Attempting high-fidelity conversion engine...');
+      const pyOutPath = path.join(tempDir, `doc_${context.jobId}_py.docx`);
+      outputBuffer = await convertViaPython(inPath, pyOutPath, 60000);
 
-      await fs.writeFile(inPath, inputBuffer);
-
-      try {
-        await runSoffice(sofficePath, [
-          '--headless',
-          '--invisible',
-          '--nologo',
-          '--nodefault',
-          '--infilter=writer_pdf_import',
-          '--convert-to',
-          'docx',
-          '--outdir',
-          tempDir,
-          inPath,
-        ], { cwd: tempDir, timeout: 30000, maxBuffer: 10 * 1024 * 1024 });
-      } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        console.error(`[PdfToWord] soffice HARD FAIL: ${errMsg}`);
+      if (outputBuffer) {
+        conversionTier = 'python-pdf2docx';
+        console.log(`[PdfToWord] Tier 1 (Python pdf2docx) succeeded: ${outputBuffer.length} bytes`);
+        await context.onProgress(90, 'High-fidelity conversion complete.');
       }
 
-      const expectedOutPath = path.join(tempDir, `doc_${context.jobId}.docx`);
-      let foundDocxPath: string | null = null;
+      // ── Tier 2: LibreOffice soffice (fallback) ─────────────────────────
+      if (!outputBuffer) {
+        await context.onProgress(40, 'Falling back to LibreOffice conversion...');
+        const sofficePath = await getSoffice();
 
-      try {
-        await fs.access(expectedOutPath);
-        foundDocxPath = expectedOutPath;
-      } catch {
-        try {
-          const files = await fs.readdir(tempDir);
-          const docxFile = files.find(f => f.toLowerCase().endsWith('.docx'));
-          if (docxFile) foundDocxPath = path.join(tempDir, docxFile);
-        } catch { /* ignore */ }
+        if (sofficePath) {
+          try {
+            await runSoffice(sofficePath, [
+              '--headless',
+              '--invisible',
+              '--nologo',
+              '--nodefault',
+              '--infilter=writer_pdf_import',
+              '--convert-to',
+              'docx',
+              '--outdir',
+              tempDir,
+              inPath,
+            ], { cwd: tempDir, timeout: 30000, maxBuffer: 10 * 1024 * 1024 });
+          } catch (err: unknown) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            console.error(`[PdfToWord] Tier 2 soffice error: ${errMsg}`);
+          }
+
+          const expectedOutPath = path.join(tempDir, `doc_${context.jobId}.docx`);
+          let foundDocxPath: string | null = null;
+
+          try {
+            await fs.access(expectedOutPath);
+            foundDocxPath = expectedOutPath;
+          } catch {
+            try {
+              const files = await fs.readdir(tempDir);
+              const docxFile = files.find(f => f.toLowerCase().endsWith('.docx'));
+              if (docxFile) foundDocxPath = path.join(tempDir, docxFile);
+            } catch { /* ignore */ }
+          }
+
+          if (foundDocxPath) {
+            outputBuffer = await fs.readFile(foundDocxPath);
+            outputBuffer = optimizeDocxFontsAndLayout(outputBuffer);
+            conversionTier = 'libreoffice';
+            console.log(`[PdfToWord] Tier 2 (LibreOffice) succeeded: ${outputBuffer.length} bytes`);
+            await context.onProgress(90, 'LibreOffice conversion complete.');
+          }
+        }
       }
 
-      if (foundDocxPath) {
-        outputBuffer = await fs.readFile(foundDocxPath);
-        outputBuffer = optimizeDocxFontsAndLayout(outputBuffer);
-      } else {
+      // ── Tier 3: JS OpenXML builder (last resort) ───────────────────────
+      if (!outputBuffer) {
+        await context.onProgress(60, 'Using text extraction fallback...');
+        const pageTexts = await extractPdfTextByPage(inputBuffer);
         outputBuffer = buildDocxPackage(pageTexts, 'Converted Document');
+        conversionTier = 'js-openxml';
+        console.log(`[PdfToWord] Tier 3 (JS OpenXML) fallback: ${outputBuffer.length} bytes`);
+        await context.onProgress(90, 'Text extraction conversion complete.');
       }
 
+    } finally {
+      // Always clean up temp directory
       try { await fs.rm(tempDir, { recursive: true, force: true }); } catch { /* best effort */ }
-    } else {
-      outputBuffer = buildDocxPackage(pageTexts, 'Converted Document');
     }
 
-    await context.onProgress(100, 'PDF converted to Word (.docx) successfully.');
+    await context.onProgress(100, `PDF converted to Word (.docx) successfully [${conversionTier}].`);
 
     return {
       outputFiles: [

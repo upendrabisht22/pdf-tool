@@ -16,6 +16,9 @@ scratch_*/
 temp/
 *.tmp
 *.log
+*_job_*
+test_*
+barcode_*
 
 # Environment variables
 .env
