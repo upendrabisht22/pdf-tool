@@ -1098,9 +1098,52 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Serve Main Web Application with Rich SEO & Structured Data
-  const currentToolKey = pathname.replace(/^\//, '') || 'merge-pdf';
+  const isHomepage = pathname === '/' || pathname === '';
+  const currentToolKey = isHomepage ? 'merge-pdf' : pathname.replace(/^\//, '');
   const toolConfig = TOOL_REGISTRY[currentToolKey] || TOOL_REGISTRY['merge-pdf'];
   const jsonLd = generateToolJsonLd(toolConfig);
+
+  // Category & Related Tools Helper
+  const TOOL_ICONS_MAP = {
+    'merge-pdf': '📑', 'split-pdf': '✂️', 'compress-pdf': '⚡', 'rotate-pdf': '🔄',
+    'delete-pdf-pages': '🗑️', 'extract-pages': '📑', 'jpg-to-pdf': '🖼️', 'pdf-to-jpg': '📷',
+    'word-to-pdf': '📄', 'excel-to-pdf': '📊', 'pdf-to-word': '📝', 'pdf-to-excel': '📈',
+    'watermark-pdf': '💧', 'page-numbers-pdf': '🔢', 'strip-metadata-pdf': '🧹', 'sign-pdf': '📜',
+    'draw-signature': '✍️', 'flatten-pdf': '📄', 'repair-pdf': '🛠️', 'protect-pdf': '🔒',
+    'unlock-pdf': '🔓', 'redact-pdf': '🛡️', 'ocr-pdf': '👁️', 'compare-pdf': '⚖️',
+    'ai-summarize': '💡', 'ai-ask': '🤖', 'ai-extract-table': '📋', 'pipeline': '⚡'
+  };
+
+  const getToolCategory = (key) => {
+    if (['merge-pdf', 'split-pdf', 'compress-pdf', 'rotate-pdf', 'delete-pdf-pages', 'extract-pages'].includes(key)) return { name: 'Core PDF', link: '/merge-pdf' };
+    if (['word-to-pdf', 'excel-to-pdf', 'pdf-to-word', 'pdf-to-excel', 'jpg-to-pdf', 'pdf-to-jpg'].includes(key)) return { name: 'Conversions', link: '/pdf-to-word' };
+    if (['watermark-pdf', 'page-numbers-pdf', 'strip-metadata-pdf', 'sign-pdf', 'draw-signature', 'flatten-pdf', 'repair-pdf', 'protect-pdf', 'unlock-pdf', 'redact-pdf'].includes(key)) return { name: 'Security & Sign', link: '/protect-pdf' };
+    if (['ocr-pdf', 'compare-pdf', 'ai-summarize', 'ai-ask', 'ai-extract-table'].includes(key)) return { name: 'AI & OCR', link: '/ai-ask' };
+    return { name: 'PDF Tools', link: '/merge-pdf' };
+  };
+
+  const getRelatedToolsList = (key) => {
+    const map = {
+      'pdf-to-word': ['word-to-pdf', 'compress-pdf', 'ocr-pdf', 'protect-pdf', 'pdf-to-excel', 'merge-pdf'],
+      'word-to-pdf': ['pdf-to-word', 'compress-pdf', 'merge-pdf', 'protect-pdf', 'sign-pdf', 'excel-to-pdf'],
+      'pdf-to-excel': ['excel-to-pdf', 'ai-extract-table', 'pdf-to-word', 'compress-pdf'],
+      'excel-to-pdf': ['pdf-to-excel', 'word-to-pdf', 'compress-pdf', 'merge-pdf'],
+      'merge-pdf': ['split-pdf', 'compress-pdf', 'rotate-pdf', 'pdf-to-word', 'protect-pdf'],
+      'split-pdf': ['merge-pdf', 'extract-pages', 'delete-pdf-pages', 'compress-pdf'],
+      'compress-pdf': ['merge-pdf', 'pdf-to-word', 'protect-pdf', 'redact-pdf'],
+      'protect-pdf': ['unlock-pdf', 'watermark-pdf', 'redact-pdf', 'sign-pdf'],
+      'unlock-pdf': ['protect-pdf', 'compress-pdf', 'pdf-to-word', 'merge-pdf'],
+      'ai-ask': ['ai-summarize', 'ai-extract-table', 'ocr-pdf', 'pdf-to-word'],
+      'ai-summarize': ['ai-ask', 'ai-extract-table', 'ocr-pdf', 'compress-pdf'],
+      'ocr-pdf': ['pdf-to-word', 'ai-ask', 'compress-pdf', 'searchable-pdf'],
+      'redact-pdf': ['protect-pdf', 'strip-metadata-pdf', 'flatten-pdf', 'watermark-pdf'],
+      'draw-signature': ['sign-pdf', 'flatten-pdf', 'protect-pdf', 'compress-pdf'],
+    };
+    return map[key] || ['merge-pdf', 'pdf-to-word', 'compress-pdf', 'ai-ask'];
+  };
+
+  const category = getToolCategory(currentToolKey);
+  const relatedSlugs = getRelatedToolsList(currentToolKey);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -1111,7 +1154,7 @@ const server = http.createServer(async (req, res) => {
   <meta name="description" content="${toolConfig.metaDescription}">
   <meta name="keywords" content="${toolConfig.keywords.join(', ')}">
   <link rel="canonical" href="${toolConfig.canonicalUrl}">
-  <link rel="stylesheet" href="/styles.css?v=2.2">
+  <link rel="stylesheet" href="/styles.css?v=2.3">
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -1126,7 +1169,7 @@ const server = http.createServer(async (req, res) => {
   </script>
 </head>
 <body>
-  ${renderNavbar('tools')}
+  ${renderNavbar(category.name === 'AI & OCR' ? 'ai' : 'tools')}
 
   <!-- Interactive Category & Tool Navigation -->
   <div class="tool-navigation-wrapper">
@@ -1135,6 +1178,15 @@ const server = http.createServer(async (req, res) => {
 
   <!-- Main Experience Canvas -->
   <main class="main-content">
+    <!-- Breadcrumb Navigation for Dedicated Tool Pages -->
+    <nav class="breadcrumb-bar" id="breadcrumb-bar" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="${category.link}" id="breadcrumb-cat">${category.name}</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current" id="breadcrumb-current">${toolConfig.title}</span>
+    </nav>
+
     <section class="hero-section">
       <div class="hero-badge-pill">
         <span>🔒</span>
@@ -1271,113 +1323,118 @@ const server = http.createServer(async (req, res) => {
         <p style="color: var(--brand-primary); font-weight: 800; font-size: 1.15rem; font-family: 'JetBrains Mono', monospace;" id="progress-percent">0%</p>
       </div>
 
-      <!-- Result Card -->
+      <!-- Result / Success Card (Modern Framer Motion Redesign) -->
       <div class="result-card" id="result-card">
         <div class="result-icon-box">✓</div>
-        <h3 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin-bottom: 0.4rem;">Document Processed Successfully!</h3>
-        <p style="color: var(--text-secondary); font-size: 0.95rem;">Your optimized document has been generated, sanitized, and verified.</p>
+        <h3 class="result-title" id="result-title">Document Processed Successfully!</h3>
+        <p class="result-subtitle" id="result-subtitle">Your optimized document has been generated, sanitized, and verified.</p>
+        
+        <div class="result-file-info" id="result-file-info">
+          <div class="result-file-main">
+            <span class="result-file-icon" id="result-file-icon">📄</span>
+            <div>
+              <div class="result-file-name" id="result-file-name">document.pdf</div>
+              <div class="result-file-meta" id="result-file-meta">Verified • Client-Side Secure</div>
+            </div>
+          </div>
+          <span class="result-file-badge" id="result-file-badge">PDF</span>
+        </div>
+
         <div>
           <a href="#" class="download-action-btn" id="download-btn">
-            <span>Download Document</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span id="download-btn-text">Download Document</span>
           </a>
         </div>
-        <div style="margin-top: 1.25rem;">
-          <button class="select-control" onclick="resetWorkspace()">Process Another Document</button>
+
+        <div class="result-actions-row">
+          <button class="result-secondary-btn" onclick="resetWorkspace()">↻ Convert Another File</button>
+        </div>
+
+        <!-- Next Steps Recommendations -->
+        <div class="next-steps-container">
+          <div class="next-steps-label">⚡ Next Recommended Actions</div>
+          <div class="next-steps-chips" id="next-steps-chips">
+            <a href="/compress-pdf" class="next-step-chip"><span>⚡ Compress File Size</span></a>
+            <a href="/protect-pdf" class="next-step-chip"><span>🔒 Protect with Password</span></a>
+            <a href="/sign-pdf" class="next-step-chip"><span>✍️ Sign Document</span></a>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Trust Metrics Bar -->
-    <div class="trust-metrics-bar">
-      <div class="trust-metric-item">
-        <div class="trust-metric-number">100%</div>
-        <div class="trust-metric-label">Private In-Browser Processing</div>
-      </div>
-      <div class="trust-metric-item">
-        <div class="trust-metric-number">AES-256</div>
-        <div class="trust-metric-label">Military Grade Encryption</div>
-      </div>
-      <div class="trust-metric-item">
-        <div class="trust-metric-number">0s</div>
-        <div class="trust-metric-label">Zero Cloud Data Retention</div>
-      </div>
-      <div class="trust-metric-item">
-        <div class="trust-metric-number">1M+</div>
-        <div class="trust-metric-label">Documents Processed Securely</div>
-      </div>
-    </div>
-
-    <!-- Bento Grid Feature Showcase -->
-    <section class="seo-section" id="features">
-      <h2 style="font-size: 2.1rem; font-weight: 800; text-align: center; color: var(--text-hero); margin-bottom: 0.75rem; letter-spacing: -0.02em;">Engineered for High-Consequence Documents</h2>
-      <p style="text-align: center; color: var(--text-secondary); max-width: 620px; margin: 0 auto 2.5rem;">Military-grade encryption, zero-leak permanent redaction, and grounded AI intelligence.</p>
-
-      <div class="bento-grid">
-        <div class="bento-card">
-          <div class="bento-icon" style="background: #fee2e2; border-color: #fecaca; color: #e5322d;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </div>
-          <h3 class="bento-title">Zero-Leak Security Redaction</h3>
-          <p class="bento-desc">Unlike consumer tools that paint surface black boxes, our engine purges underlying vector text streams, annotations, and metadata permanently.</p>
+    <!-- Tool-Specific Content & Smart Backlinks Section -->
+    <div class="tool-content-wrapper" id="tool-content-wrapper">
+      <!-- 1. Tool-Specific How-To Guide -->
+      <section class="tool-howto-section" style="margin-bottom: 3.5rem;">
+        <h2 class="tool-section-heading">How to use this tool</h2>
+        <p class="tool-section-subheading">Follow these simple steps to process your document in seconds.</p>
+        <div class="tool-steps-grid" id="tool-steps-container">
+          ${toolConfig.howToSteps.map((step, idx) => `
+            <div class="tool-step-card">
+              <div class="tool-step-badge">${idx + 1}</div>
+              <h3 class="tool-step-title">${step.name}</h3>
+              <p class="tool-step-desc">${step.text}</p>
+            </div>
+          `).join('')}
         </div>
-        <div class="bento-card">
-          <div class="bento-icon" style="background: #e0e7ff; border-color: #c7d2fe; color: #4338ca;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </div>
-          <h3 class="bento-title">Grounded AI Intelligence (RAG)</h3>
-          <p class="bento-desc">Semantic chunking with verifiable [Page X] citations. No token truncation on 100+ page contracts and zero hallucinated numbers or clauses.</p>
-        </div>
-        <div class="bento-card">
-          <div class="bento-icon" style="background: #dcfce7; border-color: #bbf7d0; color: #15803d;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          </div>
-          <h3 class="bento-title">Universal Font & Script Fidelity</h3>
-          <p class="bento-desc">HarfBuzz shaping engine renders complex non-Latin scripts (Hindi Devanagari ligatures, Urdu RTL, Arabic, Cyrillic) with 100% vector accuracy.</p>
-        </div>
-      </div>
+      </section>
 
-      <!-- How to Guide -->
-      <div class="workspace-card" id="how-it-works" style="margin-top: 3.5rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-hero); margin-bottom: 1.5rem;">How to use this tool</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
-          ${toolConfig.howToSteps
-            .map(
-              (step, idx) => `
-            <div style="display: flex; gap: 1rem; align-items: flex-start;">
-              <div style="width: 32px; height: 32px; border-radius: 50%; background: #fee2e2; color: var(--brand-primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; flex-shrink: 0;">${idx + 1}</div>
-              <div>
-                <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-hero); margin-bottom: 0.25rem;">${step.name}</h4>
-                <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">${step.text}</p>
+      <!-- 2. Tool-Specific Key Features -->
+      <section class="tool-features-section" style="margin-bottom: 3.5rem;">
+        <h2 class="tool-section-heading">Key Features & Security</h2>
+        <p class="tool-section-subheading">Engineered with precision vector geometry, high-fidelity font preservation, and zero data storage.</p>
+        <div class="tool-features-grid" id="tool-features-container">
+          ${toolConfig.features.map((feat, idx) => `
+            <div class="tool-feature-card">
+              <div class="tool-feature-icon">${idx === 0 ? '🔒' : idx === 1 ? '⚡' : '✨'}</div>
+              <h3 class="tool-feature-title">Feature ${idx + 1}</h3>
+              <p class="tool-feature-desc">${feat}</p>
+            </div>
+          `).join('')}
+        </div>
+      </section>
+
+      <!-- 3. Smart Related Tools & High-Converting Backlinks -->
+      <section class="related-tools-section">
+        <h2 class="tool-section-heading" style="margin-bottom: 0.5rem;">Related Document Tools</h2>
+        <p class="tool-section-subheading" style="margin-bottom: 2rem;">Explore complementary tools to edit, convert, and secure your files.</p>
+        <div class="related-tools-grid" id="related-tools-container">
+          ${relatedSlugs.slice(0, 4).map(slug => {
+            const relTool = TOOL_REGISTRY[slug];
+            if (!relTool) return '';
+            return `
+              <a href="/${slug}" class="related-tool-card">
+                <span class="related-tool-icon">${TOOL_ICONS_MAP[slug] || '📄'}</span>
+                <span class="related-tool-title">${relTool.title}</span>
+                <span class="related-tool-desc">${relTool.metaDescription.substring(0, 80)}...</span>
+              </a>
+            `;
+          }).join('')}
+        </div>
+      </section>
+
+      <!-- 4. Tool-Specific FAQ Accordion -->
+      <section class="faq-container" id="faq" style="margin-top: 3.5rem;">
+        <h2 class="tool-section-heading">Frequently Asked Questions</h2>
+        <p class="tool-section-subheading">Everything you need to know about this tool and security standards.</p>
+        <div id="faq-list-container">
+          ${toolConfig.faqs.map(faq => `
+            <div class="faq-item">
+              <div class="faq-question">
+                <span>${faq.question}</span>
+                <div class="faq-icon">+</div>
               </div>
+              <div class="faq-answer">${faq.answer}</div>
             </div>
-          `
-            )
-            .join('')}
+          `).join('')}
         </div>
-      </div>
-
-      <!-- FAQ Accordion -->
-      <div class="faq-container" id="faq">
-        <h2 style="font-size: 1.9rem; font-weight: 800; text-align: center; color: var(--text-hero); margin-bottom: 1.75rem; letter-spacing: -0.02em;">Frequently Asked Questions</h2>
-        ${toolConfig.faqs
-          .map(
-            (faq) => `
-          <div class="faq-item">
-            <div class="faq-question">
-              <span>${faq.question}</span>
-              <div class="faq-icon">+</div>
-            </div>
-            <div class="faq-answer">${faq.answer}</div>
-          </div>
-        `
-          )
-          .join('')}
-      </div>
-    </section>
+      </section>
+    </div>
   </main>
 
   ${renderFooter()}
-  <script src="/app.js?v=2.2"></script>
+  <script src="/app.js?v=2.3"></script>
 </body>
 </html>`;
 

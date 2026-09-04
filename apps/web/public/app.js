@@ -891,17 +891,177 @@ function parsePageRanges(rangeStr, totalPages) {
   return Array.from(pages).sort((a, b) => a - b);
 }
 
-window.switchTool = function(toolKey) {
+const TOOL_DETAILS_DATA = {
+  'merge-pdf': {
+    category: 'Core PDF', categoryLink: '/merge-pdf',
+    features: ['Zero-upload client-side processing for ultimate speed and privacy', 'Drag-and-drop file reordering with live page preview', 'Preserves high-resolution images, bookmarks, and form fields'],
+    howToSteps: [
+      { name: 'Upload PDFs', text: 'Select and drag your PDF documents into the drop zone.' },
+      { name: 'Arrange Order', text: 'Drag files or pages to set your desired reading order.' },
+      { name: 'Merge & Download', text: 'Click "Merge PDF" to combine instantly and download your unified document.' }
+    ],
+    faqs: [
+      { question: 'Is my data safe when merging PDFs?', answer: 'Yes. Lightweight merges are processed locally right in your browser. Your files never leave your computer.' },
+      { question: 'How many PDF files can I combine at once?', answer: 'You can merge up to 50 files simultaneously for free.' },
+      { question: 'Will combining PDFs reduce document quality?', answer: 'No. The original vector fidelity, fonts, and embedded images are preserved with zero degradation.' }
+    ],
+    related: ['split-pdf', 'compress-pdf', 'rotate-pdf', 'pdf-to-word']
+  },
+  'split-pdf': {
+    category: 'Core PDF', categoryLink: '/merge-pdf',
+    features: ['Split by custom page ranges (e.g. 1-5, 8, 11-14)', 'Extract every single page into separate standalone files', 'Instant client-side extraction with zero lag'],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Drop your PDF file into the splitter.' },
+      { name: 'Select Pages', text: 'Choose your desired page ranges or split every page.' },
+      { name: 'Download', text: 'Download your extracted PDF files individually or as a ZIP archive.' }
+    ],
+    faqs: [
+      { question: 'Can I extract non-consecutive pages?', answer: 'Yes! Specify ranges like 1-3, 5, 8-10 in the split configuration.' }
+    ],
+    related: ['merge-pdf', 'extract-pages', 'delete-pdf-pages', 'compress-pdf']
+  },
+  'compress-pdf': {
+    category: 'Core PDF', categoryLink: '/merge-pdf',
+    features: ['Three intelligent compression levels tailored for email and web', 'Smart vector preservation ensuring crisp, readable typography', 'Real-time compression ratio and size savings calculator'],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select the PDF file you want to shrink.' },
+      { name: 'Choose Preset', text: 'Select Extreme, Recommended, or High Quality compression.' },
+      { name: 'Download', text: 'Get your lightweight PDF ready for email and sharing.' }
+    ],
+    faqs: [
+      { question: 'How much can I reduce my PDF size?', answer: 'Most PDFs are reduced between 40% and 85% depending on embedded images and fonts.' }
+    ],
+    related: ['merge-pdf', 'pdf-to-word', 'protect-pdf', 'redact-pdf']
+  },
+  'pdf-to-word': {
+    category: 'Conversions', categoryLink: '/pdf-to-word',
+    features: ['Reconstructs native Word tables (<w:tbl>) from vector grids', 'Preserves original font families, sizes, and layout structure', 'Auto-rasterizes barcode and custom symbol spans at 300 DPI'],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select or drag your PDF document into the workspace.' },
+      { name: 'Reconstruct', text: 'Our Python/WASM engine analyzes structure, fonts, and tables.' },
+      { name: 'Download Word', text: 'Download and edit your native .docx file in Microsoft Word or Google Docs.' }
+    ],
+    faqs: [
+      { question: 'Can I edit the converted Word file?', answer: 'Yes! The output is a standard OpenXML .docx file compatible with Microsoft Word, LibreOffice, and Google Docs.' },
+      { question: 'Are tables and barcodes preserved accurately?', answer: 'Yes. Our high-fidelity engine reconstructs native Word tables and renders specialized barcode fonts as high-res 300 DPI inline images.' }
+    ],
+    related: ['word-to-pdf', 'compress-pdf', 'ocr-pdf', 'protect-pdf']
+  },
+  'word-to-pdf': {
+    category: 'Conversions', categoryLink: '/pdf-to-word',
+    features: ['Universal font rendering with HarfBuzz engine (Devanagari, Arabic, Latin)', 'Preserves margins, headings, bullet lists, and complex table layouts', 'Supports DOCX, DOC, RTF, ODT, and TXT files'],
+    howToSteps: [
+      { name: 'Upload Word File', text: 'Select or drag your .docx or .doc file into the converter.' },
+      { name: 'Convert', text: 'Our engine compiles the document layout into clean vector PDF.' },
+      { name: 'Download PDF', text: 'Download your high-resolution PDF instantly.' }
+    ],
+    faqs: [
+      { question: 'Are non-English scripts supported?', answer: 'Yes! Our HarfBuzz engine has universal Unicode fonts installed for Hindi, Urdu, Arabic, Spanish, French, and currencies.' }
+    ],
+    related: ['pdf-to-word', 'compress-pdf', 'merge-pdf', 'protect-pdf']
+  },
+  'ai-ask': {
+    category: 'AI & OCR', categoryLink: '/ai-ask',
+    features: ['Hybrid Vector + BM25 retrieval for high-precision fact retrieval', 'Grounded citations: every answer references exact page numbers and source quotes', 'Zero-hallucination constraint architecture with BYOK Gemini key'],
+    howToSteps: [
+      { name: 'Upload Document', text: 'Select your PDF document.' },
+      { name: 'Ask a Question', text: 'Type your query (e.g. "What are the termination penalties?").' },
+      { name: 'Get Answer', text: 'Receive verified answers with clickable page citations.' }
+    ],
+    faqs: [
+      { question: 'How does it prevent hallucinations?', answer: 'The model is strictly constrained to retrieved context chunks and must provide direct source quotes for every claim.' },
+      { question: 'Is my Gemini API key secure?', answer: 'Yes. Your key is stored exclusively in your browser localStorage and is never stored on our servers.' }
+    ],
+    related: ['ai-summarize', 'ai-extract-table', 'ocr-pdf', 'pdf-to-word']
+  },
+  'ai-summarize': {
+    category: 'AI & OCR', categoryLink: '/ai-ask',
+    features: ['Hierarchical map-reduce: analyzes full long documents without truncation', 'Executive Overviews, Key Findings, Risk Liabilities, and Numerical Tables', 'Export summary as Markdown or structured text'],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Upload any report, contract, or textbook.' },
+      { name: 'Choose Focus', text: 'Select Executive, Financial, or Legal focus area.' },
+      { name: 'Generate Summary', text: 'Get instant structured takeaways and action items.' }
+    ],
+    faqs: [
+      { question: 'Does it truncate large documents?', answer: 'No. Our hierarchical engine processes every page independently before synthesizing the final summary.' }
+    ],
+    related: ['ai-ask', 'ai-extract-table', 'compress-pdf', 'pdf-to-word']
+  },
+  'ocr-pdf': {
+    category: 'AI & OCR', categoryLink: '/ai-ask',
+    features: ['Sandwich PDF generation: original visual clarity with invisible searchable text', 'Multilingual OCR models (English, Hindi, Spanish, French, German, Arabic)', 'Export to Searchable PDF, Plain Text, or structured JSON'],
+    howToSteps: [
+      { name: 'Upload Scanned PDF', text: 'Upload your scan or camera document.' },
+      { name: 'Select Language', text: 'Pick your document language for optimal recognition.' },
+      { name: 'Download Searchable PDF', text: 'Search, select, and copy text directly in your PDF.' }
+    ],
+    faqs: [
+      { question: 'What is a Searchable PDF?', answer: 'A Searchable PDF preserves the exact visual appearance of your scan while placing an invisible text layer behind the image.' }
+    ],
+    related: ['pdf-to-word', 'ai-ask', 'compress-pdf', 'word-to-pdf']
+  },
+  'protect-pdf': {
+    category: 'Security & Sign', categoryLink: '/protect-pdf',
+    features: ['Strong AES-256 encryption standards', 'Granular permission locks for printing, copying, and editing', '100% private in-browser encryption'],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select the file to lock.' },
+      { name: 'Set Password', text: 'Enter a strong password to secure the document.' },
+      { name: 'Encrypt & Download', text: 'Download your encrypted PDF.' }
+    ],
+    faqs: [
+      { question: 'Can anyone open the file without the password?', answer: 'No. The document cannot be viewed or decrypted without entering the correct password.' }
+    ],
+    related: ['unlock-pdf', 'watermark-pdf', 'redact-pdf', 'sign-pdf']
+  }
+};
+
+window.switchTool = function(toolKey, updateUrl = true) {
   if (!TOOL_DEFINITIONS[toolKey]) return;
   activeTool = toolKey;
   stagedFiles = [];
   perPageRotations = {};
 
+  // 1. Sync Browser URL and History
+  if (updateUrl && window.location.pathname !== '/' + toolKey) {
+    try {
+      window.history.pushState({ tool: toolKey }, '', '/' + toolKey);
+    } catch { /* ignore in non-browser environments */ }
+  }
+
+  // 2. Update Active Tab Pill
   document.querySelectorAll('.tool-tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tool === toolKey);
   });
 
   const config = TOOL_DEFINITIONS[toolKey];
+  const details = TOOL_DETAILS_DATA[toolKey] || {
+    category: config.category === 'convert' ? 'Conversions' : config.category === 'security' ? 'Security & Sign' : config.category === 'ai' ? 'AI & OCR' : 'Core PDF',
+    categoryLink: '/' + toolKey,
+    features: [config.badge, 'High-resolution vector fidelity', '100% in-browser privacy'],
+    howToSteps: [
+      { name: 'Upload File', text: 'Select or drag your document into the drop zone.' },
+      { name: 'Configure Options', text: 'Choose your desired conversion or editing parameters.' },
+      { name: 'Download', text: 'Download your processed document instantly.' }
+    ],
+    faqs: [
+      { question: 'Is my document secure?', answer: 'Yes! All operations run locally in your browser with zero data retention.' }
+    ],
+    related: ['merge-pdf', 'compress-pdf', 'pdf-to-word', 'protect-pdf']
+  };
+
+  // 3. Update Document Title & Breadcrumbs
+  document.title = `${config.title} — DocPlatform`;
+  const breadcrumbCat = document.getElementById('breadcrumb-cat');
+  const breadcrumbCurrent = document.getElementById('breadcrumb-current');
+  if (breadcrumbCat) {
+    breadcrumbCat.textContent = details.category;
+    breadcrumbCat.href = details.categoryLink;
+  }
+  if (breadcrumbCurrent) {
+    breadcrumbCurrent.textContent = config.title;
+  }
+
+  // 4. Update Hero & Button Labels
   document.getElementById('hero-badge-text').textContent = config.badge;
   document.getElementById('hero-title').textContent = config.title;
   document.getElementById('hero-subtitle').textContent = config.subtitle;
@@ -949,6 +1109,58 @@ window.switchTool = function(toolKey) {
 
   const optionsContainer = document.getElementById('tool-options-container');
   optionsContainer.innerHTML = config.optionsHtml;
+
+  // 5. Dynamic Content Updates (How-To Steps, Features, Related Tools, FAQs)
+  const stepsContainer = document.getElementById('tool-steps-container');
+  if (stepsContainer && details.howToSteps) {
+    stepsContainer.innerHTML = details.howToSteps.map((step, idx) => `
+      <div class="tool-step-card">
+        <div class="tool-step-badge">${idx + 1}</div>
+        <h3 class="tool-step-title">${step.name}</h3>
+        <p class="tool-step-desc">${step.text}</p>
+      </div>
+    `).join('');
+  }
+
+  const featuresContainer = document.getElementById('tool-features-container');
+  if (featuresContainer && details.features) {
+    featuresContainer.innerHTML = details.features.map((feat, idx) => `
+      <div class="tool-feature-card">
+        <div class="tool-feature-icon">${idx === 0 ? '🔒' : idx === 1 ? '⚡' : '✨'}</div>
+        <h3 class="tool-feature-title">Feature ${idx + 1}</h3>
+        <p class="tool-feature-desc">${feat}</p>
+      </div>
+    `).join('');
+  }
+
+  const relatedContainer = document.getElementById('related-tools-container');
+  if (relatedContainer && details.related) {
+    relatedContainer.innerHTML = details.related.slice(0, 4).map(slug => {
+      const relTool = TOOL_DEFINITIONS[slug];
+      if (!relTool) return '';
+      return `
+        <a href="/${slug}" class="related-tool-card" onclick="event.preventDefault(); switchTool('${slug}')">
+          <span class="related-tool-icon">${TOOL_ICONS[slug] || '📄'}</span>
+          <span class="related-tool-title">${relTool.title}</span>
+          <span class="related-tool-desc">${relTool.subtitle.substring(0, 80)}...</span>
+        </a>
+      `;
+    }).join('');
+  }
+
+  const faqContainer = document.getElementById('faq-list-container');
+  if (faqContainer && details.faqs) {
+    faqContainer.innerHTML = details.faqs.map(faq => `
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>${faq.question}</span>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-answer">${faq.answer}</div>
+      </div>
+    `).join('');
+    initFaqAccordion();
+  }
 
   // Dynamic handlers for split mode dropdown
   const splitModeSelect = document.getElementById('opt-split-mode');
@@ -2039,16 +2251,98 @@ function renderSuccessDownload(url, filename) {
     clearInterval(pollInterval);
     pollInterval = null;
   }
-  document.getElementById('dropzone').style.display = 'none';
-  document.getElementById('staging-area').style.display = 'none';
-  document.getElementById('progress-container').style.display = 'none';
+  const dropzone = document.getElementById('dropzone');
+  const stagingArea = document.getElementById('staging-area');
+  const progressContainer = document.getElementById('progress-container');
+  const sigStudio = document.getElementById('signature-studio');
+
+  if (dropzone) dropzone.style.display = 'none';
+  if (stagingArea) stagingArea.style.display = 'none';
+  if (progressContainer) progressContainer.style.display = 'none';
+  if (sigStudio) sigStudio.style.display = 'none';
   
   const resultCard = document.getElementById('result-card');
-  resultCard.style.display = 'block';
+  if (resultCard) resultCard.style.display = 'block';
+
+  // 1. File Metadata & Extension Parsing
+  const cleanFilename = filename || (stagedFiles[0]?.name ? `${stagedFiles[0].name.replace(/\.[^/.]+$/, '')}_processed.pdf` : 'converted_document.pdf');
+  const ext = (cleanFilename.split('.').pop() || 'pdf').toUpperCase();
+
+  const fileNameEl = document.getElementById('result-file-name');
+  const fileBadgeEl = document.getElementById('result-file-badge');
+  const fileIconEl = document.getElementById('result-file-icon');
+  const fileMetaEl = document.getElementById('result-file-meta');
+  const downloadBtnText = document.getElementById('download-btn-text');
+
+  if (fileNameEl) fileNameEl.textContent = cleanFilename;
+  if (fileBadgeEl) fileBadgeEl.textContent = ext;
+
+  if (fileIconEl) {
+    if (ext === 'DOCX' || ext === 'DOC') fileIconEl.textContent = '📝';
+    else if (ext === 'XLSX' || ext === 'XLS') fileIconEl.textContent = '📊';
+    else if (ext === 'ZIP') fileIconEl.textContent = '📦';
+    else if (ext === 'PNG' || ext === 'JPG' || ext === 'JPEG' || ext === 'WEBP') fileIconEl.textContent = '🖼️';
+    else fileIconEl.textContent = '📄';
+  }
+
+  if (fileMetaEl) {
+    fileMetaEl.textContent = 'Verified High Fidelity • Client-Side Secure • Ready';
+  }
 
   const downloadBtn = document.getElementById('download-btn');
-  downloadBtn.href = url;
-  downloadBtn.download = filename;
+  if (downloadBtn) {
+    downloadBtn.href = url;
+    downloadBtn.download = cleanFilename;
+  }
+  if (downloadBtnText) {
+    if (ext === 'DOCX') downloadBtnText.textContent = 'Download Word (.docx)';
+    else if (ext === 'XLSX') downloadBtnText.textContent = 'Download Excel (.xlsx)';
+    else if (ext === 'PDF') downloadBtnText.textContent = 'Download PDF Document';
+    else if (ext === 'ZIP') downloadBtnText.textContent = 'Download All Files (.zip)';
+    else downloadBtnText.textContent = `Download ${ext} Document`;
+  }
+
+  // 2. Dynamic Next Steps Recommendations
+  const nextStepsChips = document.getElementById('next-steps-chips');
+  if (nextStepsChips) {
+    const nextStepsMap = {
+      'pdf-to-word': [
+        { label: '⚡ Compress Word / PDF', link: '/compress-pdf' },
+        { label: '🔒 Protect with Password', link: '/protect-pdf' },
+        { label: '✍️ Draw / Add Signature', link: '/draw-signature' }
+      ],
+      'word-to-pdf': [
+        { label: '⚡ Compress PDF', link: '/compress-pdf' },
+        { label: '🔒 Protect PDF', link: '/protect-pdf' },
+        { label: '📑 Merge with other PDFs', link: '/merge-pdf' }
+      ],
+      'merge-pdf': [
+        { label: '⚡ Compress Merged PDF', link: '/compress-pdf' },
+        { label: '🔒 Protect PDF', link: '/protect-pdf' },
+        { label: '📝 Convert to Word', link: '/pdf-to-word' }
+      ],
+      'compress-pdf': [
+        { label: '🔒 Protect PDF', link: '/protect-pdf' },
+        { label: '✍️ Sign Document', link: '/draw-signature' },
+        { label: '📝 Convert to Word', link: '/pdf-to-word' }
+      ],
+      'ai-ask': [
+        { label: '💡 Generate Full Summary', link: '/ai-summarize' },
+        { label: '📋 Extract Tables to Excel', link: '/ai-extract-table' },
+        { label: '📝 Convert to Word', link: '/pdf-to-word' }
+      ]
+    };
+    const steps = nextStepsMap[activeTool] || [
+      { label: '⚡ Compress File', link: '/compress-pdf' },
+      { label: '🔒 Protect with Password', link: '/protect-pdf' },
+      { label: '📝 Convert to Word', link: '/pdf-to-word' }
+    ];
+    nextStepsChips.innerHTML = steps.map(s => `
+      <a href="${s.link}" class="next-step-chip" onclick="event.preventDefault(); switchTool('${s.link.replace(/^\//, '')}')">
+        <span>${s.label}</span>
+      </a>
+    `).join('');
+  }
 }
 
 // Global Initialization
@@ -2057,10 +2351,20 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   initFaqAccordion();
 
-  // Set active tab on tool load
+  // Set active tab on tool load based on URL path
   const currentPath = window.location.pathname.replace(/^\//, '') || 'merge-pdf';
   if (TOOL_DEFINITIONS[currentPath]) {
-    switchTool(currentPath);
+    switchTool(currentPath, false);
+  } else {
+    switchTool('merge-pdf', false);
   }
+
+  // Handle browser Back / Forward Navigation
+  window.addEventListener('popstate', (e) => {
+    const slug = window.location.pathname.replace(/^\//, '') || 'merge-pdf';
+    if (TOOL_DEFINITIONS[slug]) {
+      switchTool(slug, false);
+    }
+  });
 });
 

@@ -1606,3 +1606,480 @@ body::before {
   .nav-byok-btn span.byok-btn-text { display: none; }
 }
 
+/* ==========================================================================
+   Phase 10: Professional UI/UX & Framer Motion-Style Polish
+   ========================================================================== */
+
+/* ── Fluid Spring Physics & Keyframes ────────────────────────────────────── */
+@keyframes springIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(12px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.01) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes successPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  75% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes shimmerGlow {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Breadcrumb Bar ──────────────────────────────────────────────────────── */
+.breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  max-width: 860px;
+  margin: 0.5rem auto 1.25rem;
+  padding: 0 1rem;
+}
+.breadcrumb-bar a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.breadcrumb-bar a:hover {
+  color: var(--brand-primary);
+}
+.breadcrumb-sep {
+  color: var(--border-medium);
+  font-size: 0.8rem;
+}
+.breadcrumb-current {
+  color: var(--text-hero);
+  font-weight: 700;
+}
+
+/* ── Enhanced Workspace Card & Dropzone ──────────────────────────────────── */
+.workspace-card {
+  animation: springIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dropzone {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dropzone:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-primary);
+  background: #fef2f2;
+}
+.dropzone.dragover {
+  border-color: var(--brand-primary);
+  background: #fee2e2;
+  transform: scale(1.02);
+  box-shadow: 0 12px 30px rgba(229, 50, 45, 0.15);
+}
+
+/* ── Redesigned Modern Result / Success Card ─────────────────────────────── */
+.result-card {
+  display: none;
+  text-align: center;
+  padding: 2.75rem 2rem;
+  background: #ffffff;
+  border-radius: 24px;
+  animation: springIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.result-icon-box {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0 auto 1.25rem;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+  animation: successPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards, pulseGlow 2.5s infinite;
+}
+
+.result-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-hero);
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.02em;
+}
+
+.result-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 1.75rem;
+}
+
+/* Document Info Box in Success Card */
+.result-file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 0.9rem 1.25rem;
+  margin: 0 auto 1.75rem;
+  max-width: 520px;
+  text-align: left;
+}
+.result-file-main {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+.result-file-icon {
+  font-size: 1.6rem;
+}
+.result-file-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-hero);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.result-file-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.result-file-badge {
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+/* Primary Download CTA */
+.download-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border-radius: var(--radius-pill);
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.download-action-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.45);
+  filter: brightness(1.06);
+}
+
+.result-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+.result-secondary-btn {
+  padding: 0.6rem 1.25rem;
+  background: #ffffff;
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border-medium);
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.result-secondary-btn:hover {
+  border-color: var(--text-hero);
+  color: var(--text-hero);
+  background: var(--bg-subtle);
+}
+
+/* Next Steps Recommendations Bar */
+.next-steps-container {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+.next-steps-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.85rem;
+}
+.next-steps-chips {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.next-step-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.next-step-chip:hover {
+  background: #ffffff;
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Tool-Specific Content Sections ──────────────────────────────────────── */
+.tool-content-wrapper {
+  max-width: 1080px;
+  margin: 3.5rem auto 0;
+  padding: 0 1.25rem;
+}
+
+.tool-section-heading {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-hero);
+  text-align: center;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+.tool-section-subheading {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  max-width: 600px;
+  margin: 0 auto 2.25rem;
+}
+
+/* How-To Step Cards */
+.tool-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 3.5rem;
+}
+.tool-step-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 1.75rem 1.5rem;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+.tool-step-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.08);
+}
+.tool-step-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #fee2e2;
+  color: var(--brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 1.1rem;
+}
+.tool-step-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-hero);
+  margin-bottom: 0.4rem;
+}
+.tool-step-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* Feature Highlights Grid */
+.tool-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 3.5rem;
+}
+.tool-feature-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 1.75rem 1.5rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tool-feature-card:hover {
+  background: #ffffff;
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card);
+  border-color: var(--border-medium);
+}
+.tool-feature-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.9rem;
+}
+.tool-feature-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-hero);
+  margin-bottom: 0.4rem;
+}
+.tool-feature-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* Related Tools / Smart Backlinks Grid */
+.related-tools-section {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
+  margin-bottom: 3.5rem;
+  box-shadow: var(--shadow-card);
+}
+.related-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+.related-tool-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.15rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.related-tool-card:hover {
+  background: #ffffff;
+  border-color: var(--brand-primary);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px -4px rgba(229, 50, 45, 0.12);
+}
+.related-tool-icon {
+  font-size: 1.6rem;
+  margin-bottom: 0.6rem;
+}
+.related-tool-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-hero);
+  margin-bottom: 0.25rem;
+  transition: color 0.15s ease;
+}
+.related-tool-card:hover .related-tool-title {
+  color: var(--brand-primary);
+}
+.related-tool-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+/* ── Homepage All-Tools Category Directory ───────────────────────────────── */
+.home-directory-section {
+  max-width: 1140px;
+  margin: 3.5rem auto 0;
+  padding: 0 1.25rem;
+}
+.home-category-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-hero);
+  margin: 2.5rem 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.home-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .tool-steps-grid,
+  .tool-features-grid,
+  .related-tools-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .tool-steps-grid,
+  .tool-features-grid,
+  .related-tools-grid {
+    grid-template-columns: 1fr;
+  }
+  .result-file-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .download-action-btn {
+    width: 100%;
+  }
+}
+

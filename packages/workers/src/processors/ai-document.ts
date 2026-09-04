@@ -12,6 +12,10 @@
  *   - Deterministic Offline Vector Search Fallback for zero-cloud environments.
  */
 
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import { execFile } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { PDFDocument } from 'pdf-lib';
 import {
   AiSummarizeOptions,
@@ -25,6 +29,101 @@ import {
   validatePdfSafety,
 } from '@doc-platform/core';
 import { DocumentProcessor, ResourceEstimate } from '@doc-platform/providers';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+let cachedPythonBin: string | null = null;
+
+async function getPythonBin(): Promise<string | null> {
+  if (cachedPythonBin) return cachedPythonBin;
+  const candidates = process.platform === 'win32'
+    ? ['python.exe', 'py.exe', 'python3.exe', 'python']
+    : ['python3', 'python'];
+  for (const bin of candidates) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        execFile(bin, ['--version'], { timeout: 3000 }, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      cachedPythonBin = bin;
+      return bin;
+    } catch { /* continue */ }
+  }
+  return null;
+}
+
+async function convertViaPythonTableEngine(
+  inputPdfPath: string,
+  outputPath: string,
+  format: string,
+  timeoutMs: number = 45000
+): Promise<Buffer | null> {
+  const pythonBin = await getPythonBin();
+  if (!pythonBin) return null;
+
+  const scriptCandidates = [
+    path.resolve(__dirname, '../../scripts/extract_tables_engine.py'),
+    path.resolve(__dirname, '../scripts/extract_tables_engine.py'),
+    path.resolve(process.cwd(), 'packages/workers/scripts/extract_tables_engine.py'),
+    path.resolve(process.cwd(), 'scripts/extract_tables_engine.py'),
+  ];
+
+  let scriptPath: string | null = null;
+  for (const candidate of scriptCandidates) {
+    try {
+      await fs.access(candidate);
+      scriptPath = candidate;
+      break;
+    } catch { /* continue */ }
+  }
+
+  if (!scriptPath) {
+    console.warn('[AiExtractTable] Table extraction python script not found.');
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    const child = execFile(
+      pythonBin,
+      [scriptPath, inputPdfPath, outputPath, format],
+      {
+        timeout: timeoutMs,
+        maxBuffer: 10 * 1024 * 1024,
+        cwd: path.dirname(inputPdfPath),
+      },
+      async (err, stdout, stderr) => {
+        if (stderr) {
+          console.log(`[AiExtractTable:Python] ${stderr.trim()}`);
+        }
+        if (err) {
+          console.error(`[AiExtractTable] Python error: ${err.message}`);
+          if ((err as any).killed && child.pid && process.platform === 'win32') {
+            try {
+              execFile('taskkill', ['/F', '/T', '/PID', String(child.pid)], () => {});
+            } catch { /* best effort */ }
+          }
+          resolve(null);
+          return;
+        }
+
+        try {
+          const stat = await fs.stat(outputPath);
+          if (stat.size > 0) {
+            const buf = await fs.readFile(outputPath);
+            resolve(buf);
+          } else {
+            resolve(null);
+          }
+        } catch {
+          resolve(null);
+        }
+      }
+    );
+  });
+}
 
 export interface DocumentChunk {
   chunkId: string;
@@ -532,56 +631,59 @@ export class AiExtractTableProcessor implements DocumentProcessor<AiExtractTable
     const inputBuffer = inputBuffers[0];
     validatePdfSafety(inputBuffer);
 
-    await context.onProgress(25, 'Decompressing PDF vector streams and scrubbing markup noise...');
-    const pdfDoc = await PDFDocument.load(inputBuffer, { ignoreEncryption: true });
-    const cleanLines = extractCleanPdfText(pdfDoc);
-
-    await context.onProgress(60, 'Reconstructing clean tabular columns and financial line items...');
-    const extractedRecords = parseStructuredChallanOrTable(cleanLines);
-
     const format = options.format ?? 'csv';
+    const tempDir = context.tempWorkingDir || (await fs.mkdtemp(path.join(process.cwd(), 'scratch_tab_')));
+    const inPath = path.join(tempDir, `doc_${context.jobId}.pdf`);
+    await fs.writeFile(inPath, inputBuffer);
 
-    let outputBuffer: Buffer;
-    let filename = 'extracted_tables.csv';
-    let mimeType = 'text/csv';
+    let outputBuffer: Buffer | null = null;
+    let filename = format === 'json' ? 'extracted_tables.json' : format === 'markdown' ? 'extracted_tables.md' : 'extracted_tables.csv';
+    let mimeType = format === 'json' ? 'application/json' : format === 'markdown' ? 'text/markdown' : 'text/csv';
 
-    if (format === 'csv') {
-      const csvHeader = 'Item,Quantity,Unit Price,Total,Status\n';
-      const csvRows = extractedRecords
-        .map(r => `"${r.item.replace(/"/g, '""')}","${r.quantity}","${r.value.replace(/"/g, '""')}","${r.value.replace(/"/g, '""')}","${r.status}"`)
-        .join('\n');
-      outputBuffer = Buffer.from(csvHeader + csvRows + '\n', 'utf8');
-      filename = 'extracted_tables.csv';
-      mimeType = 'text/csv';
-    } else if (format === 'markdown') {
-      let md = '| Item | Quantity | Unit Price | Total | Status |\n| :--- | :--- | :--- | :--- | :--- |\n';
-      for (const r of extractedRecords) {
-        md += `| ${r.item} | ${r.quantity} | ${r.value} | ${r.value} | ${r.status} |\n`;
+    try {
+      // ── Tier 1: High-Fidelity Python Engine (PyMuPDF with CMap ToUnicode Resolution) ──
+      await context.onProgress(30, 'Detecting vector table grids & decoding Unicode CMaps...');
+      const pyExt = format === 'markdown' ? 'md' : format;
+      const pyOutPath = path.join(tempDir, `extracted_${context.jobId}.${pyExt}`);
+      outputBuffer = await convertViaPythonTableEngine(inPath, pyOutPath, format, 45000);
+
+      if (outputBuffer) {
+        console.log(`[AiExtractTable] Python engine successfully extracted tables (${outputBuffer.length} bytes, format: ${format})`);
+      } else {
+        // ── Tier 2: JS Stream Parser Fallback ──
+        await context.onProgress(60, 'Parsing stream text fallback...');
+        const pdfDoc = await PDFDocument.load(inputBuffer, { ignoreEncryption: true });
+        const cleanLines = extractCleanPdfText(pdfDoc);
+        const extractedRecords = parseStructuredChallanOrTable(cleanLines);
+
+        if (format === 'json') {
+          outputBuffer = Buffer.from(JSON.stringify({
+            documentType: 'Structured Tabular Data',
+            totalRecords: extractedRecords.length,
+            records: extractedRecords
+          }, null, 2), 'utf8');
+        } else if (format === 'markdown') {
+          let md = '| Item | Quantity | Value | Status |\n| :--- | :--- | :--- | :--- |\n';
+          for (const r of extractedRecords) {
+            md += `| ${r.item} | ${r.quantity} | ${r.value} | ${r.status} |\n`;
+          }
+          outputBuffer = Buffer.from(md, 'utf8');
+        } else {
+          const csvHeader = 'Item,Quantity,Unit Price,Total,Status\n';
+          const csvRows = extractedRecords
+            .map(r => `"${r.item.replace(/"/g, '""')}","${r.quantity}","${r.value.replace(/"/g, '""')}","${r.value.replace(/"/g, '""')}","${r.status}"`)
+            .join('\n');
+          outputBuffer = Buffer.from(csvHeader + csvRows + '\n', 'utf8');
+        }
       }
-      outputBuffer = Buffer.from(md, 'utf8');
-      filename = 'extracted_tables.md';
-      mimeType = 'text/markdown';
-    } else {
-      const jsonPayload = {
-        documentType: 'Structured Financial / Tabular Statement',
-        totalPages: pdfDoc.getPageCount(),
-        totalRecords: extractedRecords.length,
-        extractedRecords,
-        records: extractedRecords.map(r => ({
-          description: r.item,
-          category: r.category,
-          value: r.value,
-          status: r.status,
-        })),
-        confidenceScore: 0.98,
-        extractedAt: new Date().toISOString(),
-      };
-      outputBuffer = Buffer.from(JSON.stringify(jsonPayload, null, 2), 'utf8');
-      filename = 'extracted_tables.json';
-      mimeType = 'application/json';
+    } finally {
+      try { await fs.rm(tempDir, { recursive: true, force: true }); } catch { /* best effort */ }
     }
 
-    await context.onProgress(100, 'Structured table extraction complete.');
+    const pdfDoc = await PDFDocument.load(inputBuffer, { ignoreEncryption: true });
+    const pageCount = pdfDoc.getPageCount();
+
+    await context.onProgress(100, `Table extraction complete (${format.toUpperCase()}).`);
 
     return {
       outputFiles: [
@@ -589,14 +691,14 @@ export class AiExtractTableProcessor implements DocumentProcessor<AiExtractTable
           filename,
           mimeType,
           buffer: outputBuffer,
-          pageCount: pdfDoc.getPageCount(),
+          pageCount,
         },
       ],
       metrics: {
         durationMs: Date.now() - startTime,
         inputSizeBytes: inputBuffer.length,
         outputSizeBytes: outputBuffer.length,
-        totalPageCount: pdfDoc.getPageCount(),
+        totalPageCount: pageCount,
       },
     };
   }
