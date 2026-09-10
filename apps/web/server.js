@@ -639,7 +639,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    function saveApiKeyFromModal(e) {
+    async function saveApiKeyFromModal(e) {
       if (e) e.preventDefault();
       const input = document.getElementById('gemini-api-key-input');
       const msg = document.getElementById('byok-status-msg');
@@ -648,10 +648,44 @@ const server = http.createServer(async (req, res) => {
         if (msg) { msg.textContent = 'Please enter an API key or click Remove Key.'; msg.style.color = '#dc2626'; }
         return;
       }
-      localStorage.setItem('dp_user_gemini_key', val);
-      updateByokBadge();
-      if (msg) { msg.textContent = '✅ API key saved locally in your browser.'; msg.style.color = '#16a34a'; }
-      setTimeout(() => closeApiKeyModal(), 1200);
+
+      if (msg) {
+        msg.textContent = '🔄 Validating key with Google Gemini API...';
+        msg.style.color = '#6366f1';
+      }
+
+      try {
+        const testRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(val), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }] })
+        });
+        const data = await testRes.json();
+        if (!testRes.ok || data.error) {
+          const errText = data.error?.message || 'API key is invalid or rejected by Google.';
+          if (msg) {
+            msg.textContent = '❌ Verification Failed: ' + errText;
+            msg.style.color = '#dc2626';
+          }
+          return;
+        }
+
+        localStorage.setItem('dp_user_gemini_key', val);
+        updateByokBadge();
+        if (msg) {
+          msg.textContent = '✅ Key verified & active with Google Gemini 2.0 Flash!';
+          msg.style.color = '#16a34a';
+        }
+        setTimeout(() => closeApiKeyModal(), 1200);
+      } catch (netErr) {
+        localStorage.setItem('dp_user_gemini_key', val);
+        updateByokBadge();
+        if (msg) {
+          msg.textContent = '⚠️ Key saved (offline network bypass).';
+          msg.style.color = '#d97706';
+        }
+        setTimeout(() => closeApiKeyModal(), 1200);
+      }
     }
 
     function clearApiKeyFromModal() {
@@ -1534,13 +1568,22 @@ const server = http.createServer(async (req, res) => {
         </div>
       </div>
 
-      <!-- Progress Tracking -->
+      <!-- Progress Tracking (Dynamic Real-Time Live Status) -->
       <div class="progress-container" id="progress-container">
-        <h3 id="progress-status-text" style="font-size: 1.2rem; font-weight: 700; color: var(--text-hero); margin-bottom: 0.5rem;">Processing Document...</h3>
+        <div class="progress-header-box">
+          <div class="progress-spinner" id="progress-spinner"></div>
+          <div class="progress-titles">
+            <h3 id="progress-status-text" class="progress-status-text">Processing Document...</h3>
+            <p id="progress-sub-status" class="progress-sub-status">Analyzing document structure & vector glyphs...</p>
+          </div>
+        </div>
         <div class="progress-bar-track">
           <div class="progress-bar-fill" id="progress-bar-fill"></div>
         </div>
-        <p style="color: var(--brand-primary); font-weight: 800; font-size: 1.15rem; font-family: 'JetBrains Mono', monospace;" id="progress-percent">0%</p>
+        <div class="progress-meta-row">
+          <span class="progress-percent" id="progress-percent">0%</span>
+          <span class="progress-timer" id="progress-timer">⏱️ 0.0s</span>
+        </div>
       </div>
 
       <!-- Result / Success Card (Modern Framer Motion Redesign) -->
@@ -1577,7 +1620,7 @@ const server = http.createServer(async (req, res) => {
         </div>
 
         <div class="result-actions-row">
-          <button class="result-secondary-btn" onclick="resetWorkspace()">↻ Convert Another File</button>
+          <button class="result-secondary-btn" id="result-secondary-btn" onclick="resetWorkspace()">↻ Convert Another File</button>
         </div>
 
         <!-- Next Steps Recommendations -->

@@ -77,7 +77,37 @@ test('AI Summarize - rejects empty file input', async () => {
   );
 });
 
+test('AI Summarize - rejects invalid Gemini API key with UNAUTHORIZED error instead of hallucinated mock fallback', async () => {
+  const processor = new AiSummarizeProcessor();
+  const inputBuf = await makeTestPdf(2);
+  const ctx = makeCtx('ai-sum-invalid-key');
+
+  await assert.rejects(
+    () => processor.process(
+      [inputBuf],
+      { mode: 'executive', focusArea: 'financials', apiKey: 'fake_invalid_gemini_key_12345' },
+      ctx
+    ),
+    (err) => err instanceof PlatformError && err.code === 'UNAUTHORIZED' && err.message.includes('Google Gemini API request failed')
+  );
+});
+
 // ─── AI Grounded Q&A Tests ───────────────────────────────────────────────────
+
+test('AI Ask - rejects invalid Gemini API key with UNAUTHORIZED error instead of mock fallback', async () => {
+  const processor = new AiAskProcessor();
+  const inputBuf = await makeTestPdf(2);
+  const ctx = makeCtx('ai-ask-invalid-key');
+
+  await assert.rejects(
+    () => processor.process(
+      [inputBuf],
+      { question: 'What is this document?', apiKey: 'fake_invalid_gemini_key_12345' },
+      ctx
+    ),
+    (err) => err instanceof PlatformError && err.code === 'UNAUTHORIZED' && err.message.includes('Google Gemini API request failed')
+  );
+});
 
 test('AI Ask - returns grounded answer with exact page citations', async () => {
   const processor = new AiAskProcessor();
