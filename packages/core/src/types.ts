@@ -37,6 +37,9 @@ export type OperationType =
   | 'ai-summarize'
   | 'ai-ask'
   | 'ai-extract-table'
+  | 'pdf-to-markdown'
+  | 'markdown-to-pdf'
+  | 'gst-invoice-pdf'
   | 'pipeline';
 
 // ============================================================================
@@ -449,6 +452,65 @@ export interface AiExtractTableOptions {
   apiKey?: string;
 }
 
+export interface PdfToMarkdownOptions {
+  extractTables?: boolean;
+  includePageBreaks?: boolean;
+  headingSensitivity?: 'low' | 'medium' | 'high';
+}
+
+export interface MarkdownToPdfOptions {
+  theme?: 'github' | 'academic' | 'modern' | 'minimal';
+  pageSize?: 'A4' | 'Letter';
+}
+
+export interface GstInvoiceItem {
+  id: string;
+  description: string;
+  hsn?: string;
+  qty: number;
+  rate: number;
+  discountPct?: number;
+  gstRate: number; // 0, 5, 12, 18, 28
+}
+
+export interface GstInvoiceOptions {
+  seller: {
+    name: string;
+    gstin?: string;
+    pan?: string;
+    address: string;
+    state: string;
+    stateCode?: string;
+    phone?: string;
+    email?: string;
+  };
+  buyer: {
+    name: string;
+    gstin?: string;
+    address: string;
+    state: string;
+    stateCode?: string;
+    placeOfSupply?: string;
+  };
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate?: string;
+  reverseCharge?: boolean;
+  taxType?: 'intra' | 'inter' | 'auto';
+  currency?: string;
+  items: GstInvoiceItem[];
+  bankDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    branch?: string;
+    upiId?: string;
+  };
+  notes?: string;
+  terms?: string;
+  theme?: 'modern' | 'corporate' | 'emerald' | 'minimal';
+}
+
 export interface PipelineStep {
   operation: OperationType;
   options: Record<string, unknown>;
@@ -491,6 +553,9 @@ export interface OperationOptionsMap {
   'ai-summarize': AiSummarizeOptions;
   'ai-ask': AiAskOptions;
   'ai-extract-table': AiExtractTableOptions;
+  'pdf-to-markdown': PdfToMarkdownOptions;
+  'markdown-to-pdf': MarkdownToPdfOptions;
+  'gst-invoice-pdf': GstInvoiceOptions;
   'pipeline': PipelineOptions;
 }
 

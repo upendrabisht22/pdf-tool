@@ -2332,3 +2332,340 @@ body::before {
   }
 }
 
+/* ── Professional GST Invoice Studio ──────────────────────────────────────── */
+.gst-studio-container {
+  display: grid;
+  grid-template-columns: minmax(380px, 1.1fr) minmax(360px, 0.9fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .gst-studio-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gst-form-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.gst-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.gst-panel-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-hero);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gst-theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gst-section-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.gst-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-hero);
+  margin-bottom: 0.75rem;
+}
+
+.gst-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.gst-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.6rem;
+}
+
+@media (max-width: 500px) {
+  .gst-grid-2, .gst-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gst-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.gst-input {
+  width: 100%;
+  padding: 0.48rem 0.65rem;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gst-input:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(229, 50, 45, 0.12);
+}
+
+.gst-items-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+}
+
+.gst-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.gst-items-table th {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-weight: 700;
+  padding: 0.5rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.74rem;
+}
+
+.gst-items-table td {
+  padding: 0.4rem 0.35rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.gst-del-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 0.88rem;
+  padding: 0.2rem;
+  border-radius: 4px;
+}
+.gst-del-btn:hover {
+  background: #fee2e2;
+}
+
+/* Live Preview Panel */
+.gst-preview-panel {
+  position: sticky;
+  top: 1.5rem;
+  background: #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.gst-preview-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.gst-preview-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #475569;
+  letter-spacing: 0.06em;
+  background: #ffffff;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+}
+
+.gst-preview-tax-mode {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #15803d;
+  background: #dcfce7;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.gst-paper {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  padding: 1.75rem;
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: #1e293b;
+  min-height: 580px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+/* Paper Document Elements */
+.gst-doc-header {
+  border-radius: 6px;
+  padding: 0.85rem 1.1rem;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.gst-doc-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.gst-doc-meta-bar {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.5rem 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  margin-bottom: 0.85rem;
+}
+
+.gst-doc-addresses {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.gst-doc-addr-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.65rem 0.85rem;
+  background: #ffffff;
+}
+
+.gst-doc-addr-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.gst-doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.72rem;
+}
+
+.gst-doc-table th {
+  background: #f1f5f9;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+  padding: 0.4rem 0.45rem;
+  text-align: left;
+  font-weight: 700;
+}
+
+.gst-doc-table td {
+  padding: 0.4rem 0.45rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.gst-doc-bottom {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.gst-doc-bank-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.gst-doc-qr {
+  width: 72px;
+  height: 72px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 3px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gst-doc-totals-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.75rem 0.85rem;
+}
+
+.gst-doc-total-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  font-size: 0.74rem;
+}
+
+.gst-doc-grand-total {
+  font-size: 0.95rem;
+  font-weight: 800;
+  border-top: 1.5px solid #0f172a;
+  padding-top: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #gst-paper, #gst-paper * {
+    visibility: visible !important;
+  }
+  #gst-paper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm 15mm !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+

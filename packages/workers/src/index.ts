@@ -44,3 +44,7 @@ export * from './processors/compare.js';
 // Sprint G
 export * from './processors/ai-document.js';
 export * from './processors/pipeline.js';
+
+// Sprint H (Phase 1: PDF ↔ Markdown, Phase 2: GST Invoice)
+export * from './processors/pdf-markdown.js';
+export * from './processors/gst-invoice.js';

@@ -447,6 +447,52 @@ const TOOL_DEFINITIONS = {
         <option value="markdown">Markdown Table (.md)</option>
       </select>
     `
+  },
+  'pdf-to-markdown': {
+    category: 'convert',
+    title: 'PDF to Markdown Converter',
+    badge: 'Structure & Table Aware',
+    subtitle: 'Convert PDF documents into clean, structured Markdown (.md) with headings, code blocks, lists, and formatted tables.',
+    actionName: 'Convert to Markdown (.md)',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <label style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="opt-md-tables" checked> Preserve Tables in GFM Format
+      </label>
+      <label style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+        <input type="checkbox" id="opt-md-page-break" checked> Include Page Break Dividers (---)
+      </label>
+    `
+  },
+  'markdown-to-pdf': {
+    category: 'convert',
+    title: 'Markdown to PDF Converter',
+    badge: 'Vector Typography & Styling',
+    subtitle: 'Compile GitHub-flavored Markdown (.md) into crisp, high-resolution vector PDF documents with custom styling.',
+    actionName: 'Compile to PDF (.pdf)',
+    multiple: false,
+    accept: '.md,.markdown,text/markdown,text/plain',
+    optionsHtml: `
+      <select id="opt-md-pagesize" class="select-control">
+        <option value="A4" selected>A4 Standard (210 x 297 mm)</option>
+        <option value="Letter">US Letter (8.5 x 11 in)</option>
+      </select>
+      <select id="opt-md-theme" class="select-control">
+        <option value="modern" selected>Modern Clean (Helvetica)</option>
+        <option value="technical">Technical / Code (Courier)</option>
+      </select>
+    `
+  },
+  'gst-invoice-pdf': {
+    category: 'business',
+    title: 'Professional GST & Tax Invoice Generator',
+    badge: 'Split-Screen Live Studio & Dynamic UPI QR',
+    subtitle: 'Create 100% compliant Indian GST tax invoices with instant vector PDF generation and scannable UPI QR code.',
+    actionName: 'Generate GST Invoice PDF',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
   }
 };
 
@@ -493,6 +539,9 @@ const TOOL_ICONS = {
   'ai-summarize': '💡',
   'ai-ask': '🤖',
   'ai-extract-table': '📋',
+  'pdf-to-markdown': '📝',
+  'markdown-to-pdf': '📄',
+  'gst-invoice-pdf': '🧾',
   'pipeline': '⚡'
 };
 
@@ -506,6 +555,7 @@ function renderToolTabs() {
     { key: 'convert', label: 'Convert' },
     { key: 'security', label: 'Security & Sign' },
     { key: 'ai', label: 'AI & OCR' },
+    { key: 'business', label: 'Business & Tax' },
   ];
 
   let html = `<div class="category-pills-container">`;
@@ -1012,6 +1062,49 @@ const TOOL_DETAILS_DATA = {
       { question: 'Can anyone open the file without the password?', answer: 'No. The document cannot be viewed or decrypted without entering the correct password.' }
     ],
     related: ['unlock-pdf', 'watermark-pdf', 'redact-pdf', 'sign-pdf']
+  },
+  'pdf-to-markdown': {
+    category: 'Conversions', categoryLink: '/pdf-to-markdown',
+    features: ['Structure-aware heading detection (#, ##, ###) from font sizes', 'Table column alignment & formatting in GitHub Flavored Markdown (GFM)', 'Clean list and code block preservation without broken lines'],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Drag and drop your PDF document into the workspace.' },
+      { name: 'Configure Options', text: 'Toggle GFM table preservation and page divider breaks.' },
+      { name: 'Download Markdown', text: 'Download clean .md file for GitHub, Obsidian, or documentation.' }
+    ],
+    faqs: [
+      { question: 'Does it preserve tables in Markdown format?', answer: 'Yes! Vector tables are automatically recognized and converted into standard GFM Markdown pipes (| col1 | col2 |).' },
+      { question: 'Can I edit the extracted Markdown in Obsidian or VS Code?', answer: 'Yes, the generated .md files are 100% standard CommonMark/GFM files ready for any markdown editor.' }
+    ],
+    related: ['markdown-to-pdf', 'pdf-to-word', 'ai-extract-table', 'ocr-pdf']
+  },
+  'markdown-to-pdf': {
+    category: 'Conversions', categoryLink: '/markdown-to-pdf',
+    features: ['Vector PDF compilation with crisp typography and custom margin metrics', 'Syntax-styled code blocks, blockquotes, horizontal rules, and tables', 'Intelligent automatic pagination with header and page numbering'],
+    howToSteps: [
+      { name: 'Upload Markdown', text: 'Drop your .md or .txt markdown file into the converter.' },
+      { name: 'Select Theme', text: 'Choose A4 or Letter, plus Modern or Technical theme.' },
+      { name: 'Compile & Download', text: 'Get your professional vector PDF ready for sharing and printing.' }
+    ],
+    faqs: [
+      { question: 'Are code blocks and tables styled properly?', answer: 'Yes. Fenced code blocks are styled with monospaced Courier font and background tints, and tables are formatted with clean borders.' },
+      { question: 'Does it handle multi-page documents?', answer: 'Yes. The engine automatically measures vertical text flow and creates new pages with exact margin preservation.' }
+    ],
+    related: ['pdf-to-markdown', 'word-to-pdf', 'compress-pdf', 'protect-pdf']
+  },
+  'gst-invoice-pdf': {
+    category: 'Business & Tax', categoryLink: '/gst-invoice-pdf',
+    features: ['Real-time split-screen interactive live preview studio with instant rendering', 'Automated CGST / SGST intra-state split or IGST inter-state allocation', 'Dynamic UPI QR Code embedding for instant scannable mobile payment'],
+    howToSteps: [
+      { name: 'Fill Business Details', text: 'Enter your company name, GSTIN, address, and buyer details.' },
+      { name: 'Add Invoice Items', text: 'Add line items, HSN/SAC codes, quantities, and GST tax rates.' },
+      { name: 'Download Vector PDF', text: 'Instant download of a 100% GST-compliant invoice with UPI payment QR.' }
+    ],
+    faqs: [
+      { question: 'Is the GST invoice compliant with Indian tax guidelines?', answer: 'Yes! It contains all mandatory fields: GSTIN, HSN/SAC codes, Place of Supply, Reverse Charge flag, CGST/SGST/IGST breakdown, and Total Amount in Words.' },
+      { question: 'How does the UPI QR Code work?', answer: 'It encodes the standard UPI URI format (upi://pay?pa=...&pn=...&am=...&cu=INR). Customers can scan with Google Pay, PhonePe, or Paytm to pay directly.' },
+      { question: 'Is my financial invoice data kept private?', answer: 'Yes. Invoices are generated locally or in ephemeral worker tasks that never log or store your sensitive customer information.' }
+    ],
+    related: ['pdf-to-excel', 'ai-extract-table', 'draw-signature', 'sign-pdf']
   }
 };
 
@@ -1071,16 +1164,24 @@ window.switchTool = function(toolKey, updateUrl = true) {
   fileInput.accept = config.accept;
   fileInput.multiple = config.multiple;
 
-  // Toggle Signature Studio vs standard PDF dropzone
+  // Toggle Signature Studio vs GST Invoice Studio vs standard PDF dropzone
   const sigStudio = document.getElementById('signature-studio');
+  const gstStudio = document.getElementById('gst-invoice-studio');
   const dropzone = document.getElementById('dropzone');
 
   if (toolKey === 'draw-signature') {
     if (sigStudio) sigStudio.style.display = 'block';
+    if (gstStudio) gstStudio.style.display = 'none';
     if (dropzone) dropzone.style.display = 'none';
     switchSignatureTab('draw');
+  } else if (toolKey === 'gst-invoice-pdf') {
+    if (sigStudio) sigStudio.style.display = 'none';
+    if (gstStudio) gstStudio.style.display = 'block';
+    if (dropzone) dropzone.style.display = 'none';
+    if (typeof initGstInvoiceStudio === 'function') initGstInvoiceStudio();
   } else {
     if (sigStudio) sigStudio.style.display = 'none';
+    if (gstStudio) gstStudio.style.display = 'none';
     if (dropzone) dropzone.style.display = 'block';
   }
 
@@ -1097,6 +1198,10 @@ window.switchTool = function(toolKey, updateUrl = true) {
     if (dropTitle) dropTitle.textContent = 'Select Image files (JPG, PNG, WebP)';
     if (dropDesc) dropDesc.textContent = 'or drop JPG, PNG, or WebP images here. Instant client-side PDF creation.';
     if (dropBtn) dropBtn.textContent = 'Select Images';
+  } else if (activeTool === 'markdown-to-pdf') {
+    if (dropTitle) dropTitle.textContent = 'Select Markdown file (.md, .txt)';
+    if (dropDesc) dropDesc.textContent = 'or drop Markdown files here. Instant compilation to vector PDF.';
+    if (dropBtn) dropBtn.textContent = 'Select Markdown File';
   } else if (config.category === 'convert' && (activeTool.includes('word') || activeTool.includes('excel') || activeTool.includes('powerpoint') || activeTool.includes('ppt'))) {
     if (dropTitle) dropTitle.textContent = 'Select Office document';
     if (dropDesc) dropDesc.textContent = 'or drop Word, Excel, or PowerPoint files here.';
@@ -1205,14 +1310,22 @@ window.resetWorkspace = function resetWorkspace() {
   if (stagingArea) stagingArea.style.display = 'none';
 
   const sigStudio = document.getElementById('signature-studio');
+  const gstStudio = document.getElementById('gst-invoice-studio');
   const dropzone = document.getElementById('dropzone');
 
   if (activeTool === 'draw-signature') {
     if (sigStudio) sigStudio.style.display = 'block';
+    if (gstStudio) gstStudio.style.display = 'none';
     if (dropzone) dropzone.style.display = 'none';
     switchSignatureTab('draw');
+  } else if (activeTool === 'gst-invoice-pdf') {
+    if (sigStudio) sigStudio.style.display = 'none';
+    if (gstStudio) gstStudio.style.display = 'block';
+    if (dropzone) dropzone.style.display = 'none';
+    if (typeof initGstInvoiceStudio === 'function') initGstInvoiceStudio();
   } else {
     if (sigStudio) sigStudio.style.display = 'none';
+    if (gstStudio) gstStudio.style.display = 'none';
     if (dropzone) dropzone.style.display = 'block';
   }
 
@@ -1274,6 +1387,9 @@ function detectFileType(file, bytes) {
   if (['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'rtf', 'odt'].includes(ext)) {
     return 'docx';
   }
+  if (['md', 'markdown', 'txt'].includes(ext) || file.type === 'text/markdown' || file.type === 'text/plain') {
+    return 'markdown';
+  }
 
   return 'unknown';
 }
@@ -1289,6 +1405,8 @@ async function handleFilesSelected(files, isAppend = false) {
     let isValid = false;
     if (activeTool === 'jpg-to-pdf' || activeTool === 'draw-signature') {
       isValid = ['png', 'jpeg', 'webp'].includes(detected);
+    } else if (activeTool === 'markdown-to-pdf') {
+      isValid = ['markdown', 'unknown'].includes(detected) || file.name.endsWith('.md') || file.name.endsWith('.txt');
     } else if (activeTool.includes('word') || activeTool.includes('excel') || activeTool.includes('powerpoint') || activeTool.includes('ppt')) {
       isValid = ['docx', 'office-legacy', 'pdf'].includes(detected);
     } else {
@@ -1302,10 +1420,12 @@ async function handleFilesSelected(files, isAppend = false) {
         size: file.size,
         fileObject: file,
         bytes: bytes,
-        detectedFormat: detected
+        detectedFormat: detected === 'markdown' ? 'markdown' : detected
       });
     } else {
-      alert(`File "${file.name}" was rejected. Please select a valid ${activeTool === 'jpg-to-pdf' ? 'Image (JPG, PNG, WebP)' : 'PDF document'}.`);
+      const expectedType = activeTool === 'jpg-to-pdf' ? 'Image (JPG, PNG, WebP)' :
+                           activeTool === 'markdown-to-pdf' ? 'Markdown file (.md, .txt)' : 'PDF document';
+      alert(`File "${file.name}" was rejected. Please select a valid ${expectedType}.`);
     }
   }
 
@@ -2334,6 +2454,12 @@ function collectActiveToolOptions() {
     opts.question = document.getElementById('opt-ask-query')?.value || 'What are the main key points of this document?';
   } else if (activeTool === 'ai-extract-table') {
     opts.format = document.getElementById('opt-table-format')?.value || 'json';
+  } else if (activeTool === 'pdf-to-markdown') {
+    opts.preserveTables = document.getElementById('opt-md-tables')?.checked ?? true;
+    opts.includePageBreaks = document.getElementById('opt-md-page-break')?.checked ?? true;
+  } else if (activeTool === 'markdown-to-pdf') {
+    opts.pageSize = document.getElementById('opt-md-pagesize')?.value || 'A4';
+    opts.theme = document.getElementById('opt-md-theme')?.value || 'modern';
   }
 
   return opts;
@@ -2360,6 +2486,21 @@ function startLiveProgressTracking(toolKey) {
       { maxPct: 65, text: 'Extracting spreadsheet rows & decoding CMaps...', sub: 'ToUnicode font translation & cell formatting' },
       { maxPct: 85, text: 'Building native Excel (.xlsx) workbook...', sub: 'openpyxl styling & auto-column width sizing' },
       { maxPct: 95, text: 'Sanitizing spreadsheet output...', sub: 'Validating table row consistency' },
+    ],
+    'pdf-to-markdown': [
+      { maxPct: 35, text: 'Parsing PDF document vector streams...', sub: 'Detecting layout, text blocks & font sizes' },
+      { maxPct: 65, text: 'Reconstructing headings, tables & lists...', sub: 'PyMuPDF structure extractor & GFM formatter' },
+      { maxPct: 92, text: 'Sanitizing Markdown syntax...', sub: 'Validating CommonMark / GFM compliance' },
+    ],
+    'markdown-to-pdf': [
+      { maxPct: 35, text: 'Parsing Markdown AST & elements...', sub: 'Analyzing headings, code blocks, tables & quotes' },
+      { maxPct: 70, text: 'Typesetting vector typography & pages...', sub: 'Calculating page flow, margins & line wraps' },
+      { maxPct: 92, text: 'Compiling high-resolution PDF document...', sub: 'Embedding vector fonts & metadata' },
+    ],
+    'gst-invoice-pdf': [
+      { maxPct: 30, text: 'Calculating GST tax rates & Indian Rupee words...', sub: 'Intra/Inter-State tax splitting (CGST/SGST/IGST)' },
+      { maxPct: 65, text: 'Generating dynamic UPI payment QR code...', sub: 'Encoding payment URI with exact invoice amount' },
+      { maxPct: 92, text: 'Drawing vector A4 tax invoice geometry...', sub: 'Embedding clean vector typography & payment matrix' },
     ],
     'word-to-pdf': [
       { maxPct: 35, text: 'Parsing OpenXML Word document...', sub: 'Reading document body, headers & styles' },
@@ -2475,6 +2616,12 @@ function pollJobStatus(jobId) {
             outName = `${baseName}.docx`;
           } else if (activeTool === 'pdf-to-excel') {
             outName = `${baseName}.xlsx`;
+          } else if (activeTool === 'pdf-to-markdown') {
+            outName = `${baseName}.md`;
+          } else if (activeTool === 'markdown-to-pdf') {
+            outName = `${baseName}.pdf`;
+          } else if (activeTool === 'gst-invoice-pdf') {
+            outName = `${baseName || 'gst_invoice'}.pdf`;
           } else if (activeTool === 'split-pdf') {
             outName = `${baseName}_split.zip`;
           } else if (activeTool === 'ai-summarize') {
@@ -2556,8 +2703,9 @@ function renderSuccessDownload(url, filename) {
     if (ext === 'DOCX') downloadBtnText.textContent = 'Download Word (.docx)';
     else if (ext === 'XLSX') downloadBtnText.textContent = 'Download Excel (.xlsx)';
     else if (ext === 'CSV') downloadBtnText.textContent = 'Download CSV Spreadsheet';
-    else if (ext === 'MD') downloadBtnText.textContent = 'Download AI Summary (.md)';
+    else if (ext === 'MD') downloadBtnText.textContent = 'Download Markdown (.md)';
     else if (ext === 'JSON') downloadBtnText.textContent = 'Download AI Answers (.json)';
+    else if (activeTool === 'gst-invoice-pdf') downloadBtnText.textContent = 'Download GST Tax Invoice (.pdf)';
     else if (ext === 'PDF') downloadBtnText.textContent = 'Download PDF Document';
     else if (ext === 'ZIP') downloadBtnText.textContent = 'Download All Files (.zip)';
     else downloadBtnText.textContent = `Download ${ext} Document`;
@@ -2572,6 +2720,12 @@ function renderSuccessDownload(url, filename) {
       secondaryBtn.textContent = '↻ Ask Another Question';
     } else if (activeTool === 'ai-extract-table') {
       secondaryBtn.textContent = '↻ Extract Another Table';
+    } else if (activeTool === 'pdf-to-markdown') {
+      secondaryBtn.textContent = '↻ Convert Another PDF';
+    } else if (activeTool === 'markdown-to-pdf') {
+      secondaryBtn.textContent = '↻ Compile Another Markdown';
+    } else if (activeTool === 'gst-invoice-pdf') {
+      secondaryBtn.textContent = '↻ Create Another Invoice';
     } else if (activeTool === 'draw-signature' || activeTool === 'sign-pdf') {
       secondaryBtn.textContent = '↻ Sign Another Document';
     } else if (activeTool === 'protect-pdf' || activeTool === 'unlock-pdf') {
@@ -2637,6 +2791,21 @@ function renderSuccessDownload(url, filename) {
   const nextStepsChips = document.getElementById('next-steps-chips');
   if (nextStepsChips) {
     const nextStepsMap = {
+      'pdf-to-markdown': [
+        { label: '📄 Markdown to PDF', link: '/markdown-to-pdf' },
+        { label: '📝 Convert to Word', link: '/pdf-to-word' },
+        { label: '⚡ Compress PDF', link: '/compress-pdf' }
+      ],
+      'markdown-to-pdf': [
+        { label: '📝 PDF to Markdown', link: '/pdf-to-markdown' },
+        { label: '⚡ Compress PDF', link: '/compress-pdf' },
+        { label: '🔒 Protect PDF', link: '/protect-pdf' }
+      ],
+      'gst-invoice-pdf': [
+        { label: '✍️ Draw & Sign Document', link: '/draw-signature' },
+        { label: '🔒 Password Protect Invoice', link: '/protect-pdf' },
+        { label: '⚡ Compress PDF', link: '/compress-pdf' }
+      ],
       'pdf-to-word': [
         { label: '⚡ Compress Word / PDF', link: '/compress-pdf' },
         { label: '🔒 Protect with Password', link: '/protect-pdf' },
@@ -2750,6 +2919,512 @@ function renderSimpleMarkdown(md) {
   if (inList) out.push('</ul>');
   return out.join('\n');
 }
+
+// ============================================================================
+// Professional GST Tax Invoice Studio Controller
+// ============================================================================
+
+let gstItems = [
+  { id: 1, description: 'Enterprise Cloud Architecture & Consulting', hsn: '998313', quantity: 1, rate: 45000, gstRate: 18 },
+  { id: 2, description: 'Secure Document Pipeline Implementation', hsn: '998314', quantity: 2, rate: 12500, gstRate: 18 }
+];
+let nextGstItemId = 3;
+
+window.initGstInvoiceStudio = function() {
+  const dateInput = document.getElementById('gst-inv-date');
+  if (dateInput && !dateInput.value) {
+    dateInput.value = new Date().toISOString().split('T')[0];
+  }
+  renderGstItemsTable();
+  updateGstInvoicePreview();
+};
+
+window.renderGstItemsTable = function() {
+  const tbody = document.getElementById('gst-items-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = gstItems.map(item => `
+    <tr data-item-id="${item.id}">
+      <td>
+        <input type="text" class="gst-input" value="${escapeHtml(item.description)}" 
+               oninput="onGstItemChange(${item.id}, 'description', this.value)" 
+               placeholder="Item / Service description *" style="font-size: 0.8rem; padding: 0.35rem 0.5rem;" />
+      </td>
+      <td>
+        <input type="text" class="gst-input" value="${escapeHtml(item.hsn)}" 
+               oninput="onGstItemChange(${item.id}, 'hsn', this.value)" 
+               placeholder="HSN/SAC" style="font-size: 0.8rem; padding: 0.35rem 0.5rem;" />
+      </td>
+      <td>
+        <input type="number" min="1" step="1" class="gst-input" value="${item.quantity}" 
+               oninput="onGstItemChange(${item.id}, 'quantity', parseFloat(this.value) || 0)" 
+               style="font-size: 0.8rem; padding: 0.35rem 0.4rem; text-align: center;" />
+      </td>
+      <td>
+        <input type="number" min="0" step="any" class="gst-input" value="${item.rate}" 
+               oninput="onGstItemChange(${item.id}, 'rate', parseFloat(this.value) || 0)" 
+               placeholder="0.00" style="font-size: 0.8rem; padding: 0.35rem 0.5rem; text-align: right;" />
+      </td>
+      <td>
+        <select class="gst-input" onchange="onGstItemChange(${item.id}, 'gstRate', parseFloat(this.value) || 0)" 
+                style="font-size: 0.8rem; padding: 0.35rem 0.3rem;">
+          <option value="0" ${item.gstRate === 0 ? 'selected' : ''}>0%</option>
+          <option value="5" ${item.gstRate === 5 ? 'selected' : ''}>5%</option>
+          <option value="12" ${item.gstRate === 12 ? 'selected' : ''}>12%</option>
+          <option value="18" ${item.gstRate === 18 ? 'selected' : ''}>18%</option>
+          <option value="28" ${item.gstRate === 28 ? 'selected' : ''}>28%</option>
+        </select>
+      </td>
+      <td style="text-align: center;">
+        <button type="button" class="file-card-remove" onclick="deleteGstItemRow(${item.id})" 
+                title="Delete Row" style="font-size: 0.75rem;">✕</button>
+      </td>
+    </tr>
+  `).join('');
+};
+
+window.onGstItemChange = function(id, field, value) {
+  const item = gstItems.find(it => it.id === id);
+  if (item) {
+    item[field] = value;
+    updateGstInvoicePreview();
+  }
+};
+
+window.addGstItemRow = function() {
+  gstItems.push({
+    id: nextGstItemId++,
+    description: '',
+    hsn: '9983',
+    quantity: 1,
+    rate: 1000,
+    gstRate: 18
+  });
+  renderGstItemsTable();
+  updateGstInvoicePreview();
+};
+
+window.deleteGstItemRow = function(id) {
+  if (gstItems.length <= 1) {
+    alert('At least 1 line item is required on the invoice.');
+    return;
+  }
+  gstItems = gstItems.filter(it => it.id !== id);
+  renderGstItemsTable();
+  updateGstInvoicePreview();
+};
+
+window.numberToWordsClient = function(amount) {
+  const words = [
+    '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+    'Seventeen', 'Eighteen', 'Nineteen'
+  ];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  function convertChunk(n) {
+    let str = '';
+    if (n >= 100) {
+      str += words[Math.floor(n / 100)] + ' Hundred ';
+      n %= 100;
+    }
+    if (n >= 20) {
+      str += tens[Math.floor(n / 10)] + ' ';
+      n %= 10;
+    }
+    if (n > 0) {
+      str += words[n] + ' ';
+    }
+    return str.trim();
+  }
+
+  const rounded = Math.round(amount * 100) / 100;
+  const rupees = Math.floor(rounded);
+  const paise = Math.round((rounded - rupees) * 100);
+
+  if (rupees === 0 && paise === 0) return 'Zero Rupees Only';
+
+  let result = '';
+  const crore = Math.floor(rupees / 10000000);
+  const remCrore = rupees % 10000000;
+  const lakh = Math.floor(remCrore / 100000);
+  const remLakh = remCrore % 100000;
+  const thousand = Math.floor(remLakh / 1000);
+  const remThousand = remLakh % 1000;
+
+  if (crore > 0) result += convertChunk(crore) + ' Crore ';
+  if (lakh > 0) result += convertChunk(lakh) + ' Lakh ';
+  if (thousand > 0) result += convertChunk(thousand) + ' Thousand ';
+  if (remThousand > 0) result += convertChunk(remThousand) + ' ';
+
+  result = 'Rupees ' + result.trim();
+  if (paise > 0) {
+    result += ' and ' + convertChunk(paise) + ' Paise';
+  }
+  return result + ' Only';
+};
+
+window.updateGstInvoicePreview = function() {
+  const paper = document.getElementById('gst-paper');
+  if (!paper) return;
+
+  const sellerName = document.getElementById('gst-seller-name')?.value || 'Acme Technologies Pvt Ltd';
+  const sellerGstin = document.getElementById('gst-seller-gstin')?.value || '';
+  const sellerAddress = document.getElementById('gst-seller-address')?.value || '';
+  const sellerState = document.getElementById('gst-seller-state')?.value || 'Delhi';
+  const sellerCode = document.getElementById('gst-seller-code')?.value || '07';
+  const sellerPhone = document.getElementById('gst-seller-phone')?.value || '';
+  const sellerPan = document.getElementById('gst-seller-pan')?.value || '';
+
+  const buyerName = document.getElementById('gst-buyer-name')?.value || 'Apex Retailers LLP';
+  const buyerGstin = document.getElementById('gst-buyer-gstin')?.value || '';
+  const buyerAddress = document.getElementById('gst-buyer-address')?.value || '';
+  const buyerState = document.getElementById('gst-buyer-state')?.value || 'Delhi';
+  const buyerCode = document.getElementById('gst-buyer-code')?.value || '07';
+
+  const invNumber = document.getElementById('gst-inv-number')?.value || 'INV-2026-001';
+  const invDate = document.getElementById('gst-inv-date')?.value || new Date().toISOString().split('T')[0];
+  const taxTypeMode = document.getElementById('gst-tax-type')?.value || 'auto';
+  const theme = document.getElementById('gst-theme-select')?.value || 'modern';
+
+  const upiId = document.getElementById('gst-upi-id')?.value || '';
+  const bankName = document.getElementById('gst-bank-name')?.value || '';
+  const bankAcc = document.getElementById('gst-bank-acc')?.value || '';
+  const bankIfsc = document.getElementById('gst-bank-ifsc')?.value || '';
+
+  // Determine inter vs intra state
+  let isInterState = false;
+  if (taxTypeMode === 'inter') {
+    isInterState = true;
+  } else if (taxTypeMode === 'intra') {
+    isInterState = false;
+  } else {
+    isInterState = (sellerState.toLowerCase().trim() !== buyerState.toLowerCase().trim());
+  }
+
+  // Update Tax badge
+  const taxBadge = document.getElementById('gst-preview-tax-badge');
+  if (taxBadge) {
+    taxBadge.textContent = isInterState ? 'Inter-State (100% IGST)' : 'Intra-State (CGST 50% + SGST 50%)';
+  }
+
+  // Theme color styling
+  let themePrimary = '#0f172a';
+  let themeLight = '#f8fafc';
+  if (theme === 'corporate') {
+    themePrimary = '#1e40af';
+    themeLight = '#eff6ff';
+  } else if (theme === 'emerald') {
+    themePrimary = '#065f46';
+    themeLight = '#ecfdf5';
+  } else if (theme === 'minimal') {
+    themePrimary = '#334155';
+    themeLight = '#f8fafc';
+  }
+
+  // Calculate totals
+  let subtotal = 0;
+  let cgstTotal = 0;
+  let sgstTotal = 0;
+  let igstTotal = 0;
+
+  const itemRowsHtml = gstItems.map((item, idx) => {
+    const qty = Number(item.quantity) || 0;
+    const rate = Number(item.rate) || 0;
+    const itemTotal = qty * rate;
+    const gstPct = Number(item.gstRate) || 0;
+    subtotal += itemTotal;
+
+    let taxAmount = 0;
+    if (isInterState) {
+      taxAmount = itemTotal * (gstPct / 100);
+      igstTotal += taxAmount;
+    } else {
+      const halfTax = itemTotal * (gstPct / 200);
+      cgstTotal += halfTax;
+      sgstTotal += halfTax;
+      taxAmount = halfTax * 2;
+    }
+    const lineGross = itemTotal + taxAmount;
+
+    return `
+      <tr>
+        <td style="text-align: center; color: #64748b;">${idx + 1}</td>
+        <td style="font-weight: 600; color: #0f172a;">${escapeHtml(item.description || 'Service / Product')}</td>
+        <td style="text-align: center;">${escapeHtml(item.hsn || '-')}</td>
+        <td style="text-align: center;">${qty}</td>
+        <td style="text-align: right;">${rate.toFixed(2)}</td>
+        <td style="text-align: right; font-weight: 600;">${itemTotal.toFixed(2)}</td>
+        <td style="text-align: center;">${gstPct}%</td>
+        <td style="text-align: right;">${taxAmount.toFixed(2)}</td>
+        <td style="text-align: right; font-weight: 700;">${lineGross.toFixed(2)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const totalTax = isInterState ? igstTotal : (cgstTotal + sgstTotal);
+  const grandTotal = Math.round(subtotal + totalTax);
+  const roundOff = (grandTotal - (subtotal + totalTax));
+  const amountInWords = numberToWordsClient(grandTotal);
+
+  paper.innerHTML = `
+    <!-- Invoice Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 2px solid ${themePrimary}; padding-bottom: 1rem;">
+      <div>
+        <h1 style="font-size: 1.4rem; font-weight: 800; color: ${themePrimary}; margin: 0; letter-spacing: -0.02em;">${escapeHtml(sellerName)}</h1>
+        <div style="font-size: 0.76rem; color: #64748b; margin-top: 0.25rem;">${escapeHtml(sellerAddress)}</div>
+        <div style="font-size: 0.74rem; font-weight: 700; color: #334155; margin-top: 0.2rem;">
+          GSTIN: <span style="font-family: monospace;">${escapeHtml(sellerGstin || 'Unregistered')}</span>
+          ${sellerPan ? ` • PAN: <span style="font-family: monospace;">${escapeHtml(sellerPan)}</span>` : ''}
+          ${sellerPhone ? ` • Ph: ${escapeHtml(sellerPhone)}` : ''}
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div style="background: ${themePrimary}; color: #ffffff; padding: 0.3rem 0.85rem; border-radius: 4px; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.06em; display: inline-block;">
+          TAX INVOICE
+        </div>
+        <div style="font-size: 0.68rem; color: #64748b; margin-top: 0.35rem; font-weight: 600;">Original for Recipient</div>
+      </div>
+    </div>
+
+    <!-- Meta Details Grid -->
+    <div class="gst-doc-meta-grid" style="background: ${themeLight}; border: 1px solid #e2e8f0; margin-bottom: 1rem;">
+      <div><strong>Invoice No:</strong> <span style="font-family: monospace; font-weight: 700; color: #0f172a;">${escapeHtml(invNumber)}</span></div>
+      <div><strong>Invoice Date:</strong> ${escapeHtml(invDate)}</div>
+      <div><strong>Place of Supply:</strong> ${escapeHtml(buyerState)} (${escapeHtml(buyerCode)})</div>
+      <div><strong>Reverse Charge:</strong> No</div>
+    </div>
+
+    <!-- Addresses Section -->
+    <div class="gst-doc-addresses">
+      <div class="gst-doc-addr-card">
+        <div class="gst-doc-addr-title">Billed By (Supplier)</div>
+        <div style="font-weight: 700; font-size: 0.82rem; color: #0f172a;">${escapeHtml(sellerName)}</div>
+        <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">${escapeHtml(sellerAddress)}</div>
+        <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">State: ${escapeHtml(sellerState)} (${escapeHtml(sellerCode)})</div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: #0f172a; margin-top: 0.25rem;">GSTIN: <span style="font-family: monospace;">${escapeHtml(sellerGstin)}</span></div>
+      </div>
+      <div class="gst-doc-addr-card">
+        <div class="gst-doc-addr-title">Billed To (Recipient / Client)</div>
+        <div style="font-weight: 700; font-size: 0.82rem; color: #0f172a;">${escapeHtml(buyerName)}</div>
+        <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">${escapeHtml(buyerAddress || 'Address on file')}</div>
+        <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">State: ${escapeHtml(buyerState)} (${escapeHtml(buyerCode)})</div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: #0f172a; margin-top: 0.25rem;">GSTIN: <span style="font-family: monospace;">${escapeHtml(buyerGstin || 'Consumer / Unregistered')}</span></div>
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <table class="gst-doc-table">
+      <thead>
+        <tr>
+          <th style="width: 5%; text-align: center;">#</th>
+          <th style="width: 32%;">Item Description</th>
+          <th style="width: 10%; text-align: center;">HSN</th>
+          <th style="width: 7%; text-align: center;">Qty</th>
+          <th style="width: 12%; text-align: right;">Rate (Rs.)</th>
+          <th style="width: 12%; text-align: right;">Taxable (Rs.)</th>
+          <th style="width: 8%; text-align: center;">GST%</th>
+          <th style="width: 10%; text-align: right;">Tax (Rs.)</th>
+          <th style="width: 14%; text-align: right;">Total (Rs.)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemRowsHtml}
+      </tbody>
+    </table>
+
+    <!-- Bottom Section: Amount in words, UPI QR, Bank, Totals -->
+    <div class="gst-doc-bottom">
+      <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+        <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem; background: ${themeLight};">
+          <div style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Total Amount in Words</div>
+          <div style="font-size: 0.78rem; font-weight: 700; color: #0f172a; margin-top: 0.15rem;">${escapeHtml(amountInWords)}</div>
+        </div>
+
+        <div class="gst-doc-bank-box">
+          <div id="gst-paper-qr-box" class="gst-doc-qr"></div>
+          <div style="font-size: 0.72rem; color: #475569; line-height: 1.45;">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.2rem;">🏦 Bank & UPI Details</div>
+            ${bankName ? `<div><strong>Bank:</strong> ${escapeHtml(bankName)}</div>` : ''}
+            ${bankAcc ? `<div><strong>A/C:</strong> <span style="font-family: monospace;">${escapeHtml(bankAcc)}</span></div>` : ''}
+            ${bankIfsc ? `<div><strong>IFSC:</strong> <span style="font-family: monospace;">${escapeHtml(bankIfsc)}</span></div>` : ''}
+            ${upiId ? `<div style="margin-top: 0.15rem; color: ${themePrimary}; font-weight: 700;"><strong>UPI ID:</strong> ${escapeHtml(upiId)}</div>` : ''}
+          </div>
+        </div>
+
+        <div style="font-size: 0.68rem; color: #94a3b8; line-height: 1.35; padding-left: 0.2rem;">
+          Terms: Subject to ${escapeHtml(sellerState)} jurisdiction. Goods / services once invoiced are subject to agreement terms.
+        </div>
+      </div>
+
+      <div>
+        <div class="gst-doc-totals-box">
+          <div class="gst-doc-total-row">
+            <span style="color: #64748b;">Taxable Value:</span>
+            <span style="font-weight: 600;">Rs. ${subtotal.toFixed(2)}</span>
+          </div>
+          ${!isInterState ? `
+            <div class="gst-doc-total-row">
+              <span style="color: #64748b;">Central GST (CGST):</span>
+              <span style="font-weight: 600;">Rs. ${cgstTotal.toFixed(2)}</span>
+            </div>
+            <div class="gst-doc-total-row">
+              <span style="color: #64748b;">State GST (SGST):</span>
+              <span style="font-weight: 600;">Rs. ${sgstTotal.toFixed(2)}</span>
+            </div>
+          ` : `
+            <div class="gst-doc-total-row">
+              <span style="color: #64748b;">Integrated GST (IGST):</span>
+              <span style="font-weight: 600;">Rs. ${igstTotal.toFixed(2)}</span>
+            </div>
+          `}
+          ${roundOff !== 0 ? `
+            <div class="gst-doc-total-row" style="font-size: 0.7rem; color: #94a3b8;">
+              <span>Round Off:</span>
+              <span>${roundOff > 0 ? '+' : ''}${roundOff.toFixed(2)}</span>
+            </div>
+          ` : ''}
+          <div class="gst-doc-total-row gst-doc-grand-total">
+            <span style="color: ${themePrimary};">Invoice Total:</span>
+            <span style="color: ${themePrimary}; font-size: 1.05rem;">Rs. ${grandTotal.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.25rem; text-align: right; padding-right: 0.5rem;">
+          <div style="font-size: 0.72rem; color: #64748b;">For <strong>${escapeHtml(sellerName)}</strong></div>
+          <div style="height: 38px;"></div>
+          <div style="border-top: 1px dashed #cbd5e1; display: inline-block; padding-top: 0.25rem; font-size: 0.72rem; font-weight: 700; color: #334155;">
+            Authorized Signatory
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Render dynamic UPI QR code
+  const qrBox = document.getElementById('gst-paper-qr-box');
+  if (qrBox) {
+    qrBox.innerHTML = '';
+    if (upiId && grandTotal > 0 && typeof QRCode !== 'undefined') {
+      try {
+        const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(sellerName)}&am=${grandTotal.toFixed(2)}&cu=INR&tn=${encodeURIComponent(invNumber)}`;
+        new QRCode(qrBox, {
+          text: upiUri,
+          width: 66,
+          height: 66,
+          colorDark: '#0f172a',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel?.M || 0
+        });
+      } catch (qrErr) {
+        qrBox.innerHTML = `<span style="font-size: 0.6rem; color: #94a3b8; text-align: center;">UPI QR</span>`;
+      }
+    } else {
+      qrBox.innerHTML = `<span style="font-size: 0.6rem; color: #94a3b8; text-align: center;">UPI QR</span>`;
+    }
+  }
+};
+
+window.generateAndDownloadGstInvoicePdf = async function() {
+  const sellerName = document.getElementById('gst-seller-name')?.value || 'Acme Technologies Pvt Ltd';
+  const sellerGstin = document.getElementById('gst-seller-gstin')?.value || '';
+  const sellerAddress = document.getElementById('gst-seller-address')?.value || '';
+  const sellerState = document.getElementById('gst-seller-state')?.value || 'Delhi';
+  const sellerCode = document.getElementById('gst-seller-code')?.value || '07';
+  const sellerPhone = document.getElementById('gst-seller-phone')?.value || '';
+  const sellerPan = document.getElementById('gst-seller-pan')?.value || '';
+
+  const buyerName = document.getElementById('gst-buyer-name')?.value || 'Apex Retailers LLP';
+  const buyerGstin = document.getElementById('gst-buyer-gstin')?.value || '';
+  const buyerAddress = document.getElementById('gst-buyer-address')?.value || '';
+  const buyerState = document.getElementById('gst-buyer-state')?.value || 'Delhi';
+  const buyerCode = document.getElementById('gst-buyer-code')?.value || '07';
+
+  const invNumber = document.getElementById('gst-inv-number')?.value || 'INV-2026-001';
+  const invDate = document.getElementById('gst-inv-date')?.value || new Date().toISOString().split('T')[0];
+  const taxType = document.getElementById('gst-tax-type')?.value || 'auto';
+  const theme = document.getElementById('gst-theme-select')?.value || 'modern';
+
+  const upiId = document.getElementById('gst-upi-id')?.value || '';
+  const bankName = document.getElementById('gst-bank-name')?.value || '';
+  const bankAcc = document.getElementById('gst-bank-acc')?.value || '';
+  const bankIfsc = document.getElementById('gst-bank-ifsc')?.value || '';
+
+  const options = {
+    seller: {
+      name: sellerName,
+      gstin: sellerGstin,
+      address: sellerAddress,
+      state: sellerState,
+      stateCode: sellerCode,
+      phone: sellerPhone,
+      pan: sellerPan
+    },
+    buyer: {
+      name: buyerName,
+      gstin: buyerGstin,
+      address: buyerAddress,
+      state: buyerState,
+      stateCode: buyerCode
+    },
+    invoiceNumber: invNumber,
+    invoiceDate: invDate,
+    taxType: taxType,
+    theme: theme,
+    currency: 'INR',
+    upiId: upiId,
+    bankDetails: {
+      bankName: bankName,
+      accountNumber: bankAcc,
+      ifscCode: bankIfsc
+    },
+    items: gstItems.map(it => ({
+      description: it.description || 'Service',
+      hsn: it.hsn || '9983',
+      quantity: Number(it.quantity) || 1,
+      rate: Number(it.rate) || 0,
+      gstRate: Number(it.gstRate) || 18
+    }))
+  };
+
+  const gstStudio = document.getElementById('gst-invoice-studio');
+  if (gstStudio) gstStudio.style.display = 'none';
+
+  const progContainer = document.getElementById('progress-container');
+  if (progContainer) progContainer.style.display = 'block';
+
+  startLiveProgressTracking('gst-invoice-pdf');
+
+  try {
+    const res = await fetch('/api/v1/jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        operation: 'gst-invoice-pdf',
+        files: [],
+        options: options
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Failed to submit GST invoice job.');
+    }
+
+    currentJobId = data.jobId;
+    pollJobStatus(currentJobId);
+  } catch (err) {
+    stopLiveProgressTracking(false);
+    alert(`Error generating invoice: ${err.message}`);
+    if (gstStudio) gstStudio.style.display = 'block';
+    if (progContainer) progContainer.style.display = 'none';
+  }
+};
+
+window.printGstInvoicePreview = function() {
+  window.print();
+};
+
 
 // Global Initialization
 document.addEventListener('DOMContentLoaded', () => {

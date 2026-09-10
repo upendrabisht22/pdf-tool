@@ -440,6 +440,74 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
       { question: 'Will my signature file be under 30 KB?', answer: 'Yes! The compressor algorithm automatically optimizes and guarantees the output image size is strictly below your selected limit.' },
     ],
   },
+  'pdf-to-markdown': {
+    slug: 'pdf-to-markdown',
+    title: 'PDF to Markdown (.md) Converter',
+    metaTitle: 'Convert PDF to Markdown Online — Free Structured MD with Tables | DocPlatform',
+    metaDescription: 'Convert PDF documents to clean GitHub Flavored Markdown (.md) with preserved headings, bullet lists, code blocks, and formatted tables for LLMs, RAG, and docs.',
+    canonicalUrl: 'https://docplatform.app/pdf-to-markdown',
+    keywords: ['pdf to markdown', 'convert pdf to md', 'pdf to markdown online', 'pdf table to markdown', 'pdf to md for llm', 'pdf to markdown free'],
+    features: [
+      'Preserves structural headings (H1, H2, H3), bold text, and lists',
+      'Converts vector tables into clean Markdown tables (| Col 1 | Col 2 |)',
+      'Optimized for LLM prompts, RAG vector search, and documentation',
+      '100% private local in-browser processing with zero cloud data retention',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select or drag your PDF document into the converter.' },
+      { name: 'Configure Options', text: 'Choose table formatting and heading sensitivity.' },
+      { name: 'Convert & Copy/Download', text: 'Instantly download your clean .md file or copy Markdown to clipboard.' },
+    ],
+    faqs: [
+      { question: 'Does this converter preserve tables in Markdown?', answer: 'Yes! Complex tables are parsed and rendered as clean GitHub-Flavored Markdown tables.' },
+      { question: 'Can I use the output for LLM prompts and RAG?', answer: 'Absolutely. The extracted Markdown is structured specifically for token efficiency in LLM context windows.' },
+    ],
+  },
+  'markdown-to-pdf': {
+    slug: 'markdown-to-pdf',
+    title: 'Markdown to PDF Converter',
+    metaTitle: 'Convert Markdown to PDF Online — High-Fidelity Vector Document | DocPlatform',
+    metaDescription: 'Convert Markdown (.md) files or documentation into print-ready, beautifully styled PDF documents with syntax highlighting, tables, and typography.',
+    canonicalUrl: 'https://docplatform.app/markdown-to-pdf',
+    keywords: ['markdown to pdf', 'convert md to pdf', 'md to pdf online', 'markdown document to pdf', 'markdown print pdf'],
+    features: [
+      'Clean typography with GitHub Modern, Academic, and Minimal themes',
+      'Supports code blocks, blockquotes, math syntax, and tables',
+      'Configurable page sizes (A4, US Letter) with clean margins',
+      'Instant client-side vector PDF generation',
+    ],
+    howToSteps: [
+      { name: 'Upload or Paste Markdown', text: 'Drop your .md file or paste raw Markdown into the editor.' },
+      { name: 'Select Theme', text: 'Choose your preferred styling theme (Modern, Academic, Minimal).' },
+      { name: 'Download PDF', text: 'Download your high-resolution vector PDF in seconds.' },
+    ],
+    faqs: [
+      { question: 'Are code blocks styled properly?', answer: 'Yes, code blocks include clean monospaced styling and formatting.' },
+    ],
+  },
+  'gst-invoice-pdf': {
+    slug: 'gst-invoice-pdf',
+    title: 'GST & Tax Invoice Generator',
+    metaTitle: 'Free GST Invoice Generator Online — Tax Compliant Invoice with UPI QR | DocPlatform',
+    metaDescription: 'Create, customize, and download professional GST-compliant tax invoices with automatic CGST/SGST/IGST tax calculation, amount in words, and dynamic UPI QR codes.',
+    canonicalUrl: 'https://docplatform.app/gst-invoice-pdf',
+    keywords: ['gst invoice generator', 'free tax invoice maker', 'gst bill generator online', 'invoice with upi qr code', 'indian gst invoice maker'],
+    features: [
+      'Automatic CGST, SGST, and IGST calculation with HSN/SAC code support',
+      'Embedded dynamic UPI payment QR code for instant mobile scan-and-pay',
+      'Automated Amount in Words conversion (Rupees Lakhs & Crores)',
+      '100% private in-browser generation — zero financial data sent to servers',
+    ],
+    howToSteps: [
+      { name: 'Enter Business & Client Details', text: 'Add seller and buyer info, GSTIN numbers, and invoice date.' },
+      { name: 'Add Line Items', text: 'Add items, rates, and GST rates — totals and taxes calculate automatically.' },
+      { name: 'Download PDF', text: 'Download your professional, print-ready GST tax invoice with UPI QR code.' },
+    ],
+    faqs: [
+      { question: 'Does this invoice comply with Indian GST laws?', answer: 'Yes. It contains all mandatory fields including GSTIN, HSN codes, state codes, intra/inter-state tax split, and reverse charge options.' },
+      { question: 'Can customers pay via the QR code on the invoice?', answer: 'Yes! The dynamic UPI QR code encodes your VPA and the exact invoice amount, allowing instant scan-and-pay via GPay, PhonePe, Paytm, or BHIM.' },
+    ],
+  },
 };
 
 /**

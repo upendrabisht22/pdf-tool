@@ -40,6 +40,9 @@ import {
   AiAskProcessor,
   AiExtractTableProcessor,
   PipelineProcessor,
+  PdfToMarkdownProcessor,
+  MarkdownToPdfProcessor,
+  GstInvoiceProcessor,
   SandboxedWorkerHarness,
 } from '@doc-platform/workers';
 import { TOOL_REGISTRY, generateToolJsonLd } from '@doc-platform/core';
@@ -111,6 +114,9 @@ async function startWorkerLoop() {
     'ai-ask': new AiAskProcessor(),
     'ai-extract-table': new AiExtractTableProcessor(),
     'pipeline': new PipelineProcessor(),
+    'pdf-to-markdown': new PdfToMarkdownProcessor(),
+    'markdown-to-pdf': new MarkdownToPdfProcessor(),
+    'gst-invoice-pdf': new GstInvoiceProcessor(),
   };
 
   while (true) {
@@ -354,7 +360,9 @@ const server = http.createServer(async (req, res) => {
           if (f.base64Data) {
             const buf = Buffer.from(f.base64Data, 'base64');
             await storageProvider.putObject(storageKey, buf, {
-              contentType: f.name.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream',
+              contentType: f.name.endsWith('.pdf') ? 'application/pdf' :
+                           f.name.endsWith('.md') ? 'text/markdown' :
+                           f.name.endsWith('.txt') ? 'text/plain' : 'application/octet-stream',
             });
           } else if (f.storageKey) {
             // Existing key
@@ -374,6 +382,8 @@ const server = http.createServer(async (req, res) => {
             mimeType: f.name.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
                       f.name.endsWith('.xlsx') ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
                       f.name.endsWith('.pptx') ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
+                      f.name.endsWith('.md') ? 'text/markdown' :
+                      f.name.endsWith('.txt') ? 'text/plain' :
                       f.name.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream',
             sizeBytes: f.size || f.sizeBytes || 1024,
             detectedFormat: f.name.split('.').pop() || 'pdf',
@@ -1365,14 +1375,16 @@ const server = http.createServer(async (req, res) => {
     'watermark-pdf': '💧', 'page-numbers-pdf': '🔢', 'strip-metadata-pdf': '🧹', 'sign-pdf': '📜',
     'draw-signature': '✍️', 'flatten-pdf': '📄', 'repair-pdf': '🛠️', 'protect-pdf': '🔒',
     'unlock-pdf': '🔓', 'redact-pdf': '🛡️', 'ocr-pdf': '👁️', 'compare-pdf': '⚖️',
-    'ai-summarize': '💡', 'ai-ask': '🤖', 'ai-extract-table': '📋', 'pipeline': '⚡'
+    'ai-summarize': '💡', 'ai-ask': '🤖', 'ai-extract-table': '📋', 'pipeline': '⚡',
+    'pdf-to-markdown': '📝', 'markdown-to-pdf': '📄', 'gst-invoice-pdf': '🧾'
   };
 
   const getToolCategory = (key) => {
     if (['merge-pdf', 'split-pdf', 'compress-pdf', 'rotate-pdf', 'delete-pdf-pages', 'extract-pages'].includes(key)) return { name: 'Core PDF', link: '/merge-pdf' };
-    if (['word-to-pdf', 'excel-to-pdf', 'pdf-to-word', 'pdf-to-excel', 'jpg-to-pdf', 'pdf-to-jpg'].includes(key)) return { name: 'Conversions', link: '/pdf-to-word' };
+    if (['word-to-pdf', 'excel-to-pdf', 'pdf-to-word', 'pdf-to-excel', 'jpg-to-pdf', 'pdf-to-jpg', 'pdf-to-markdown', 'markdown-to-pdf'].includes(key)) return { name: 'Conversions', link: '/pdf-to-word' };
     if (['watermark-pdf', 'page-numbers-pdf', 'strip-metadata-pdf', 'sign-pdf', 'draw-signature', 'flatten-pdf', 'repair-pdf', 'protect-pdf', 'unlock-pdf', 'redact-pdf'].includes(key)) return { name: 'Security & Sign', link: '/protect-pdf' };
     if (['ocr-pdf', 'compare-pdf', 'ai-summarize', 'ai-ask', 'ai-extract-table'].includes(key)) return { name: 'AI & OCR', link: '/ai-ask' };
+    if (['gst-invoice-pdf'].includes(key)) return { name: 'Business & Tax', link: '/gst-invoice-pdf' };
     return { name: 'PDF Tools', link: '/merge-pdf' };
   };
 
@@ -1392,6 +1404,9 @@ const server = http.createServer(async (req, res) => {
       'ocr-pdf': ['pdf-to-word', 'ai-ask', 'compress-pdf', 'searchable-pdf'],
       'redact-pdf': ['protect-pdf', 'strip-metadata-pdf', 'flatten-pdf', 'watermark-pdf'],
       'draw-signature': ['sign-pdf', 'flatten-pdf', 'protect-pdf', 'compress-pdf'],
+      'pdf-to-markdown': ['markdown-to-pdf', 'pdf-to-word', 'ai-summarize', 'ocr-pdf'],
+      'markdown-to-pdf': ['pdf-to-markdown', 'word-to-pdf', 'compress-pdf', 'merge-pdf'],
+      'gst-invoice-pdf': ['sign-pdf', 'protect-pdf', 'pdf-to-excel', 'compress-pdf'],
     };
     return map[key] || ['merge-pdf', 'pdf-to-word', 'compress-pdf', 'ai-ask'];
   };
@@ -1412,6 +1427,7 @@ const server = http.createServer(async (req, res) => {
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script type="application/ld+json">
     ${JSON.stringify(jsonLd.webAppSchema)}
   </script>
@@ -1529,6 +1545,157 @@ const server = http.createServer(async (req, res) => {
             <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-hero); margin-bottom: 0.35rem;">Select Signature Photo from Phone / PC</h3>
             <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Drop any phone camera photo of your handwritten signature here to auto-compress strictly under 30 KB.</p>
             <button type="button" class="upload-btn"><span>Choose Signature Image</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dedicated Professional GST Invoice Studio -->
+      <div id="gst-invoice-studio" style="display: none; padding: 0.5rem;">
+        <div class="gst-studio-container">
+          <!-- Left: Invoice Editor Form -->
+          <div class="gst-form-panel">
+            <div class="gst-panel-header">
+              <div class="gst-panel-title">🧾 GST Invoice Designer</div>
+              <div class="gst-theme-picker">
+                <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Theme:</span>
+                <select id="gst-theme-select" class="select-control" onchange="updateGstInvoicePreview()" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                  <option value="modern" selected>Modern Slate</option>
+                  <option value="corporate">Corporate Blue</option>
+                  <option value="emerald">Emerald Green</option>
+                  <option value="minimal">Clean Minimal</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Seller Details -->
+            <div class="gst-section-card">
+              <div class="gst-section-title">🏢 Billed From (Your Business)</div>
+              <div class="gst-grid-2">
+                <input type="text" id="gst-seller-name" placeholder="Business Name *" value="Acme Technologies Pvt Ltd" oninput="updateGstInvoicePreview()" class="gst-input" />
+                <input type="text" id="gst-seller-gstin" placeholder="Your GSTIN (e.g. 07AAAAA0000A1Z5)" value="07AAAAA0000A1Z5" oninput="updateGstInvoicePreview()" class="gst-input" />
+              </div>
+              <div class="gst-grid-2" style="margin-top: 0.5rem;">
+                <input type="text" id="gst-seller-address" placeholder="Address, City, Pincode" value="Plot 42, Okhla Phase 3, New Delhi" oninput="updateGstInvoicePreview()" class="gst-input" />
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="text" id="gst-seller-state" placeholder="State (e.g. Delhi)" value="Delhi" oninput="updateGstInvoicePreview()" class="gst-input" style="flex: 2;" />
+                  <input type="text" id="gst-seller-code" placeholder="Code" value="07" oninput="updateGstInvoicePreview()" class="gst-input" style="flex: 1;" />
+                </div>
+              </div>
+              <div class="gst-grid-2" style="margin-top: 0.5rem;">
+                <input type="text" id="gst-seller-phone" placeholder="Phone (optional)" value="+91 98765 43210" oninput="updateGstInvoicePreview()" class="gst-input" />
+                <input type="text" id="gst-seller-pan" placeholder="PAN Number" value="AAAAA0000A" oninput="updateGstInvoicePreview()" class="gst-input" />
+              </div>
+            </div>
+
+            <!-- Buyer Details -->
+            <div class="gst-section-card">
+              <div class="gst-section-title">👤 Billed To (Client / Customer)</div>
+              <div class="gst-grid-2">
+                <input type="text" id="gst-buyer-name" placeholder="Client Name *" value="Apex Retailers LLP" oninput="updateGstInvoicePreview()" class="gst-input" />
+                <input type="text" id="gst-buyer-gstin" placeholder="Buyer GSTIN (if registered)" value="07BBBBB1111B1Z2" oninput="updateGstInvoicePreview()" class="gst-input" />
+              </div>
+              <div class="gst-grid-2" style="margin-top: 0.5rem;">
+                <input type="text" id="gst-buyer-address" placeholder="Client Address, City" value="Connaught Place, Central Delhi" oninput="updateGstInvoicePreview()" class="gst-input" />
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="text" id="gst-buyer-state" placeholder="State (e.g. Delhi)" value="Delhi" oninput="updateGstInvoicePreview()" class="gst-input" style="flex: 2;" />
+                  <input type="text" id="gst-buyer-code" placeholder="Code" value="07" oninput="updateGstInvoicePreview()" class="gst-input" style="flex: 1;" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Invoice Meta & Tax Mode -->
+            <div class="gst-section-card">
+              <div class="gst-section-title">📅 Invoice Details & Tax Mode</div>
+              <div class="gst-grid-3">
+                <div>
+                  <label class="gst-label">Invoice Number</label>
+                  <input type="text" id="gst-inv-number" value="INV-2026-001" oninput="updateGstInvoicePreview()" class="gst-input" />
+                </div>
+                <div>
+                  <label class="gst-label">Invoice Date</label>
+                  <input type="date" id="gst-inv-date" oninput="updateGstInvoicePreview()" class="gst-input" />
+                </div>
+                <div>
+                  <label class="gst-label">Tax Type</label>
+                  <select id="gst-tax-type" class="gst-input" onchange="updateGstInvoicePreview()">
+                    <option value="auto" selected>Auto (Intra/Inter)</option>
+                    <option value="intra">Intra-State (CGST + SGST)</option>
+                    <option value="inter">Inter-State (IGST)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Line Items Table -->
+            <div class="gst-section-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div class="gst-section-title" style="margin-bottom: 0;">📦 Line Items & Services</div>
+                <button type="button" class="select-control" onclick="addGstItemRow()" style="font-size: 0.78rem; padding: 0.25rem 0.65rem;">+ Add Item</button>
+              </div>
+              <div class="gst-items-table-wrapper">
+                <table class="gst-items-table" id="gst-items-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 34%;">Description</th>
+                      <th style="width: 16%;">HSN</th>
+                      <th style="width: 12%;">Qty</th>
+                      <th style="width: 16%;">Rate (Rs.)</th>
+                      <th style="width: 14%;">GST%</th>
+                      <th style="width: 8%;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="gst-items-tbody">
+                    <!-- Rows dynamically generated -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Banking & UPI QR Setup -->
+            <div class="gst-section-card">
+              <div class="gst-section-title">⚡ Instant Digital Payment & Bank Details</div>
+              <div class="gst-grid-2">
+                <div>
+                  <label class="gst-label">UPI ID (for dynamic QR code)</label>
+                  <input type="text" id="gst-upi-id" placeholder="yourbusiness@upi / 9876543210@paytm" value="acmetech@hdfcbank" oninput="updateGstInvoicePreview()" class="gst-input" />
+                </div>
+                <div>
+                  <label class="gst-label">Bank Name</label>
+                  <input type="text" id="gst-bank-name" placeholder="Bank Name" value="HDFC Bank" oninput="updateGstInvoicePreview()" class="gst-input" />
+                </div>
+              </div>
+              <div class="gst-grid-2" style="margin-top: 0.5rem;">
+                <div>
+                  <label class="gst-label">Account Number</label>
+                  <input type="text" id="gst-bank-acc" placeholder="Account Number" value="50200012345678" oninput="updateGstInvoicePreview()" class="gst-input" />
+                </div>
+                <div>
+                  <label class="gst-label">IFSC Code</label>
+                  <input type="text" id="gst-bank-ifsc" placeholder="IFSC Code" value="HDFC0000123" oninput="updateGstInvoicePreview()" class="gst-input" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+              <button type="button" class="process-btn" onclick="generateAndDownloadGstInvoicePdf()" style="flex: 2;">
+                <span>⚡ Download GST Invoice PDF</span>
+              </button>
+              <button type="button" class="select-control" onclick="printGstInvoicePreview()" style="flex: 1; font-weight: 600;">
+                <span>🖨️ Print</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Live Real-Time Invoice Document Preview -->
+          <div class="gst-preview-panel">
+            <div class="gst-preview-toolbar">
+              <span class="gst-preview-badge">LIVE A4 VECTOR PREVIEW</span>
+              <span id="gst-preview-tax-badge" class="gst-preview-tax-mode">Intra-State (CGST 9% + SGST 9%)</span>
+            </div>
+            <div class="gst-paper" id="gst-paper">
+              <!-- Live Invoice Content rendered in real-time -->
+            </div>
           </div>
         </div>
       </div>
