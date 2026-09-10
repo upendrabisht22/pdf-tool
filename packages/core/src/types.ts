@@ -417,6 +417,8 @@ export interface AiSummarizeOptions {
   targetLanguage?: string;
   /** Max words in summary output. Default: 500 */
   maxWordCount?: number;
+  /** BYOK: User's Gemini API key for live summarization. When absent, falls back to offline heuristics. */
+  apiKey?: string;
 }
 
 export interface AiCitation {
@@ -434,6 +436,8 @@ export interface AiAskOptions {
   topKChunks?: number;
   /** Specific page range to restrict search to */
   pageRange?: 'all' | number[];
+  /** BYOK: User's Gemini API key for live Q&A. When absent, falls back to offline BM25 heuristics. */
+  apiKey?: string;
 }
 
 export interface AiExtractTableOptions {
@@ -441,6 +445,8 @@ export interface AiExtractTableOptions {
   schema?: Record<string, 'string' | 'number' | 'date' | 'boolean'>;
   /** Output format: 'json' | 'csv' | 'markdown' */
   format?: 'json' | 'csv' | 'markdown';
+  /** BYOK: User's Gemini API key for multimodal vision table extraction fallback. */
+  apiKey?: string;
 }
 
 export interface PipelineStep {

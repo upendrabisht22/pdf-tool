@@ -732,10 +732,10 @@ const server = http.createServer(async (req, res) => {
             <a href="https://github.com/upendrabisht22/pdf-tool" target="_blank" rel="noopener" class="social-icon-btn" title="GitHub">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             </a>
-            <a href="#" class="social-icon-btn" title="Twitter / X">
+            <a href="https://twitter.com/intent/tweet?text=DocPlatform+-+100%25+free+private+PDF+tools+with+AI&url=https://docplatform.app" target="_blank" rel="noopener" class="social-icon-btn" title="Share on Twitter / X">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
             </a>
-            <a href="#" class="social-icon-btn" title="LinkedIn">
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://docplatform.app" target="_blank" rel="noopener" class="social-icon-btn" title="Share on LinkedIn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
             </a>
           </div>
@@ -759,7 +759,7 @@ const server = http.createServer(async (req, res) => {
           <h4 class="footer-col-title">Developers</h4>
           <ul class="footer-links-list">
             <li><a href="/api/v1/health" class="footer-link" target="_blank">REST API Health</a></li>
-            <li><a href="#features" class="footer-link">Sandboxed Workers</a></li>
+            <li><a href="/#features" class="footer-link">Sandboxed Workers</a></li>
             <li><a href="/pricing" class="footer-link">API Rate Limits</a></li>
             <li><a href="https://github.com/upendrabisht22/pdf-tool" class="footer-link" target="_blank">Architecture Spec</a></li>
             <li>
@@ -774,9 +774,9 @@ const server = http.createServer(async (req, res) => {
         <div>
           <h4 class="footer-col-title">Company & Legal</h4>
           <ul class="footer-links-list">
-            <li><a href="#" class="footer-link">Privacy Policy</a></li>
-            <li><a href="#" class="footer-link">Terms of Service</a></li>
-            <li><a href="#" class="footer-link">Security Whitepaper</a></li>
+            <li><a href="/privacy" class="footer-link">Privacy Policy</a></li>
+            <li><a href="/terms" class="footer-link">Terms of Service</a></li>
+            <li><a href="/security" class="footer-link">Security Whitepaper</a></li>
             <li><a href="mailto:support@docplatform.com" class="footer-link">support@docplatform.com</a></li>
             <li><span style="font-size: 0.85rem; color: var(--text-muted);">Bengaluru, India</span></li>
           </ul>
@@ -787,8 +787,9 @@ const server = http.createServer(async (req, res) => {
       <div class="footer-bottom-bar">
         <div>© 2026 DocPlatform Inc. All rights reserved. Precision vector processing & zero cloud retention.</div>
         <div class="footer-bottom-links">
-          <a href="#" class="footer-bottom-link">Privacy Policy</a>
-          <a href="#" class="footer-bottom-link">Terms of Service</a>
+          <a href="/privacy" class="footer-bottom-link">Privacy Policy</a>
+          <a href="/terms" class="footer-bottom-link">Terms of Service</a>
+          <a href="/security" class="footer-bottom-link">Security Whitepaper</a>
           <a href="mailto:support@docplatform.com" class="footer-bottom-link">Contact Support</a>
         </div>
       </div>
@@ -1097,6 +1098,225 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Route: Dedicated /privacy Page (Zero-Retention & In-Browser Privacy Policy)
+  if (pathname === '/privacy') {
+    const privacyHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy & Zero-Retention Architecture — DocPlatform</title>
+  <meta name="description" content="Learn how DocPlatform protects your documents with 100% in-browser processing, zero cloud retention, and local BYOK Gemini key privacy.">
+  <link rel="canonical" href="https://docplatform.app/privacy">
+  <link rel="stylesheet" href="/styles.css?v=2.3">
+</head>
+<body>
+  ${renderNavbar('')}
+
+  <main class="main-content" style="padding-top: 2rem;">
+    <nav class="breadcrumb-bar" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Privacy Policy</span>
+    </nav>
+
+    <section class="pricing-hero" style="margin-bottom: 2rem;">
+      <h1 class="pricing-title">
+        Privacy Policy & <br>
+        <span class="pricing-title-gradient">Zero-Retention Guarantee</span>
+      </h1>
+      <p class="pricing-subtitle">
+        Your documents belong to you. We believe privacy is a fundamental human right, not a paid tier feature.
+      </p>
+    </section>
+
+    <div style="max-width: 860px; margin: 0 auto 5rem; background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 16px; padding: 2.75rem 2.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); line-height: 1.8; color: var(--text-primary);">
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #dcfce7; color: #166534; padding: 0.35rem 0.9rem; border-radius: 9999px; font-weight: 700; font-size: 0.82rem; margin-bottom: 1.5rem;">
+        <span>🔒</span> Zero Cloud Data Retention • Last Updated September 2026
+      </div>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 1.5rem 0 0.5rem;">1. 100% In-Browser Processing (Client-Side Privacy)</h2>
+      <p>
+        For standard PDF operations (including <strong>Merge, Split, Rotate, Compress, Delete Pages, Image to PDF, and Password Protect</strong>), all processing executes <strong>entirely inside your browser</strong> via WebAssembly and JavaScript vector engines. Your document bytes never leave your device and are never transmitted to our servers or stored in any cloud bucket.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">2. Bring Your Own Key (BYOK) for AI Intelligence</h2>
+      <p>
+        For AI Document Q&A, Summaries, and Table Extraction, you provide your own free Google Gemini API Key. Your key is stored <strong>exclusively in your browser's localStorage</strong>. It is never written to our database, never logged, and never accessible by our team.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">3. Ephemeral Server Workers & 60-Minute Auto-Purge</h2>
+      <p>
+        For heavy server conversions (such as high-fidelity Office to PDF or multilingual OCR), input files are held temporarily in ephemeral isolated scratch memory. Our automated <strong>Job-TTL Cleanup Daemon</strong> forcefully purges all inputs, outputs, and intermediate scratch files within <strong>60 minutes</strong> of job completion.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">4. Zero Tracking, Cookies, or Data Monetization</h2>
+      <p>
+        We do not use tracking cookies, we do not profile your reading habits, and <strong>we never sell or monetize user data</strong>. DocPlatform is sustained through voluntary community coffee tips and open-source sponsorship.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">5. Contact Our Privacy Team</h2>
+      <p>
+        If you have questions regarding our privacy architecture or require custom air-gapped on-premise deployments, contact us directly at <a href="mailto:support@docplatform.com" style="color: var(--brand-primary); font-weight: 700; text-decoration: underline;">support@docplatform.com</a>.
+      </p>
+    </div>
+  </main>
+
+  ${renderFooter()}
+  <script src="/app.js?v=2.3"></script>
+</body>
+</html>`;
+
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(privacyHtml);
+    return;
+  }
+
+  // Route: Dedicated /terms Page (Terms of Service)
+  if (pathname === '/terms') {
+    const termsHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service — DocPlatform</title>
+  <meta name="description" content="Simple, transparent, and developer-friendly Terms of Service for DocPlatform.">
+  <link rel="canonical" href="https://docplatform.app/terms">
+  <link rel="stylesheet" href="/styles.css?v=2.3">
+</head>
+<body>
+  ${renderNavbar('')}
+
+  <main class="main-content" style="padding-top: 2rem;">
+    <nav class="breadcrumb-bar" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Terms of Service</span>
+    </nav>
+
+    <section class="pricing-hero" style="margin-bottom: 2rem;">
+      <h1 class="pricing-title">
+        Terms of <br>
+        <span class="pricing-title-gradient">Service & Usage</span>
+      </h1>
+      <p class="pricing-subtitle">
+        Zero paywalls, zero hidden contracts. Straightforward terms for our free document platform.
+      </p>
+    </section>
+
+    <div style="max-width: 860px; margin: 0 auto 5rem; background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 16px; padding: 2.75rem 2.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); line-height: 1.8; color: var(--text-primary);">
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 1rem 0 0.5rem;">1. Free & Zero-Login Commitment</h2>
+      <p>
+        DocPlatform is provided free of charge for personal, educational, and commercial use. You are not required to create an account, register your email, or provide credit card information to use any core document processing feature.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">2. Acceptable Use Guidelines</h2>
+      <p>
+        You agree not to use DocPlatform to process, generate, or distribute malicious code, illegal materials, or execute denial-of-service (DoS) attacks against our infrastructure. Batch rate limits are enforced at the network level to ensure fair availability for all community users.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">3. Intellectual Property</h2>
+      <p>
+        You retain 100% full ownership, rights, and copyright to all documents and data you process using DocPlatform. We claim zero rights or ownership over your content.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">4. Disclaimer & Limitation of Liability</h2>
+      <p>
+        DocPlatform is provided "as is" without warranty of any kind, either express or implied. While we employ rigorous automated testing and cryptographic verification, users are encouraged to maintain backups of critical original documents before performing irreversible batch modifications.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">5. Voluntary Community Support</h2>
+      <p>
+        Any tip or donation made via our coffee tip jar is voluntary gratitude and does not create an ongoing commercial contract or service-level commitment.
+      </p>
+    </div>
+  </main>
+
+  ${renderFooter()}
+  <script src="/app.js?v=2.3"></script>
+</body>
+</html>`;
+
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(termsHtml);
+    return;
+  }
+
+  // Route: Dedicated /security Page (Security Architecture Whitepaper)
+  if (pathname === '/security') {
+    const securityHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Architecture & Whitepaper — DocPlatform</title>
+  <meta name="description" content="Technical overview of DocPlatform's security model: AES-256 GCM encryption, zero-leak vector redaction, sandboxed worker isolation, and ephemeral TTL memory.">
+  <link rel="canonical" href="https://docplatform.app/security">
+  <link rel="stylesheet" href="/styles.css?v=2.3">
+</head>
+<body>
+  ${renderNavbar('')}
+
+  <main class="main-content" style="padding-top: 2rem;">
+    <nav class="breadcrumb-bar" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Security Whitepaper</span>
+    </nav>
+
+    <section class="pricing-hero" style="margin-bottom: 2rem;">
+      <h1 class="pricing-title">
+        Security Architecture & <br>
+        <span class="pricing-title-gradient">Encryption Whitepaper</span>
+      </h1>
+      <p class="pricing-subtitle">
+        Engineered with defense-in-depth security, strict memory isolation, and zero-leak document redaction.
+      </p>
+    </section>
+
+    <div style="max-width: 860px; margin: 0 auto 5rem; background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 16px; padding: 2.75rem 2.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); line-height: 1.8; color: var(--text-primary);">
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 1rem 0 0.5rem;">1. Cryptographic Standards (AES-256 GCM)</h2>
+      <p>
+        DocPlatform implements true AES-256 GCM authenticated encryption with PBKDF2 key derivation for PDF protection. Document permissions (printing, extraction, modification) are enforced cryptographically with 128-bit/256-bit permission flags.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">2. Permanent Zero-Leak Vector Redaction</h2>
+      <p>
+        Unlike naive tools that merely draw a visual black box over sensitive text while leaving the underlying text stream selectable, DocPlatform's Redaction engine scrubs the underlying vector character streams, removes cached form XObjects, and strips metadata dictionary trails to guarantee <strong>zero-leak redaction</strong>.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">3. Sandboxed Worker Isolation (SandboxedWorkerHarness)</h2>
+      <p>
+        All server-side conversion tasks execute inside sandboxed child worker processes with:
+      </p>
+      <ul style="padding-left: 1.5rem; margin: 0.75rem 0;">
+        <li>Strict <strong>60-second execution CPU timeout budgets</strong> to neutralize decompression bombs (zip bombs).</li>
+        <li>Memory consumption caps enforced per worker lease.</li>
+        <li>Automatic subprocess process-group termination (SIGKILL) on timeout.</li>
+      </ul>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">4. Automated Storage Hygiene (Job-TTL Daemon)</h2>
+      <p>
+        Our background cleanup daemon continuously monitors the file storage layer and automatically purges all temporary files older than <strong>60 minutes</strong>. No unencrypted document data is permanently archived.
+      </p>
+
+      <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-hero); margin: 2rem 0 0.5rem;">5. Responsible Disclosure</h2>
+      <p>
+        If you discover a security vulnerability, please report it immediately to <a href="mailto:security@docplatform.com" style="color: var(--brand-primary); font-weight: 700; text-decoration: underline;">security@docplatform.com</a>. We review all security inquiries within 24 hours.
+      </p>
+    </div>
+  </main>
+
+  ${renderFooter()}
+  <script src="/app.js?v=2.3"></script>
+</body>
+</html>`;
+
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(securityHtml);
+    return;
+  }
+
   // Serve Main Web Application with Rich SEO & Structured Data
   const isHomepage = pathname === '/' || pathname === '';
   const currentToolKey = isHomepage ? 'merge-pdf' : pathname.replace(/^\//, '');
@@ -1338,6 +1558,15 @@ const server = http.createServer(async (req, res) => {
             </div>
           </div>
           <span class="result-file-badge" id="result-file-badge">PDF</span>
+        </div>
+
+        <!-- AI Response & Preview Box (For AI Summaries, Q&A, and Extracted Tables) -->
+        <div class="result-ai-preview" id="result-ai-preview" style="display: none;">
+          <div class="result-ai-header">
+            <span class="result-ai-badge">🤖 AI Intelligence Preview</span>
+            <button type="button" class="result-ai-copy-btn" id="result-ai-copy-btn" onclick="copyAiPreviewText()">📋 Copy Text</button>
+          </div>
+          <div class="result-ai-body" id="result-ai-body"></div>
         </div>
 
         <div>

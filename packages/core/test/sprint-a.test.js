@@ -179,15 +179,19 @@ test('Unlock - rejects empty password', async () => {
   );
 });
 
-test('Unlock - processes an unencrypted PDF transparently (no-op unlock)', async () => {
-  // An unencrypted PDF can be "unlocked" — it just passes through unchanged
+test('Unlock - rejects unencrypted PDF (nothing to unlock)', async () => {
+  // An unencrypted PDF should be rejected — there is nothing to unlock
   const processor = new UnlockPdfProcessor();
   const inputBuf = await makeTestPdf(2);
   const ctx = makeCtx();
 
-  const result = await processor.process([inputBuf], { password: 'any-password' }, ctx);
-  assert.equal(result.outputFiles.length, 1);
-  assertValidPdf(result.outputFiles[0].buffer, 'unlock no-op');
+  await assert.rejects(
+    () => processor.process([inputBuf], { password: 'any-password' }, ctx),
+    (err) => {
+      assert.ok(err.message.includes('not encrypted') || err.code === 'PROCESSING_FAILED');
+      return true;
+    }
+  );
 });
 
 // ─── Repair Tests ─────────────────────────────────────────────────────────────
