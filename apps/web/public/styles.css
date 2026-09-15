@@ -2333,16 +2333,78 @@ body::before {
 }
 
 /* ── Professional GST Invoice Studio ──────────────────────────────────────── */
-.gst-studio-container {
-  display: grid;
-  grid-template-columns: minmax(380px, 1.1fr) minmax(360px, 0.9fr);
-  gap: 1.5rem;
-  align-items: start;
+.main-content.wide-canvas {
+  max-width: 1520px;
+  padding-left: 2rem;
+  padding-right: 2rem;
 }
 
-@media (max-width: 980px) {
+.gst-mobile-view-switcher {
+  display: none;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  background: var(--bg-subtle);
+  padding: 0.35rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 1024px) {
+  .gst-mobile-view-switcher {
+    display: flex;
+  }
+}
+
+.gst-view-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gst-view-tab-btn.active {
+  background: #ffffff;
+  color: var(--text-hero);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.gst-studio-container {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1.75rem;
+  align-items: start;
+  width: 100%;
+}
+
+/* Desktop 1280+ : comfortable 2-panel view */
+@media (min-width: 1281px) {
+  .gst-studio-container {
+    grid-template-columns: minmax(520px, 1.1fr) minmax(480px, 0.9fr);
+  }
+}
+
+/* Tablets & smaller laptops */
+@media (max-width: 1280px) and (min-width: 1025px) {
+  .gst-studio-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 1024px) {
   .gst-studio-container {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 }
 
@@ -2350,8 +2412,13 @@ body::before {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  padding: 1.25rem;
+  padding: 1.35rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  min-width: 0;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 .gst-panel-header {
@@ -2387,25 +2454,28 @@ body::before {
 }
 
 .gst-section-title {
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 700;
   color: var(--text-hero);
   margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .gst-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
+  gap: 0.65rem;
 }
 
 .gst-grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.6rem;
+  gap: 0.65rem;
 }
 
-@media (max-width: 500px) {
+@media (max-width: 560px) {
   .gst-grid-2, .gst-grid-3 {
     grid-template-columns: 1fr;
   }
@@ -2413,7 +2483,7 @@ body::before {
 
 .gst-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 0.25rem;
@@ -2430,6 +2500,7 @@ body::before {
   color: var(--text-primary);
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
 }
 
 .gst-input:focus {
@@ -2442,10 +2513,13 @@ body::before {
   border-radius: 8px;
   border: 1px solid var(--border-subtle);
   background: #ffffff;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .gst-items-table {
   width: 100%;
+  min-width: 580px;
   border-collapse: collapse;
   font-size: 0.8rem;
 }
@@ -2454,15 +2528,17 @@ body::before {
   background: var(--bg-subtle);
   color: var(--text-secondary);
   font-weight: 700;
-  padding: 0.5rem 0.4rem;
+  padding: 0.5rem 0.55rem;
   text-align: left;
   border-bottom: 1px solid var(--border-subtle);
   font-size: 0.74rem;
+  white-space: nowrap;
 }
 
 .gst-items-table td {
-  padding: 0.4rem 0.35rem;
+  padding: 0.45rem 0.45rem;
   border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
 }
 
 .gst-del-btn {
@@ -2470,22 +2546,65 @@ body::before {
   border: none;
   color: #ef4444;
   cursor: pointer;
-  font-size: 0.88rem;
-  padding: 0.2rem;
-  border-radius: 4px;
+  padding: 0.35rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .gst-del-btn:hover {
   background: #fee2e2;
+  color: #b91c1c;
+}
+
+.gst-action-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  align-items: center;
+}
+
+.gst-action-btn-download {
+  flex: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.gst-action-btn-print {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
 }
 
 /* Live Preview Panel */
 .gst-preview-panel {
   position: sticky;
-  top: 1.5rem;
+  top: 4.5rem;
   background: #e2e8f0;
   border-radius: 16px;
   padding: 1.25rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+  min-width: 0;
+  box-sizing: border-box;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 transparent;
 }
 
 .gst-preview-toolbar {
@@ -2493,133 +2612,291 @@ body::before {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .gst-preview-badge {
   font-size: 0.72rem;
   font-weight: 800;
-  color: #475569;
-  letter-spacing: 0.06em;
+  color: #334155;
+  letter-spacing: 0.05em;
   background: #ffffff;
-  padding: 0.25rem 0.6rem;
+  padding: 0.28rem 0.65rem;
   border-radius: 999px;
   border: 1px solid #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .gst-preview-tax-mode {
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: #15803d;
   background: #dcfce7;
-  padding: 0.2rem 0.6rem;
+  border: 1px solid #bbf7d0;
+  padding: 0.25rem 0.65rem;
   border-radius: 999px;
 }
 
 .gst-paper {
   background: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
-  padding: 1.75rem;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
   font-family: 'Inter', -apple-system, sans-serif;
   color: #1e293b;
-  min-height: 580px;
-  font-size: 0.78rem;
+  min-height: 650px;
+  font-size: 0.72rem;
   line-height: 1.35;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Paper Document Elements */
-.gst-doc-header {
-  border-radius: 6px;
-  padding: 0.85rem 1.1rem;
-  color: #ffffff;
+/* Authentic Ruled Box-in-Box Ledger Layout (Rule 46 CGST Rules, 2017) */
+.gst-doc-ledger-box {
+  border: 1.5px solid #1e293b;
+  background: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gst-doc-stat-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-}
-
-.gst-doc-title {
-  font-size: 1.2rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
-
-.gst-doc-meta-bar {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 0.5rem 0.85rem;
-  display: flex;
   justify-content: space-between;
-  font-size: 0.74rem;
-  margin-bottom: 0.85rem;
+  background: #f1f5f9;
+  border-bottom: 1.5px solid #1e293b;
+  padding: 0.5rem 0.75rem;
 }
 
-.gst-doc-addresses {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.85rem;
-  margin-bottom: 1rem;
+.gst-doc-copy-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #0f172a;
+  border: 1px solid #94a3b8;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  background: #ffffff;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.gst-doc-addr-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 0.65rem 0.85rem;
+.gst-doc-seller-block {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1.5px solid #1e293b;
   background: #ffffff;
 }
 
-.gst-doc-addr-title {
+.gst-doc-meta-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1.5px solid #1e293b;
+  background: #f8fafc;
   font-size: 0.68rem;
+}
+
+.gst-doc-meta-col {
+  padding: 0.45rem 0.75rem;
+}
+
+.gst-doc-meta-col:last-child {
+  border-left: 1.5px solid #1e293b;
+}
+
+.gst-doc-meta-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.12rem 0;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.gst-doc-meta-row span,
+.gst-doc-meta-row strong {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.gst-doc-party-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1.5px solid #1e293b;
+  font-size: 0.70rem;
+  background: #ffffff;
+}
+
+@media (max-width: 580px) {
+  .gst-doc-meta-table,
+  .gst-doc-party-table {
+    grid-template-columns: 1fr;
+  }
+  .gst-doc-meta-col:last-child,
+  .gst-doc-party-box:last-child {
+    border-left: none;
+    border-top: 1.5px solid #1e293b;
+  }
+}
+
+.gst-doc-party-box {
+  padding: 0.5rem 0.75rem;
+}
+
+.gst-doc-party-box:last-child {
+  border-left: 1.5px solid #1e293b;
+}
+
+.gst-doc-party-label {
+  font-size: 0.62rem;
   font-weight: 800;
   color: #64748b;
   text-transform: uppercase;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
+  letter-spacing: 0.04em;
+}
+
+/* Responsive Table Scroll & Crisp Grid Lining */
+.gst-doc-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 0;
+  border-bottom: 1.5px solid #1e293b;
 }
 
 .gst-doc-table {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
-  margin-bottom: 1rem;
-  font-size: 0.72rem;
+  table-layout: fixed;
+  font-size: 0.65rem;
 }
 
 .gst-doc-table th {
   background: #f1f5f9;
-  border-top: 1px solid #cbd5e1;
-  border-bottom: 1px solid #cbd5e1;
-  padding: 0.4rem 0.45rem;
-  text-align: left;
+  border: 1px solid #94a3b8;
+  padding: 0.35rem 0.25rem;
   font-weight: 700;
+  color: #0f172a;
+  font-size: 0.60rem;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .gst-doc-table td {
-  padding: 0.4rem 0.45rem;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 0.35rem 0.25rem;
+  border: 1px solid #cbd5e1;
+  vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
-.gst-doc-bottom {
+.gst-doc-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+/* Mandatory HSN/SAC Tax Summary Table */
+.gst-doc-hsn-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.64rem;
+  border: 1px solid #94a3b8;
+  table-layout: auto;
+}
+
+.gst-doc-hsn-table th {
+  background: #f1f5f9;
+  border: 1px solid #94a3b8;
+  padding: 0.3rem 0.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  word-break: break-word;
+}
+
+.gst-doc-hsn-table td {
+  border: 1px solid #cbd5e1;
+  padding: 0.3rem 0.35rem;
+  word-break: break-word;
+}
+
+/* Bottom Split: Words & Banking Left, Totals & Signatory Right */
+.gst-doc-bottom-grid {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 1rem;
-  margin-top: 0.5rem;
+  grid-template-columns: 1.2fr 0.8fr;
+  align-items: stretch;
+  border-top: 1.5px solid #1e293b;
 }
 
-.gst-doc-bank-box {
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 0.65rem 0.85rem;
+@media (max-width: 680px) {
+  .gst-doc-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+  .gst-doc-bottom-left {
+    border-right: none !important;
+    border-bottom: 1.5px solid #1e293b;
+  }
+}
+
+.gst-doc-bottom-left {
+  padding: 0.6rem 0.75rem;
+  border-right: 1.5px solid #1e293b;
   display: flex;
-  gap: 0.85rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #ffffff;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.gst-doc-bottom-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #f8fafc;
+  min-width: 0;
+}
+
+.gst-doc-words-box {
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  padding: 0.35rem 0.5rem;
+  background: #f8fafc;
+}
+
+.gst-doc-bank-qr-box {
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  padding: 0.45rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  background: #ffffff;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.gst-doc-bank-qr-box > div:first-child {
+  min-width: 0;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .gst-doc-qr {
-  width: 72px;
-  height: 72px;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  padding: 3px;
+  width: 62px;
+  height: 62px;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  padding: 2px;
   background: #ffffff;
   display: flex;
   align-items: center;
@@ -2627,26 +2904,50 @@ body::before {
   flex-shrink: 0;
 }
 
-.gst-doc-totals-box {
+.gst-doc-calc-table {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.68rem;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 0.75rem 0.85rem;
+  flex: 1;
 }
 
-.gst-doc-total-row {
+.gst-doc-calc-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.25rem;
-  font-size: 0.74rem;
+  align-items: baseline;
+  padding: 0.15rem 0;
+  font-weight: 500;
+  color: #334155;
+  gap: 0.5rem;
 }
 
-.gst-doc-grand-total {
-  font-size: 0.95rem;
+.gst-doc-calc-row > span {
+  white-space: nowrap;
+}
+
+.gst-doc-calc-row > span:first-child {
+  white-space: normal;
+  word-break: break-word;
+  flex-shrink: 1;
+}
+
+.gst-doc-grand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 0.45rem 0.65rem;
   font-weight: 800;
-  border-top: 1.5px solid #0f172a;
-  padding-top: 0.4rem;
-  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  margin-top: 0.4rem;
+  border-radius: 3px;
+}
+
+.gst-doc-signatory-block {
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid #cbd5e1;
+  background: #ffffff;
 }
 
 @media print {
@@ -2662,7 +2963,7 @@ body::before {
     top: 0 !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 10mm 15mm !important;
+    padding: 8mm !important;
     box-shadow: none !important;
     border: none !important;
   }

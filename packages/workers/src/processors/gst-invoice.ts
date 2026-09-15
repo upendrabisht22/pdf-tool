@@ -1,9 +1,18 @@
 /**
  * @file processors/gst-invoice.ts
- * @description Professional GST & Tax-Compliant Invoice Generator with dynamic UPI QR Code.
+ * @description Authentic, Production-Grade Indian GST Tax Invoice Generator (Rule 46 CGST Rules, 2017).
+ * Features:
+ *  - Formal outer boundary frame & ruled ledger box-in-box structure
+ *  - Statutory Rule 46 header & Original for Recipient marking
+ *  - Detailed Billed To (Buyer) & Shipped To (Consignee) grid
+ *  - Line items table with multi-line text wrapping & exact right-aligned currency
+ *  - Mandatory HSN/SAC Tax Summary Table with CGST/SGST/IGST breakdown
+ *  - Indian currency words (Lakhs/Crores) & statutory declaration
+ *  - Banking details with dynamic NPCI UPI QR Code
+ *  - Boxed Authorized Signatory block with stamp/signature area
  */
 
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, PDFFont, PDFPage } from 'pdf-lib';
 import * as QRCode from 'qrcode';
 import {
   GstInvoiceOptions,
@@ -14,7 +23,23 @@ import {
 } from '@doc-platform/core';
 import { DocumentProcessor, ResourceEstimate } from '@doc-platform/providers';
 
-// Helper to convert number to Indian Currency Words
+// ─── Number & Text Formatting Helpers ─────────────────────────────────────────
+
+function formatInr(val: number): string {
+  const parts = Math.abs(val).toFixed(2).split('.');
+  const integerPart = parts[0];
+  const decimalPart = parts[1];
+
+  let lastThree = integerPart.substring(integerPart.length - 3);
+  const otherNumbers = integerPart.substring(0, integerPart.length - 3);
+  if (otherNumbers !== '') {
+    lastThree = ',' + lastThree;
+  }
+  const formattedInt = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+  const sign = val < 0 ? '-' : '';
+  return `${sign}${formattedInt}.${decimalPart}`;
+}
+
 function numberToWords(amount: number): string {
   const words = [
     '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
@@ -65,6 +90,50 @@ function numberToWords(amount: number): string {
   return result + ' Only';
 }
 
+function wrapText(text: string, maxWidth: number, font: PDFFont, fontSize: number): string[] {
+  if (!text) return [''];
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const width = font.widthOfTextAtSize(testLine, fontSize);
+    if (width <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines.length ? lines : [text];
+}
+
+function drawTextRight(page: PDFPage, text: string, rightX: number, y: number, font: PDFFont, size: number, color: any) {
+  const textWidth = font.widthOfTextAtSize(text, size);
+  page.drawText(text, {
+    x: rightX - textWidth,
+    y,
+    size,
+    font,
+    color,
+  });
+}
+
+function drawTextCenter(page: PDFPage, text: string, centerX: number, y: number, font: PDFFont, size: number, color: any) {
+  const textWidth = font.widthOfTextAtSize(text, size);
+  page.drawText(text, {
+    x: centerX - (textWidth / 2),
+    y,
+    size,
+    font,
+    color,
+  });
+}
+
+// ─── Main Processor Class ─────────────────────────────────────────────────────
+
 export class GstInvoiceProcessor implements DocumentProcessor<GstInvoiceOptions> {
   readonly operation = 'gst-invoice-pdf' as const;
 
@@ -98,14 +167,14 @@ export class GstInvoiceProcessor implements DocumentProcessor<GstInvoiceOptions>
     context: WorkerExecutionContext
   ): Promise<ProcessingResult> {
     const startTime = Date.now();
-    await context.onProgress(15, 'Calculating GST tax splits and totals...');
+    await context.onProgress(10, 'Calculating GST tax splits and totals...');
 
     const seller = options.seller;
     const buyer = options.buyer;
     const items = options.items || [];
     const invoiceNumber = options.invoiceNumber || `INV-${Date.now().toString().slice(-6)}`;
     const invoiceDate = options.invoiceDate || new Date().toISOString().split('T')[0];
-    const currencySymbol = options.currency === 'USD' ? '$ ' : options.currency === 'EUR' ? 'EUR ' : 'Rs. ';
+    const currencyPrefix = options.currency === 'USD' ? '$ ' : options.currency === 'EUR' ? 'EUR ' : 'Rs. ';
 
     // Tax Determination: Inter-state (IGST) vs Intra-state (CGST + SGST)
     const isInterState = options.taxType === 'inter' ||
@@ -116,8 +185,18 @@ export class GstInvoiceProcessor implements DocumentProcessor<GstInvoiceOptions>
     let totalSgst = 0;
     let totalIgst = 0;
 
+    // HSN aggregation map for the statutory HSN summary table
+    const hsnSummaryMap = new Map<string, {
+      hsn: string;
+      taxable: number;
+      gstRate: number;
+      cgst: number;
+      sgst: number;
+      igst: number;
+    }>();
+
     const processedItems = items.map((it, idx) => {
-      const qty = Math.max(1, it.qty || 1);
+      const qty = Math.max(1, (it as any).qty ?? (it as any).quantity ?? 1);
       const rate = Math.max(0, it.rate || 0);
       const discount = Math.min(100, Math.max(0, it.discountPct || 0));
       const taxable = Math.round((qty * rate * (1 - discount / 100)) * 100) / 100;
@@ -139,10 +218,26 @@ export class GstInvoiceProcessor implements DocumentProcessor<GstInvoiceOptions>
       totalSgst += sgst;
       totalIgst += igst;
 
+      // Group into HSN summary
+      const hsnKey = `${it.hsn || '9983'}_${gstRate}`;
+      const existingHsn = hsnSummaryMap.get(hsnKey) || {
+        hsn: it.hsn || '9983',
+        taxable: 0,
+        gstRate,
+        cgst: 0,
+        sgst: 0,
+        igst: 0,
+      };
+      existingHsn.taxable += taxable;
+      existingHsn.cgst += cgst;
+      existingHsn.sgst += sgst;
+      existingHsn.igst += igst;
+      hsnSummaryMap.set(hsnKey, existingHsn);
+
       return {
         sno: idx + 1,
         description: it.description || `Item ${idx + 1}`,
-        hsn: it.hsn || '-',
+        hsn: it.hsn || '9983',
         qty,
         rate,
         taxable,
@@ -154,10 +249,13 @@ export class GstInvoiceProcessor implements DocumentProcessor<GstInvoiceOptions>
       };
     });
 
-    const grandTotal = Math.round((totalTaxable + totalCgst + totalSgst + totalIgst) * 100) / 100;
+    const totalTax = isInterState ? totalIgst : (totalCgst + totalSgst);
+    const rawTotal = totalTaxable + totalTax;
+    const grandTotal = Math.round(rawTotal);
+    const roundOff = Math.round((grandTotal - rawTotal) * 100) / 100;
     const amountWords = numberToWords(grandTotal);
 
-    await context.onProgress(40, 'Generating vector PDF invoice canvas...');
+    await context.onProgress(35, 'Generating vector PDF invoice canvas...');
     const pdfDoc = await PDFDocument.create();
     const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -167,275 +265,747 @@ export class GstInvoiceProcessor implements DocumentProcessor<GstInvoiceOptions>
     const pageHeight = 841.89; // A4 portrait
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
-    const primaryColor = options.theme === 'corporate' ? rgb(0.12, 0.25, 0.55) :
-                         options.theme === 'emerald' ? rgb(0.04, 0.45, 0.32) :
-                         rgb(0.09, 0.12, 0.2); // Modern dark slate
-    const subtleBg = rgb(0.96, 0.97, 0.98);
-    const borderColor = rgb(0.85, 0.88, 0.92);
-    const textColor = rgb(0.15, 0.18, 0.22);
-    const mutedColor = rgb(0.45, 0.5, 0.58);
+    // Professional Color Palette (Clean dark navy / charcoal with formal border styling)
+    const primaryNavy = rgb(0.06, 0.12, 0.24);
+    const headerBg = rgb(0.94, 0.96, 0.98);
+    const subtleBg = rgb(0.97, 0.98, 0.99);
+    const darkBorder = rgb(0.25, 0.3, 0.38);
+    const lightBorder = rgb(0.8, 0.84, 0.88);
+    const textDark = rgb(0.08, 0.1, 0.14);
+    const textMuted = rgb(0.38, 0.43, 0.5);
 
-    // ── Header Banner ──────────────────────────────────────────────────────────
+    // ── Outer Ledger Boundary Frame ──────────────────────────────────────────
+    const margin = 24;
+    const boxX = margin;
+    const boxWidth = pageWidth - 2 * margin; // 547.28
+    const boxBottom = 24;
+    const boxTop = pageHeight - 24; // 817.89
+    const boxHeight = boxTop - boxBottom; // 793.89
+
     page.drawRectangle({
-      x: 36,
-      y: pageHeight - 95,
-      width: pageWidth - 72,
-      height: 60,
-      color: primaryColor,
+      x: boxX,
+      y: boxBottom,
+      width: boxWidth,
+      height: boxHeight,
+      borderColor: darkBorder,
+      borderWidth: 1.2,
+    });
+
+    let yPos = boxTop;
+
+    // ── 1. Statutory Header Bar (Rule 46 CGST Rules, 2017) ───────────────────
+    const statHeaderHeight = 32;
+    page.drawRectangle({
+      x: boxX,
+      y: yPos - statHeaderHeight,
+      width: boxWidth,
+      height: statHeaderHeight,
+      color: headerBg,
+      borderColor: darkBorder,
+      borderWidth: 0.8,
+    });
+
+    drawTextCenter(page, 'TAX INVOICE', boxX + boxWidth / 2, yPos - 14, fontBold, 12, primaryNavy);
+    drawTextCenter(page, '(Issued under Section 31 of CGST Act, 2017 read with Rule 46 of CGST Rules, 2017)', boxX + boxWidth / 2, yPos - 25, fontItalic, 6.8, textMuted);
+    
+    // Copy indicator right aligned
+    drawTextRight(page, 'Original for Recipient', boxX + boxWidth - 10, yPos - 18, fontBold, 7.5, primaryNavy);
+
+    yPos -= statHeaderHeight;
+
+    // ── 2. Seller / Supplier Banner Block ────────────────────────────────────
+    const sellerHeight = 56;
+    page.drawRectangle({
+      x: boxX,
+      y: yPos - sellerHeight,
+      width: boxWidth,
+      height: sellerHeight,
+      borderColor: darkBorder,
+      borderWidth: 0.8,
     });
 
     page.drawText(seller.name.toUpperCase(), {
-      x: 50,
-      y: pageHeight - 65,
-      size: 16,
+      x: boxX + 12,
+      y: yPos - 16,
+      size: 11.5,
       font: fontBold,
-      color: rgb(1, 1, 1),
+      color: primaryNavy,
     });
 
-    page.drawText(seller.gstin ? `GSTIN: ${seller.gstin}` : 'TAX INVOICE', {
-      x: 50,
-      y: pageHeight - 82,
-      size: 9,
+    const sellerAddr = (seller.address || '').slice(0, 85);
+    page.drawText(sellerAddr, {
+      x: boxX + 12,
+      y: yPos - 29,
+      size: 7.8,
       font: fontRegular,
-      color: rgb(0.9, 0.92, 0.98),
+      color: textDark,
     });
 
-    page.drawText('TAX INVOICE', {
-      x: pageWidth - 165,
-      y: pageHeight - 65,
-      size: 14,
-      font: fontBold,
-      color: rgb(1, 1, 1),
-    });
-
-    page.drawText(`ORIGINAL FOR RECIPIENT`, {
-      x: pageWidth - 165,
-      y: pageHeight - 82,
+    const sellerDetailsLine = `GSTIN: ${seller.gstin || 'Unregistered'}  |  PAN: ${seller.pan || '-'}  |  State: ${seller.state || '-'} (Code: ${seller.stateCode || '-'})`;
+    page.drawText(sellerDetailsLine, {
+      x: boxX + 12,
+      y: yPos - 41,
       size: 7.5,
-      font: fontRegular,
-      color: rgb(0.9, 0.92, 0.98),
+      font: fontBold,
+      color: textDark,
     });
 
-    // ── Invoice Meta Bar & Address Boxes ──────────────────────────────────────
-    let yPos = pageHeight - 110;
-
-    // Meta Bar
-    page.drawRectangle({
-      x: 36,
-      y: yPos - 30,
-      width: pageWidth - 72,
-      height: 30,
-      color: subtleBg,
-      borderColor,
-      borderWidth: 1,
-    });
-
-    page.drawText(`Invoice No: ${invoiceNumber}`, { x: 48, y: yPos - 19, size: 9, font: fontBold, color: textColor });
-    page.drawText(`Date: ${invoiceDate}`, { x: 210, y: yPos - 19, size: 9, font: fontRegular, color: textColor });
-    page.drawText(`Place of Supply: ${buyer.placeOfSupply || buyer.state || 'Same State'}`, { x: 340, y: yPos - 19, size: 9, font: fontRegular, color: textColor });
-    page.drawText(isInterState ? 'IGST (Inter-State)' : 'CGST+SGST (Intra)', { x: 470, y: yPos - 19, size: 8, font: fontBold, color: primaryColor });
-
-    yPos -= 40;
-
-    // Seller & Buyer 2-Column Grid
-    const colWidth = (pageWidth - 72 - 12) / 2;
-
-    // Seller Box (Left)
-    page.drawRectangle({ x: 36, y: yPos - 75, width: colWidth, height: 75, borderColor, borderWidth: 1 });
-    page.drawText('BILLED FROM (SELLER)', { x: 46, y: yPos - 14, size: 8, font: fontBold, color: mutedColor });
-    page.drawText(seller.name, { x: 46, y: yPos - 27, size: 9.5, font: fontBold, color: textColor });
-    page.drawText((seller.address || '').slice(0, 48), { x: 46, y: yPos - 39, size: 8, font: fontRegular, color: textColor });
-    page.drawText(`State: ${seller.state || '-'} ${seller.stateCode ? `(${seller.stateCode})` : ''}`, { x: 46, y: yPos - 51, size: 8, font: fontRegular, color: textColor });
-    page.drawText(`GSTIN: ${seller.gstin || 'Unregistered'} | PAN: ${seller.pan || '-'}`, { x: 46, y: yPos - 63, size: 7.5, font: fontRegular, color: textColor });
-
-    // Buyer Box (Right)
-    const rightX = 36 + colWidth + 12;
-    page.drawRectangle({ x: rightX, y: yPos - 75, width: colWidth, height: 75, borderColor, borderWidth: 1 });
-    page.drawText('BILLED TO (BUYER / CLIENT)', { x: rightX + 10, y: yPos - 14, size: 8, font: fontBold, color: mutedColor });
-    page.drawText(buyer.name, { x: rightX + 10, y: yPos - 27, size: 9.5, font: fontBold, color: textColor });
-    page.drawText((buyer.address || '').slice(0, 48), { x: rightX + 10, y: yPos - 39, size: 8, font: fontRegular, color: textColor });
-    page.drawText(`State: ${buyer.state || '-'} ${buyer.stateCode ? `(${buyer.stateCode})` : ''}`, { x: rightX + 10, y: yPos - 51, size: 8, font: fontRegular, color: textColor });
-    page.drawText(`GSTIN: ${buyer.gstin || 'Consumer'}`, { x: rightX + 10, y: yPos - 63, size: 7.5, font: fontRegular, color: textColor });
-
-    yPos -= 90;
-
-    // ── Table Header ──────────────────────────────────────────────────────────
-    const tableHeaders = [
-      { label: '#', x: 42, width: 22 },
-      { label: 'Item Description', x: 68, width: 170 },
-      { label: 'HSN', x: 242, width: 44 },
-      { label: 'Qty', x: 290, width: 30 },
-      { label: 'Rate', x: 324, width: 48 },
-      { label: 'Taxable', x: 376, width: 54 },
-      { label: isInterState ? 'IGST' : 'GST%', x: 434, width: 44 },
-      { label: 'Total', x: 482, width: 70 },
-    ];
-
-    page.drawRectangle({
-      x: 36,
-      y: yPos - 20,
-      width: pageWidth - 72,
-      height: 20,
-      color: subtleBg,
-      borderColor,
-      borderWidth: 1,
-    });
-
-    for (const th of tableHeaders) {
-      page.drawText(th.label, { x: th.x, y: yPos - 14, size: 8, font: fontBold, color: primaryColor });
+    const contactStr = `${seller.phone ? `Ph: ${seller.phone}   ` : ''}${seller.email ? `Email: ${seller.email}` : ''}`;
+    if (contactStr.trim()) {
+      page.drawText(contactStr, {
+        x: boxX + 12,
+        y: yPos - 51,
+        size: 7,
+        font: fontRegular,
+        color: textMuted,
+      });
     }
 
-    yPos -= 20;
+    yPos -= sellerHeight;
 
-    // ── Items Rows ────────────────────────────────────────────────────────────
-    for (const item of processedItems) {
-      page.drawRectangle({
-        x: 36,
-        y: yPos - 20,
-        width: pageWidth - 72,
-        height: 20,
-        borderColor,
-        borderWidth: 0.5,
+    // ── 3. Invoice Meta 4-Quadrant Ruled Grid ─────────────────────────────────
+    const metaHeight = 44;
+    const midX = boxX + boxWidth / 2;
+
+    page.drawRectangle({
+      x: boxX,
+      y: yPos - metaHeight,
+      width: boxWidth,
+      height: metaHeight,
+      color: subtleBg,
+      borderColor: darkBorder,
+      borderWidth: 0.8,
+    });
+
+    // Vertical divider line between left and right meta columns
+    page.drawLine({
+      start: { x: midX, y: yPos },
+      end: { x: midX, y: yPos - metaHeight },
+      thickness: 0.8,
+      color: darkBorder,
+    });
+
+    // Left metadata column
+    page.drawText('Invoice Number:', { x: boxX + 12, y: yPos - 12, size: 7.5, font: fontBold, color: textDark });
+    page.drawText(invoiceNumber, { x: boxX + 90, y: yPos - 12, size: 8, font: fontBold, color: primaryNavy });
+
+    page.drawText('Invoice Date:', { x: boxX + 12, y: yPos - 22, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(invoiceDate, { x: boxX + 90, y: yPos - 22, size: 7.5, font: fontBold, color: textDark });
+
+    page.drawText('State & Code:', { x: boxX + 12, y: yPos - 32, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(`${seller.state || '-'} (${seller.stateCode || '-'})`, { x: boxX + 90, y: yPos - 32, size: 7.5, font: fontRegular, color: textDark });
+
+    page.drawText('Reverse Charge:', { x: boxX + 12, y: yPos - 41, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText('No', { x: boxX + 90, y: yPos - 41, size: 7.5, font: fontRegular, color: textDark });
+
+    // Right metadata column
+    page.drawText('Place of Supply:', { x: midX + 12, y: yPos - 12, size: 7.5, font: fontBold, color: textDark });
+    page.drawText(`${buyer.placeOfSupply || buyer.state || '-'} (${buyer.stateCode || '-'})`, { x: midX + 95, y: yPos - 12, size: 8, font: fontBold, color: primaryNavy });
+
+    page.drawText('Supply Type:', { x: midX + 12, y: yPos - 22, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(isInterState ? 'Inter-State (IGST)' : 'Intra-State (CGST + SGST)', { x: midX + 95, y: yPos - 22, size: 7.5, font: fontBold, color: textDark });
+
+    page.drawText('Payment Due Date:', { x: midX + 12, y: yPos - 32, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(options.dueDate || 'Net 15 Days / Immediate', { x: midX + 95, y: yPos - 32, size: 7.5, font: fontRegular, color: textDark });
+
+    page.drawText('Vehicle / Trans No:', { x: midX + 12, y: yPos - 41, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText('Direct / Hand Delivery', { x: midX + 95, y: yPos - 41, size: 7.5, font: fontRegular, color: textDark });
+
+    yPos -= metaHeight;
+
+    // ── 4. Party Details Grid (Receiver Billed To & Consignee Shipped To) ────
+    const partyHeight = 62;
+    page.drawRectangle({
+      x: boxX,
+      y: yPos - partyHeight,
+      width: boxWidth,
+      height: partyHeight,
+      borderColor: darkBorder,
+      borderWidth: 0.8,
+    });
+
+    // Vertical divider line between Billed to and Shipped to
+    page.drawLine({
+      start: { x: midX, y: yPos },
+      end: { x: midX, y: yPos - partyHeight },
+      thickness: 0.8,
+      color: darkBorder,
+    });
+
+    // Left: Details of Receiver | Billed to:
+    page.drawText('DETAILS OF RECEIVER (BILLED TO)', { x: boxX + 12, y: yPos - 13, size: 7.5, font: fontBold, color: textMuted });
+    page.drawText(buyer.name, { x: boxX + 12, y: yPos - 25, size: 9, font: fontBold, color: textDark });
+    page.drawText((buyer.address || 'Registered Address on File').slice(0, 52), { x: boxX + 12, y: yPos - 36, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(`State: ${buyer.state || '-'} (Code: ${buyer.stateCode || '-'})`, { x: boxX + 12, y: yPos - 46, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(`GSTIN / UIN: ${buyer.gstin || 'Consumer / Unregistered'}`, { x: boxX + 12, y: yPos - 56, size: 7.5, font: fontBold, color: primaryNavy });
+
+    // Right: Details of Consignee | Shipped to:
+    page.drawText('DETAILS OF CONSIGNEE (SHIPPED TO)', { x: midX + 12, y: yPos - 13, size: 7.5, font: fontBold, color: textMuted });
+    page.drawText(buyer.name, { x: midX + 12, y: yPos - 25, size: 9, font: fontBold, color: textDark });
+    page.drawText((buyer.address || 'Same as Billed Address').slice(0, 52), { x: midX + 12, y: yPos - 36, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(`State: ${buyer.state || '-'} (Code: ${buyer.stateCode || '-'})`, { x: midX + 12, y: yPos - 46, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(`GSTIN / UIN: ${buyer.gstin || 'Consumer / Unregistered'}`, { x: midX + 12, y: yPos - 56, size: 7.5, font: fontBold, color: primaryNavy });
+
+    yPos -= partyHeight;
+
+    // ── 5. Main Itemized Goods & Services Table ──────────────────────────────
+    // Column geometry totaling boxWidth = 547.28 exactly
+    type ColDef = { id: string; label: string; width: number; align: 'left' | 'center' | 'right' };
+    
+    let columns: ColDef[];
+    if (isInterState) {
+      columns = [
+        { id: 'sno', label: 'S.N.', width: 22, align: 'center' },
+        { id: 'desc', label: 'Description of Goods / Services', width: 195, align: 'left' },
+        { id: 'hsn', label: 'HSN/SAC', width: 48, align: 'center' },
+        { id: 'qty', label: 'Qty', width: 28, align: 'center' },
+        { id: 'rate', label: 'Rate (Rs.)', width: 58, align: 'right' },
+        { id: 'taxable', label: 'Taxable (Rs.)', width: 68, align: 'right' },
+        { id: 'igst', label: 'IGST (Rs.)', width: 58, align: 'right' },
+        { id: 'total', label: 'Total (Rs.)', width: 70.28, align: 'right' },
+      ];
+    } else {
+      columns = [
+        { id: 'sno', label: 'S.N.', width: 22, align: 'center' },
+        { id: 'desc', label: 'Description of Goods / Services', width: 165, align: 'left' },
+        { id: 'hsn', label: 'HSN/SAC', width: 46, align: 'center' },
+        { id: 'qty', label: 'Qty', width: 26, align: 'center' },
+        { id: 'rate', label: 'Rate (Rs.)', width: 54, align: 'right' },
+        { id: 'taxable', label: 'Taxable (Rs.)', width: 58, align: 'right' },
+        { id: 'cgst', label: 'CGST (Rs.)', width: 53, align: 'right' },
+        { id: 'sgst', label: 'SGST (Rs.)', width: 53, align: 'right' },
+        { id: 'total', label: 'Total (Rs.)', width: 70.28, align: 'right' },
+      ];
+    }
+
+    // Draw Table Header Row
+    const thHeight = 18;
+    page.drawRectangle({
+      x: boxX,
+      y: yPos - thHeight,
+      width: boxWidth,
+      height: thHeight,
+      color: headerBg,
+      borderColor: darkBorder,
+      borderWidth: 0.8,
+    });
+
+    let curX = boxX;
+    for (let i = 0; i < columns.length; i++) {
+      const col = columns[i];
+      if (i > 0) {
+        page.drawLine({
+          start: { x: curX, y: yPos },
+          end: { x: curX, y: yPos - thHeight },
+          thickness: 0.6,
+          color: darkBorder,
+        });
+      }
+
+      const textY = yPos - 12;
+      if (col.align === 'center') {
+        drawTextCenter(page, col.label, curX + col.width / 2, textY, fontBold, 7, primaryNavy);
+      } else if (col.align === 'right') {
+        drawTextRight(page, col.label, curX + col.width - 5, textY, fontBold, 7, primaryNavy);
+      } else {
+        page.drawText(col.label, { x: curX + 6, y: textY, size: 7, font: fontBold, color: primaryNavy });
+      }
+      curX += col.width;
+    }
+
+    yPos -= thHeight;
+
+    // Draw Items Rows (with multi-line text wrapping so titles are never clipped!)
+    let sumQty = 0;
+    for (let r = 0; r < processedItems.length; r++) {
+      const item = processedItems[r];
+      sumQty += item.qty;
+
+      const descColWidth = columns.find(c => c.id === 'desc')!.width;
+      const descLines = wrapText(item.description, descColWidth - 12, fontBold, 7.8);
+      const rowHeight = Math.max(20, descLines.length * 9.5 + 8);
+
+      // Background alternating tint
+      if (r % 2 === 1) {
+        page.drawRectangle({
+          x: boxX,
+          y: yPos - rowHeight,
+          width: boxWidth,
+          height: rowHeight,
+          color: subtleBg,
+        });
+      }
+
+      // Bottom row divider line
+      page.drawLine({
+        start: { x: boxX, y: yPos - rowHeight },
+        end: { x: boxX + boxWidth, y: yPos - rowHeight },
+        thickness: 0.5,
+        color: lightBorder,
       });
 
-      page.drawText(String(item.sno), { x: 44, y: yPos - 14, size: 8, font: fontRegular, color: textColor });
-      page.drawText(item.description.slice(0, 32), { x: 68, y: yPos - 14, size: 8, font: fontBold, color: textColor });
-      page.drawText(item.hsn, { x: 242, y: yPos - 14, size: 7.5, font: fontRegular, color: mutedColor });
-      page.drawText(String(item.qty), { x: 294, y: yPos - 14, size: 8, font: fontRegular, color: textColor });
-      page.drawText(`${currencySymbol}${item.rate.toFixed(2)}`, { x: 324, y: yPos - 14, size: 8, font: fontRegular, color: textColor });
-      page.drawText(`${currencySymbol}${item.taxable.toFixed(2)}`, { x: 376, y: yPos - 14, size: 8, font: fontRegular, color: textColor });
-      page.drawText(`${item.gstRate}%`, { x: 436, y: yPos - 14, size: 8, font: fontRegular, color: textColor });
-      page.drawText(`${currencySymbol}${item.total.toFixed(2)}`, { x: 486, y: yPos - 14, size: 8.5, font: fontBold, color: textColor });
+      // Render cell contents & vertical column divider lines
+      let rowX = boxX;
+      for (let c = 0; c < columns.length; c++) {
+        const col = columns[c];
+        if (c > 0) {
+          page.drawLine({
+            start: { x: rowX, y: yPos },
+            end: { x: rowX, y: yPos - rowHeight },
+            thickness: 0.5,
+            color: lightBorder,
+          });
+        }
 
-      yPos -= 20;
+        const cellTopY = yPos - 13;
+        if (col.id === 'sno') {
+          drawTextCenter(page, String(item.sno), rowX + col.width / 2, cellTopY, fontRegular, 7.5, textDark);
+        } else if (col.id === 'desc') {
+          for (let l = 0; l < descLines.length; l++) {
+            page.drawText(descLines[l], {
+              x: rowX + 6,
+              y: yPos - 11 - (l * 9.5),
+              size: 7.8,
+              font: fontBold,
+              color: textDark,
+            });
+          }
+        } else if (col.id === 'hsn') {
+          drawTextCenter(page, item.hsn, rowX + col.width / 2, cellTopY, fontRegular, 7.5, textDark);
+        } else if (col.id === 'qty') {
+          drawTextCenter(page, String(item.qty), rowX + col.width / 2, cellTopY, fontRegular, 7.5, textDark);
+        } else if (col.id === 'rate') {
+          drawTextRight(page, formatInr(item.rate), rowX + col.width - 5, cellTopY, fontRegular, 7.5, textDark);
+        } else if (col.id === 'taxable') {
+          drawTextRight(page, formatInr(item.taxable), rowX + col.width - 5, cellTopY, fontRegular, 7.5, textDark);
+        } else if (col.id === 'cgst') {
+          drawTextRight(page, formatInr(item.cgst), rowX + col.width - 5, cellTopY, fontRegular, 7.5, textDark);
+        } else if (col.id === 'sgst') {
+          drawTextRight(page, formatInr(item.sgst), rowX + col.width - 5, cellTopY, fontRegular, 7.5, textDark);
+        } else if (col.id === 'igst') {
+          drawTextRight(page, formatInr(item.igst), rowX + col.width - 5, cellTopY, fontRegular, 7.5, textDark);
+        } else if (col.id === 'total') {
+          drawTextRight(page, formatInr(item.total), rowX + col.width - 5, cellTopY, fontBold, 7.8, primaryNavy);
+        }
+
+        rowX += col.width;
+      }
+
+      yPos -= rowHeight;
     }
 
-    yPos -= 10;
-
-    // ── Amount in Words ───────────────────────────────────────────────────────
+    // Table Totals / Subtotal Row
+    const subtotalHeight = 16;
     page.drawRectangle({
-      x: 36,
-      y: yPos - 22,
-      width: 320,
-      height: 22,
-      color: rgb(0.98, 0.98, 0.99),
-      borderColor,
-      borderWidth: 1,
-    });
-    page.drawText(`Amount (in words): ${amountWords.slice(0, 60)}`, {
-      x: 44,
-      y: yPos - 15,
-      size: 7.5,
-      font: fontItalic,
-      color: textColor,
+      x: boxX,
+      y: yPos - subtotalHeight,
+      width: boxWidth,
+      height: subtotalHeight,
+      color: headerBg,
+      borderColor: darkBorder,
+      borderWidth: 0.8,
     });
 
-    // ── Summary Box (Right) ───────────────────────────────────────────────────
-    const sumBoxX = 368;
-    const sumBoxWidth = pageWidth - 36 - sumBoxX;
-    const sumBoxHeight = isInterState ? 75 : 88;
+    let totX = boxX;
+    for (let c = 0; c < columns.length; c++) {
+      const col = columns[c];
+      if (c > 0) {
+        page.drawLine({
+          start: { x: totX, y: yPos },
+          end: { x: totX, y: yPos - subtotalHeight },
+          thickness: 0.6,
+          color: darkBorder,
+        });
+      }
+
+      const totY = yPos - 11;
+      if (col.id === 'desc') {
+        page.drawText('Total Items & Values', { x: totX + 6, y: totY, size: 7.5, font: fontBold, color: primaryNavy });
+      } else if (col.id === 'qty') {
+        drawTextCenter(page, String(sumQty), totX + col.width / 2, totY, fontBold, 7.5, primaryNavy);
+      } else if (col.id === 'taxable') {
+        drawTextRight(page, formatInr(totalTaxable), totX + col.width - 5, totY, fontBold, 7.5, primaryNavy);
+      } else if (col.id === 'cgst') {
+        drawTextRight(page, formatInr(totalCgst), totX + col.width - 5, totY, fontBold, 7.5, primaryNavy);
+      } else if (col.id === 'sgst') {
+        drawTextRight(page, formatInr(totalSgst), totX + col.width - 5, totY, fontBold, 7.5, primaryNavy);
+      } else if (col.id === 'igst') {
+        drawTextRight(page, formatInr(totalIgst), totX + col.width - 5, totY, fontBold, 7.5, primaryNavy);
+      } else if (col.id === 'total') {
+        drawTextRight(page, formatInr(rawTotal), totX + col.width - 5, totY, fontBold, 8, primaryNavy);
+      }
+
+      totX += col.width;
+    }
+
+    yPos -= subtotalHeight;
+
+    // ── 6. Mandatory HSN / SAC Tax Summary Table (Rule 46 CGST Rules) ────────
+    const hsnRows = Array.from(hsnSummaryMap.values());
+    const hsnThHeight = 14;
+    const hsnRowHeight = 13;
+    const hsnTableHeight = hsnThHeight + (hsnRows.length * hsnRowHeight) + hsnRowHeight; // includes total row
 
     page.drawRectangle({
-      x: sumBoxX,
-      y: yPos - sumBoxHeight + 22,
-      width: sumBoxWidth,
-      height: sumBoxHeight,
-      color: subtleBg,
-      borderColor,
-      borderWidth: 1,
+      x: boxX,
+      y: yPos - hsnTableHeight,
+      width: boxWidth,
+      height: hsnTableHeight,
+      borderColor: darkBorder,
+      borderWidth: 0.8,
     });
 
-    let sY = yPos + 8;
-    page.drawText(`Taxable Value:`, { x: sumBoxX + 10, y: sY, size: 8, font: fontRegular, color: textColor });
-    page.drawText(`${currencySymbol}${totalTaxable.toFixed(2)}`, { x: sumBoxX + sumBoxWidth - 55, y: sY, size: 8, font: fontRegular, color: textColor });
+    // HSN Columns: HSN/SAC | Taxable Value | Central Tax (CGST) | State Tax (SGST) | Total Tax
+    type HsnColDef = { label: string; width: number; align: 'left' | 'center' | 'right' };
+    let hsnCols: HsnColDef[];
+    if (isInterState) {
+      hsnCols = [
+        { label: 'HSN / SAC Code', width: 90, align: 'center' },
+        { label: 'Taxable Value (Rs.)', width: 140, align: 'right' },
+        { label: 'Integrated Tax (IGST Rate & Amount)', width: 170, align: 'right' },
+        { label: 'Total Tax Amount (Rs.)', width: 147.28, align: 'right' },
+      ];
+    } else {
+      hsnCols = [
+        { label: 'HSN / SAC Code', width: 85, align: 'center' },
+        { label: 'Taxable Value (Rs.)', width: 110, align: 'right' },
+        { label: 'Central Tax (CGST Rate & Amt)', width: 125, align: 'right' },
+        { label: 'State Tax (SGST Rate & Amt)', width: 125, align: 'right' },
+        { label: 'Total Tax Amount (Rs.)', width: 102.28, align: 'right' },
+      ];
+    }
+
+    // Draw HSN Header
+    page.drawRectangle({
+      x: boxX,
+      y: yPos - hsnThHeight,
+      width: boxWidth,
+      height: hsnThHeight,
+      color: headerBg,
+    });
+
+    let hsnX = boxX;
+    for (let c = 0; c < hsnCols.length; c++) {
+      const col = hsnCols[c];
+      if (c > 0) {
+        page.drawLine({
+          start: { x: hsnX, y: yPos },
+          end: { x: hsnX, y: yPos - hsnTableHeight },
+          thickness: 0.5,
+          color: lightBorder,
+        });
+      }
+      const hsnThY = yPos - 10;
+      if (col.align === 'center') {
+        drawTextCenter(page, col.label, hsnX + col.width / 2, hsnThY, fontBold, 6.8, primaryNavy);
+      } else {
+        drawTextRight(page, col.label, hsnX + col.width - 6, hsnThY, fontBold, 6.8, primaryNavy);
+      }
+      hsnX += col.width;
+    }
+
+    let hsnY = yPos - hsnThHeight;
+
+    // Draw HSN Data Rows
+    for (let i = 0; i < hsnRows.length; i++) {
+      const row = hsnRows[i];
+      let curColX = boxX;
+
+      page.drawLine({
+        start: { x: boxX, y: hsnY - hsnRowHeight },
+        end: { x: boxX + boxWidth, y: hsnY - hsnRowHeight },
+        thickness: 0.5,
+        color: lightBorder,
+      });
+
+      const dataY = hsnY - 9;
+      if (isInterState) {
+        drawTextCenter(page, row.hsn, curColX + hsnCols[0].width / 2, dataY, fontRegular, 7, textDark);
+        curColX += hsnCols[0].width;
+
+        drawTextRight(page, formatInr(row.taxable), curColX + hsnCols[1].width - 6, dataY, fontRegular, 7, textDark);
+        curColX += hsnCols[1].width;
+
+        drawTextRight(page, `${row.gstRate}% : ${formatInr(row.igst)}`, curColX + hsnCols[2].width - 6, dataY, fontRegular, 7, textDark);
+        curColX += hsnCols[2].width;
+
+        drawTextRight(page, formatInr(row.igst), curColX + hsnCols[3].width - 6, dataY, fontBold, 7, textDark);
+      } else {
+        const halfRate = row.gstRate / 2;
+        drawTextCenter(page, row.hsn, curColX + hsnCols[0].width / 2, dataY, fontRegular, 7, textDark);
+        curColX += hsnCols[0].width;
+
+        drawTextRight(page, formatInr(row.taxable), curColX + hsnCols[1].width - 6, dataY, fontRegular, 7, textDark);
+        curColX += hsnCols[1].width;
+
+        drawTextRight(page, `${halfRate}% : ${formatInr(row.cgst)}`, curColX + hsnCols[2].width - 6, dataY, fontRegular, 7, textDark);
+        curColX += hsnCols[2].width;
+
+        drawTextRight(page, `${halfRate}% : ${formatInr(row.sgst)}`, curColX + hsnCols[3].width - 6, dataY, fontRegular, 7, textDark);
+        curColX += hsnCols[3].width;
+
+        drawTextRight(page, formatInr(row.cgst + row.sgst), curColX + hsnCols[4].width - 6, dataY, fontBold, 7, textDark);
+      }
+
+      hsnY -= hsnRowHeight;
+    }
+
+    // HSN Summary Total Row
+    page.drawRectangle({
+      x: boxX,
+      y: hsnY - hsnRowHeight,
+      width: boxWidth,
+      height: hsnRowHeight,
+      color: headerBg,
+    });
+
+    const hsnTotY = hsnY - 9;
+    drawTextCenter(page, 'Tax Summary Total', boxX + hsnCols[0].width / 2, hsnTotY, fontBold, 6.8, primaryNavy);
+    drawTextRight(page, formatInr(totalTaxable), boxX + hsnCols[0].width + hsnCols[1].width - 6, hsnTotY, fontBold, 6.8, primaryNavy);
 
     if (isInterState) {
-      sY -= 16;
-      page.drawText(`Total IGST:`, { x: sumBoxX + 10, y: sY, size: 8, font: fontRegular, color: textColor });
-      page.drawText(`${currencySymbol}${totalIgst.toFixed(2)}`, { x: sumBoxX + sumBoxWidth - 55, y: sY, size: 8, font: fontRegular, color: textColor });
+      drawTextRight(page, formatInr(totalIgst), boxX + hsnCols[0].width + hsnCols[1].width + hsnCols[2].width - 6, hsnTotY, fontBold, 6.8, primaryNavy);
+      drawTextRight(page, formatInr(totalIgst), boxX + boxWidth - 6, hsnTotY, fontBold, 7, primaryNavy);
     } else {
-      sY -= 14;
-      page.drawText(`Total CGST:`, { x: sumBoxX + 10, y: sY, size: 8, font: fontRegular, color: textColor });
-      page.drawText(`${currencySymbol}${totalCgst.toFixed(2)}`, { x: sumBoxX + sumBoxWidth - 55, y: sY, size: 8, font: fontRegular, color: textColor });
-      sY -= 14;
-      page.drawText(`Total SGST:`, { x: sumBoxX + 10, y: sY, size: 8, font: fontRegular, color: textColor });
-      page.drawText(`${currencySymbol}${totalSgst.toFixed(2)}`, { x: sumBoxX + sumBoxWidth - 55, y: sY, size: 8, font: fontRegular, color: textColor });
+      drawTextRight(page, formatInr(totalCgst), boxX + hsnCols[0].width + hsnCols[1].width + hsnCols[2].width - 6, hsnTotY, fontBold, 6.8, primaryNavy);
+      drawTextRight(page, formatInr(totalSgst), boxX + hsnCols[0].width + hsnCols[1].width + hsnCols[2].width + hsnCols[3].width - 6, hsnTotY, fontBold, 6.8, primaryNavy);
+      drawTextRight(page, formatInr(totalCgst + totalSgst), boxX + boxWidth - 6, hsnTotY, fontBold, 7, primaryNavy);
     }
 
-    sY -= 18;
+    yPos -= hsnTableHeight;
+
+    // ── 7. Bottom Details: Amount in Words, Bank + QR, Totals & Signatory ─────
+    const bottomHeight = yPos - boxBottom;
+    const splitX = boxX + 325; // 325 width left, 222.28 width right
+
+    // Vertical divider line dividing bottom area
     page.drawLine({
-      start: { x: sumBoxX, y: sY + 4 },
-      end: { x: sumBoxX + sumBoxWidth, y: sY + 4 },
-      thickness: 1,
-      color: primaryColor,
+      start: { x: splitX, y: yPos },
+      end: { x: splitX, y: boxBottom },
+      thickness: 0.8,
+      color: darkBorder,
     });
-    page.drawText(`GRAND TOTAL:`, { x: sumBoxX + 10, y: sY - 8, size: 9.5, font: fontBold, color: primaryColor });
-    page.drawText(`${currencySymbol}${grandTotal.toFixed(2)}`, { x: sumBoxX + sumBoxWidth - 62, y: sY - 8, size: 10.5, font: fontBold, color: primaryColor });
 
-    yPos -= sumBoxHeight + 10;
+    // ── LEFT BOTTOM COLUMN (Words, Bank, Dynamic UPI QR, Declaration) ────────
+    let leftY = yPos;
 
-    // ── Dynamic UPI QR Code & Banking Details ─────────────────────────────────
-    await context.onProgress(75, 'Generating dynamic UPI payment QR code...');
+    // Total Amount in Words box
+    const wordsBoxHeight = 32;
+    page.drawRectangle({
+      x: boxX,
+      y: leftY - wordsBoxHeight,
+      width: splitX - boxX,
+      height: wordsBoxHeight,
+      color: subtleBg,
+      borderColor: darkBorder,
+      borderWidth: 0.6,
+    });
 
-    const upiId = options.bankDetails?.upiId;
+    page.drawText('TOTAL INVOICE AMOUNT IN WORDS:', {
+      x: boxX + 10,
+      y: leftY - 11,
+      size: 6.8,
+      font: fontBold,
+      color: textMuted,
+    });
+
+    const wordsLines = wrapText(amountWords, splitX - boxX - 20, fontBold, 7.8);
+    for (let l = 0; l < wordsLines.length; l++) {
+      page.drawText(wordsLines[l], {
+        x: boxX + 10,
+        y: leftY - 22 - (l * 9),
+        size: 7.8,
+        font: fontBold,
+        color: primaryNavy,
+      });
+    }
+
+    leftY -= wordsBoxHeight;
+
+    // Dynamic NPCI UPI QR Code & Banking Details Side-by-Side
+    const bankBoxHeight = 78;
+    page.drawRectangle({
+      x: boxX,
+      y: leftY - bankBoxHeight,
+      width: splitX - boxX,
+      height: bankBoxHeight,
+      borderColor: darkBorder,
+      borderWidth: 0.6,
+    });
+
+    // Resolve UPI ID reliably from root or bankDetails
+    const upiId = options.bankDetails?.upiId || (options as any).upiId || (options.seller as any)?.upiId || 'merchant@upi';
     let qrPngBuffer: Buffer | null = null;
-
     if (upiId && upiId.includes('@')) {
       const upiPayload = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(seller.name)}&am=${grandTotal.toFixed(2)}&tn=INV-${encodeURIComponent(invoiceNumber)}&cu=INR`;
       try {
         qrPngBuffer = await QRCode.toBuffer(upiPayload, {
-          width: 90,
+          width: 140,
           margin: 1,
-          color: { dark: '#0f172a', light: '#ffffff' },
+          color: { dark: '#0a1020', light: '#ffffff' },
         });
       } catch (qrErr) {
         console.warn('[GstInvoice] QR code generation failed:', qrErr);
       }
     }
 
-    // Payment Box
-    page.drawRectangle({
-      x: 36,
-      y: yPos - 95,
-      width: pageWidth - 72,
-      height: 95,
-      borderColor,
-      borderWidth: 1,
-    });
-
-    page.drawText('BANKING & INSTANT DIGITAL PAYMENT', { x: 48, y: yPos - 15, size: 8, font: fontBold, color: primaryColor });
+    // Bank details left
     const bank = options.bankDetails || {};
-    page.drawText(`Bank Name: ${bank.bankName || 'HDFC Bank'}`, { x: 48, y: yPos - 30, size: 8, font: fontRegular, color: textColor });
-    page.drawText(`A/C No: ${bank.accountNumber || 'XXXXXXXXXXXX1234'}`, { x: 48, y: yPos - 43, size: 8, font: fontBold, color: textColor });
-    page.drawText(`IFSC Code: ${bank.ifscCode || 'HDFC0001234'}`, { x: 48, y: yPos - 56, size: 8, font: fontRegular, color: textColor });
-    page.drawText(`UPI ID: ${upiId || seller.email || 'merchant@upi'}`, { x: 48, y: yPos - 69, size: 8, font: fontRegular, color: primaryColor });
-    page.drawText(`Terms: Payment due in 15 days. Subject to local jurisdiction.`, { x: 48, y: yPos - 84, size: 7, font: fontItalic, color: mutedColor });
+    page.drawText('BANKING & PAYMENT DETAILS', { x: boxX + 10, y: leftY - 13, size: 7.2, font: fontBold, color: primaryNavy });
+    page.drawText(`Bank Name: ${bank.bankName || 'HDFC Bank'}`, { x: boxX + 10, y: leftY - 26, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(`A/C Holder: ${seller.name}`, { x: boxX + 10, y: leftY - 37, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(`A/C No: ${bank.accountNumber || '50200012345678'}`, { x: boxX + 10, y: leftY - 48, size: 7.5, font: fontBold, color: textDark });
+    page.drawText(`IFSC Code: ${bank.ifscCode || 'HDFC0000123'}`, { x: boxX + 10, y: leftY - 59, size: 7.5, font: fontBold, color: textDark });
+    page.drawText(`UPI ID: ${upiId}`, { x: boxX + 10, y: leftY - 70, size: 7.5, font: fontBold, color: primaryNavy });
 
+    // Embed UPI QR Image on the right of the bank box
     if (qrPngBuffer) {
       const qrImage = await pdfDoc.embedPng(qrPngBuffer);
+      const qrSize = 58;
+      const qrX = splitX - qrSize - 12;
+      const qrY = leftY - bankBoxHeight + 14;
       page.drawImage(qrImage, {
-        x: pageWidth - 145,
-        y: yPos - 85,
-        width: 75,
-        height: 75,
+        x: qrX,
+        y: qrY,
+        width: qrSize,
+        height: qrSize,
       });
-      page.drawText('Scan with any UPI App', {
-        x: pageWidth - 152,
-        y: yPos - 93,
-        size: 6.5,
-        font: fontBold,
-        color: primaryColor,
+      drawTextCenter(page, 'Scan & Pay via UPI', qrX + qrSize / 2, qrY - 7, fontBold, 5.8, primaryNavy);
+    }
+
+    leftY -= bankBoxHeight;
+
+    // Statutory Declaration & Terms
+    page.drawText('DECLARATION:', { x: boxX + 10, y: leftY - 11, size: 6.8, font: fontBold, color: textMuted });
+    const declText = 'We declare that this invoice shows the actual price of the goods / services described and that all particulars are true and correct.';
+    const declLines = wrapText(declText, splitX - boxX - 20, fontRegular, 6.8);
+    for (let l = 0; l < declLines.length; l++) {
+      page.drawText(declLines[l], {
+        x: boxX + 10,
+        y: leftY - 21 - (l * 8.5),
+        size: 6.8,
+        font: fontRegular,
+        color: textDark,
       });
     }
 
-    // Signatory
-    page.drawText(`For ${seller.name}:`, { x: pageWidth - 160, y: 55, size: 8, font: fontBold, color: textColor });
-    page.drawText('Authorized Signatory', { x: pageWidth - 160, y: 35, size: 7.5, font: fontRegular, color: mutedColor });
+    const termsText = `Terms: 1. All disputes subject to ${seller.state || 'Delhi'} jurisdiction only. 2. Payment due within specified period.`;
+    page.drawText(termsText, {
+      x: boxX + 10,
+      y: boxBottom + 8,
+      size: 6.2,
+      font: fontItalic,
+      color: textMuted,
+    });
 
-    await context.onProgress(95, 'Finalizing vector PDF invoice bytes...');
+    // ── RIGHT BOTTOM COLUMN (Financial Totals & Authorized Signatory) ────────
+    let rightY = yPos;
+    const rightWidth = boxX + boxWidth - splitX; // 222.28
+
+    // Financial Calculation Summary Box
+    const sumLineHeight = 15;
+    const calcLinesCount = isInterState ? 4 : 5; // taxable, (cgst+sgst or igst), roundoff, grandTotal
+    const calcBoxHeight = calcLinesCount * sumLineHeight + 8;
+
+    page.drawRectangle({
+      x: splitX,
+      y: rightY - calcBoxHeight,
+      width: rightWidth,
+      height: calcBoxHeight,
+      color: subtleBg,
+      borderColor: darkBorder,
+      borderWidth: 0.6,
+    });
+
+    let cy = rightY - 12;
+
+    // Taxable Value
+    page.drawText('Taxable Amount:', { x: splitX + 10, y: cy, size: 7.8, font: fontRegular, color: textDark });
+    drawTextRight(page, `${currencyPrefix}${formatInr(totalTaxable)}`, boxX + boxWidth - 10, cy, fontBold, 7.8, textDark);
+
+    if (isInterState) {
+      cy -= sumLineHeight;
+      page.drawText('Add: Integrated GST (IGST):', { x: splitX + 10, y: cy, size: 7.8, font: fontRegular, color: textDark });
+      drawTextRight(page, `${currencyPrefix}${formatInr(totalIgst)}`, boxX + boxWidth - 10, cy, fontBold, 7.8, textDark);
+    } else {
+      cy -= sumLineHeight;
+      page.drawText('Add: Central GST (CGST):', { x: splitX + 10, y: cy, size: 7.8, font: fontRegular, color: textDark });
+      drawTextRight(page, `${currencyPrefix}${formatInr(totalCgst)}`, boxX + boxWidth - 10, cy, fontBold, 7.8, textDark);
+
+      cy -= sumLineHeight;
+      page.drawText('Add: State GST (SGST):', { x: splitX + 10, y: cy, size: 7.8, font: fontRegular, color: textDark });
+      drawTextRight(page, `${currencyPrefix}${formatInr(totalSgst)}`, boxX + boxWidth - 10, cy, fontBold, 7.8, textDark);
+    }
+
+    // Round Off
+    cy -= sumLineHeight;
+    page.drawText('Round Off:', { x: splitX + 10, y: cy, size: 7.5, font: fontRegular, color: textMuted });
+    const roundOffStr = `${roundOff >= 0 ? '+' : ''}${formatInr(roundOff)}`;
+    drawTextRight(page, `${currencyPrefix}${roundOffStr}`, boxX + boxWidth - 10, cy, fontRegular, 7.5, textMuted);
+
+    // Grand Total Bar
+    page.drawRectangle({
+      x: splitX,
+      y: rightY - calcBoxHeight,
+      width: rightWidth,
+      height: 20,
+      color: primaryNavy,
+    });
+
+    page.drawText('TOTAL INVOICE VALUE:', {
+      x: splitX + 8,
+      y: rightY - calcBoxHeight + 6,
+      size: 8,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
+
+    drawTextRight(page, `${currencyPrefix}${formatInr(grandTotal)}`, boxX + boxWidth - 10, rightY - calcBoxHeight + 6, fontBold, 9.5, rgb(1, 1, 1));
+
+    rightY -= calcBoxHeight;
+
+    // Authorized Signatory Box
+    const signatoryHeight = rightY - boxBottom;
+    page.drawRectangle({
+      x: splitX,
+      y: boxBottom,
+      width: rightWidth,
+      height: signatoryHeight,
+      borderColor: darkBorder,
+      borderWidth: 0.6,
+    });
+
+    page.drawText(`For ${seller.name.toUpperCase()}`, {
+      x: splitX + 10,
+      y: rightY - 14,
+      size: 8,
+      font: fontBold,
+      color: primaryNavy,
+    });
+
+    page.drawText('(Authorized Signatory / Stamp)', {
+      x: splitX + 10,
+      y: rightY - 26,
+      size: 6.8,
+      font: fontItalic,
+      color: textMuted,
+    });
+
+    // Signature line
+    page.drawLine({
+      start: { x: splitX + 12, y: boxBottom + 22 },
+      end: { x: boxX + boxWidth - 12, y: boxBottom + 22 },
+      thickness: 0.6,
+      color: darkBorder,
+    });
+
+    drawTextCenter(page, 'Authorised Signatory', splitX + rightWidth / 2, boxBottom + 10, fontBold, 7.5, primaryNavy);
+
+    // Finalize PDF
+    await context.onProgress(95, 'Finalizing authentic vector PDF invoice bytes...');
     const pdfBytes = await pdfDoc.save();
     const outputBuffer = Buffer.from(pdfBytes);
-    await context.onProgress(100, 'GST Invoice PDF ready.');
+    await context.onProgress(100, 'Authentic Indian GST Invoice PDF ready.');
 
     return {
       outputFiles: [

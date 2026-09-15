@@ -1,7 +1,13 @@
 /**
  * DocPlatform GST Tax Invoice Studio Controller
- * Handles interactive split-screen invoice creation, real-time CGST/SGST/IGST tax calculation,
- * amount in words conversion (Crores/Lakhs/Thousands), dynamic UPI QR generation, and PDF export.
+ * Handles authentic Indian GST Tax Invoice creation compliant with Rule 46 of CGST Rules, 2017:
+ *  - Formal ruled ledger box-in-box structure with outer border
+ *  - Real-time Intra-state (CGST + SGST) vs Inter-state (IGST) tax engine
+ *  - Mandatory HSN/SAC Tax Summary Table calculation
+ *  - Amount in words (Crores/Lakhs/Thousands)
+ *  - Dynamic NPCI UPI QR code generation
+ *  - Multi-line item descriptions & right-aligned currency with Indian comma format
+ *  - Export to vector PDF worker pipeline & browser print engine
  */
 
 import { escapeHtml } from './utils.js';
@@ -12,6 +18,25 @@ export let gstItems = [
 ];
 
 let nextGstItemId = 3;
+
+/**
+ * Formats a number with Indian currency grouping (lakhs & crores).
+ */
+export function formatInrClient(val) {
+  const num = Number(val) || 0;
+  const parts = Math.abs(num).toFixed(2).split('.');
+  const integerPart = parts[0];
+  const decimalPart = parts[1];
+
+  let lastThree = integerPart.substring(integerPart.length - 3);
+  const otherNumbers = integerPart.substring(0, integerPart.length - 3);
+  if (otherNumbers !== '') {
+    lastThree = ',' + lastThree;
+  }
+  const formattedInt = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+  const sign = num < 0 ? '-' : '';
+  return `${sign}${formattedInt}.${decimalPart}`;
+}
 
 /**
  * Initializes the GST Invoice Studio with default values and renders preview.
@@ -26,7 +51,7 @@ export function initGstInvoiceStudio() {
 }
 
 /**
- * Renders the interactive items input table.
+ * Renders the interactive items input table in the editor panel.
  */
 export function renderGstItemsTable() {
   const tbody = document.getElementById('gst-items-tbody');
@@ -65,8 +90,10 @@ export function renderGstItemsTable() {
         </select>
       </td>
       <td style="text-align: center;">
-        <button type="button" class="file-card-remove" onclick="window.deleteGstItemRow(${item.id})" 
-                title="Delete Row" style="font-size: 0.75rem;">✕</button>
+        <button type="button" class="gst-del-btn" onclick="window.deleteGstItemRow(${item.id})" 
+                title="Remove Item" aria-label="Remove Item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </button>
       </td>
     </tr>
   `).join('');
@@ -167,35 +194,35 @@ export function numberToWordsClient(amount) {
 }
 
 /**
- * Recalculates all taxes and updates the live A4 preview DOM paper.
+ * Recalculates all taxes and updates the live A4 preview DOM paper
+ * with the authentic Indian GST Tax Invoice format.
  */
 export function updateGstInvoicePreview() {
   const paper = document.getElementById('gst-paper');
   if (!paper) return;
 
   const sellerName = document.getElementById('gst-seller-name')?.value || 'Acme Technologies Pvt Ltd';
-  const sellerGstin = document.getElementById('gst-seller-gstin')?.value || '';
-  const sellerAddress = document.getElementById('gst-seller-address')?.value || '';
+  const sellerGstin = document.getElementById('gst-seller-gstin')?.value || '07AAAAA0000A1Z5';
+  const sellerAddress = document.getElementById('gst-seller-address')?.value || 'Plot 42, Okhla Phase 3, New Delhi - 110020';
   const sellerState = document.getElementById('gst-seller-state')?.value || 'Delhi';
   const sellerCode = document.getElementById('gst-seller-code')?.value || '07';
-  const sellerPhone = document.getElementById('gst-seller-phone')?.value || '';
-  const sellerPan = document.getElementById('gst-seller-pan')?.value || '';
+  const sellerPhone = document.getElementById('gst-seller-phone')?.value || '+91 98765 43210';
+  const sellerPan = document.getElementById('gst-seller-pan')?.value || 'AAAAA0000A';
 
   const buyerName = document.getElementById('gst-buyer-name')?.value || 'Apex Retailers LLP';
-  const buyerGstin = document.getElementById('gst-buyer-gstin')?.value || '';
-  const buyerAddress = document.getElementById('gst-buyer-address')?.value || '';
+  const buyerGstin = document.getElementById('gst-buyer-gstin')?.value || '07BBBBB1111B1Z2';
+  const buyerAddress = document.getElementById('gst-buyer-address')?.value || 'Connaught Place, Central Delhi, Delhi - 110001';
   const buyerState = document.getElementById('gst-buyer-state')?.value || 'Delhi';
   const buyerCode = document.getElementById('gst-buyer-code')?.value || '07';
 
   const invNumber = document.getElementById('gst-inv-number')?.value || 'INV-2026-001';
   const invDate = document.getElementById('gst-inv-date')?.value || new Date().toISOString().split('T')[0];
   const taxTypeMode = document.getElementById('gst-tax-type')?.value || 'auto';
-  const theme = document.getElementById('gst-theme-select')?.value || 'modern';
 
-  const upiId = document.getElementById('gst-upi-id')?.value || '';
-  const bankName = document.getElementById('gst-bank-name')?.value || '';
-  const bankAcc = document.getElementById('gst-bank-acc')?.value || '';
-  const bankIfsc = document.getElementById('gst-bank-ifsc')?.value || '';
+  const upiId = document.getElementById('gst-upi-id')?.value || 'acmetech@hdfcbar';
+  const bankName = document.getElementById('gst-bank-name')?.value || 'HDFC Bank';
+  const bankAcc = document.getElementById('gst-bank-acc')?.value || '50200012345678';
+  const bankIfsc = document.getElementById('gst-bank-ifsc')?.value || 'HDFC0000123';
 
   // Determine inter vs intra state
   let isInterState = false;
@@ -207,199 +234,363 @@ export function updateGstInvoicePreview() {
     isInterState = (sellerState.toLowerCase().trim() !== buyerState.toLowerCase().trim());
   }
 
-  // Update Tax badge
+  // Update Tax badge in the UI
   const taxBadge = document.getElementById('gst-preview-tax-badge');
   if (taxBadge) {
     taxBadge.textContent = isInterState ? 'Inter-State (100% IGST)' : 'Intra-State (CGST 50% + SGST 50%)';
   }
 
-  // Theme color styling
-  let themePrimary = '#0f172a';
-  let themeLight = '#f8fafc';
-  if (theme === 'corporate') {
-    themePrimary = '#1e40af';
-    themeLight = '#eff6ff';
-  } else if (theme === 'emerald') {
-    themePrimary = '#065f46';
-    themeLight = '#ecfdf5';
-  } else if (theme === 'minimal') {
-    themePrimary = '#334155';
-    themeLight = '#f8fafc';
-  }
-
-  // Calculate totals
+  // Calculate totals and populate HSN summary map
   let subtotal = 0;
+  let totalQty = 0;
   let cgstTotal = 0;
   let sgstTotal = 0;
   let igstTotal = 0;
+
+  const hsnSummaryMap = new Map();
 
   const itemRowsHtml = gstItems.map((item, idx) => {
     const qty = Number(item.quantity) || 0;
     const rate = Number(item.rate) || 0;
     const itemTotal = qty * rate;
     const gstPct = Number(item.gstRate) || 0;
+    const hsn = item.hsn || '9983';
+    
     subtotal += itemTotal;
+    totalQty += qty;
 
-    let taxAmount = 0;
+    let cgstAmt = 0;
+    let sgstAmt = 0;
+    let igstAmt = 0;
+
     if (isInterState) {
-      taxAmount = itemTotal * (gstPct / 100);
-      igstTotal += taxAmount;
+      igstAmt = itemTotal * (gstPct / 100);
+      igstTotal += igstAmt;
     } else {
-      const halfTax = itemTotal * (gstPct / 200);
-      cgstTotal += halfTax;
-      sgstTotal += halfTax;
-      taxAmount = halfTax * 2;
+      cgstAmt = itemTotal * (gstPct / 200);
+      sgstAmt = itemTotal * (gstPct / 200);
+      cgstTotal += cgstAmt;
+      sgstTotal += sgstAmt;
     }
-    const lineGross = itemTotal + taxAmount;
 
-    return `
-      <tr>
-        <td style="text-align: center; color: #64748b;">${idx + 1}</td>
-        <td style="font-weight: 600; color: #0f172a;">${escapeHtml(item.description || 'Service / Product')}</td>
-        <td style="text-align: center;">${escapeHtml(item.hsn || '-')}</td>
-        <td style="text-align: center;">${qty}</td>
-        <td style="text-align: right;">${rate.toFixed(2)}</td>
-        <td style="text-align: right; font-weight: 600;">${itemTotal.toFixed(2)}</td>
-        <td style="text-align: center;">${gstPct}%</td>
-        <td style="text-align: right;">${taxAmount.toFixed(2)}</td>
-        <td style="text-align: right; font-weight: 700;">${lineGross.toFixed(2)}</td>
-      </tr>
-    `;
+    const lineGross = itemTotal + (isInterState ? igstAmt : (cgstAmt + sgstAmt));
+
+    // Aggregate into HSN summary map
+    const hsnKey = `${hsn}_${gstPct}`;
+    const existing = hsnSummaryMap.get(hsnKey) || {
+      hsn,
+      taxable: 0,
+      gstPct,
+      cgst: 0,
+      sgst: 0,
+      igst: 0
+    };
+    existing.taxable += itemTotal;
+    existing.cgst += cgstAmt;
+    existing.sgst += sgstAmt;
+    existing.igst += igstAmt;
+    hsnSummaryMap.set(hsnKey, existing);
+
+    if (isInterState) {
+      return `
+        <tr>
+          <td style="text-align: center; color: #475569; font-weight: 600; width: 5%;">${idx + 1}</td>
+          <td style="font-weight: 700; color: #0f172a; word-break: break-word; width: 32%; font-size: 0.68rem;">${escapeHtml(item.description || 'Service / Product')}</td>
+          <td style="text-align: center; font-family: monospace; font-size: 0.65rem; width: 10%;">${escapeHtml(hsn)}</td>
+          <td style="text-align: center; font-variant-numeric: tabular-nums; width: 6%;">${qty}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; width: 12%; font-size: 0.65rem;">₹${formatInrClient(rate)}</td>
+          <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; width: 13%; font-size: 0.65rem;">₹${formatInrClient(itemTotal)}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; width: 11%; font-size: 0.62rem;">₹${formatInrClient(igstAmt)} <span style="font-size: 0.56rem; color: #64748b;">(${gstPct}%)</span></td>
+          <td style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; width: 11%; color: #0f172a; font-size: 0.65rem;">₹${formatInrClient(lineGross)}</td>
+        </tr>
+      `;
+    } else {
+      return `
+        <tr>
+          <td style="text-align: center; color: #475569; font-weight: 600; width: 4%;">${idx + 1}</td>
+          <td style="font-weight: 700; color: #0f172a; word-break: break-word; width: 27%; font-size: 0.68rem;">${escapeHtml(item.description || 'Service / Product')}</td>
+          <td style="text-align: center; font-family: monospace; font-size: 0.65rem; width: 9%;">${escapeHtml(hsn)}</td>
+          <td style="text-align: center; font-variant-numeric: tabular-nums; width: 5%;">${qty}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; width: 11%; font-size: 0.65rem;">₹${formatInrClient(rate)}</td>
+          <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; width: 12%; font-size: 0.65rem;">₹${formatInrClient(itemTotal)}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; width: 11%; font-size: 0.62rem;">₹${formatInrClient(cgstAmt)} <span style="font-size: 0.56rem; color: #64748b;">(${gstPct / 2}%)</span></td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; width: 11%; font-size: 0.62rem;">₹${formatInrClient(sgstAmt)} <span style="font-size: 0.56rem; color: #64748b;">(${gstPct / 2}%)</span></td>
+          <td style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; width: 10%; color: #0f172a; font-size: 0.65rem;">₹${formatInrClient(lineGross)}</td>
+        </tr>
+      `;
+    }
   }).join('');
 
   const totalTax = isInterState ? igstTotal : (cgstTotal + sgstTotal);
-  const grandTotal = Math.round(subtotal + totalTax);
-  const roundOff = (grandTotal - (subtotal + totalTax));
+  const rawTotal = subtotal + totalTax;
+  const grandTotal = Math.round(rawTotal);
+  const roundOff = Math.round((grandTotal - rawTotal) * 100) / 100;
   const amountInWords = numberToWordsClient(grandTotal);
 
-  paper.innerHTML = `
-    <!-- Invoice Header -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 2px solid ${themePrimary}; padding-bottom: 1rem;">
-      <div>
-        <h1 style="font-size: 1.4rem; font-weight: 800; color: ${themePrimary}; margin: 0; letter-spacing: -0.02em;">${escapeHtml(sellerName)}</h1>
-        <div style="font-size: 0.76rem; color: #64748b; margin-top: 0.25rem;">${escapeHtml(sellerAddress)}</div>
-        <div style="font-size: 0.74rem; font-weight: 700; color: #334155; margin-top: 0.2rem;">
-          GSTIN: <span style="font-family: monospace;">${escapeHtml(sellerGstin || 'Unregistered')}</span>
-          ${sellerPan ? ` • PAN: <span style="font-family: monospace;">${escapeHtml(sellerPan)}</span>` : ''}
-          ${sellerPhone ? ` • Ph: ${escapeHtml(sellerPhone)}` : ''}
-        </div>
-      </div>
-      <div style="text-align: right;">
-        <div style="background: ${themePrimary}; color: #ffffff; padding: 0.3rem 0.85rem; border-radius: 4px; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.06em; display: inline-block;">
-          TAX INVOICE
-        </div>
-        <div style="font-size: 0.68rem; color: #64748b; margin-top: 0.35rem; font-weight: 600;">Original for Recipient</div>
-      </div>
-    </div>
-
-    <!-- Meta Details Grid -->
-    <div class="gst-doc-meta-grid" style="background: ${themeLight}; border: 1px solid #e2e8f0; margin-bottom: 1rem;">
-      <div><strong>Invoice No:</strong> <span style="font-family: monospace; font-weight: 700; color: #0f172a;">${escapeHtml(invNumber)}</span></div>
-      <div><strong>Invoice Date:</strong> ${escapeHtml(invDate)}</div>
-      <div><strong>Place of Supply:</strong> ${escapeHtml(buyerState)} (${escapeHtml(buyerCode)})</div>
-      <div><strong>Reverse Charge:</strong> No</div>
-    </div>
-
-    <!-- Addresses Section -->
-    <div class="gst-doc-addresses">
-      <div class="gst-doc-addr-card">
-        <div class="gst-doc-addr-title">Billed By (Supplier)</div>
-        <div style="font-weight: 700; font-size: 0.82rem; color: #0f172a;">${escapeHtml(sellerName)}</div>
-        <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">${escapeHtml(sellerAddress)}</div>
-        <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">State: ${escapeHtml(sellerState)} (${escapeHtml(sellerCode)})</div>
-        <div style="font-size: 0.75rem; font-weight: 700; color: #0f172a; margin-top: 0.25rem;">GSTIN: <span style="font-family: monospace;">${escapeHtml(sellerGstin)}</span></div>
-      </div>
-      <div class="gst-doc-addr-card">
-        <div class="gst-doc-addr-title">Billed To (Recipient / Client)</div>
-        <div style="font-weight: 700; font-size: 0.82rem; color: #0f172a;">${escapeHtml(buyerName)}</div>
-        <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">${escapeHtml(buyerAddress || 'Address on file')}</div>
-        <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">State: ${escapeHtml(buyerState)} (${escapeHtml(buyerCode)})</div>
-        <div style="font-size: 0.75rem; font-weight: 700; color: #0f172a; margin-top: 0.25rem;">GSTIN: <span style="font-family: monospace;">${escapeHtml(buyerGstin || 'Consumer / Unregistered')}</span></div>
-      </div>
-    </div>
-
-    <!-- Items Table -->
-    <table class="gst-doc-table">
-      <thead>
+  // Generate HSN Tax Summary Table Rows
+  const hsnRowsHtml = Array.from(hsnSummaryMap.values()).map(h => {
+    if (isInterState) {
+      return `
         <tr>
-          <th style="width: 5%; text-align: center;">#</th>
-          <th style="width: 32%;">Item Description</th>
-          <th style="width: 10%; text-align: center;">HSN</th>
-          <th style="width: 7%; text-align: center;">Qty</th>
-          <th style="width: 12%; text-align: right;">Rate (Rs.)</th>
-          <th style="width: 12%; text-align: right;">Taxable (Rs.)</th>
-          <th style="width: 8%; text-align: center;">GST%</th>
-          <th style="width: 10%; text-align: right;">Tax (Rs.)</th>
-          <th style="width: 14%; text-align: right;">Total (Rs.)</th>
+          <td style="text-align: center; font-family: monospace; font-weight: 600;">${escapeHtml(h.hsn)}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">₹ ${formatInrClient(h.taxable)}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">${h.gstPct}% : ₹ ${formatInrClient(h.igst)}</td>
+          <td style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;">₹ ${formatInrClient(h.igst)}</td>
         </tr>
-      </thead>
-      <tbody>
-        ${itemRowsHtml}
-      </tbody>
-    </table>
+      `;
+    } else {
+      const halfRate = h.gstPct / 2;
+      return `
+        <tr>
+          <td style="text-align: center; font-family: monospace; font-weight: 600;">${escapeHtml(h.hsn)}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">₹ ${formatInrClient(h.taxable)}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">${halfRate}% : ₹ ${formatInrClient(h.cgst)}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">${halfRate}% : ₹ ${formatInrClient(h.sgst)}</td>
+          <td style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;">₹ ${formatInrClient(h.cgst + h.sgst)}</td>
+        </tr>
+      `;
+    }
+  }).join('');
 
-    <!-- Bottom Section: Amount in words, UPI QR, Bank, Totals -->
-    <div class="gst-doc-bottom">
-      <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-        <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem; background: ${themeLight};">
-          <div style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Total Amount in Words</div>
-          <div style="font-size: 0.78rem; font-weight: 700; color: #0f172a; margin-top: 0.15rem;">${escapeHtml(amountInWords)}</div>
-        </div>
-
-        <div class="gst-doc-bank-box">
-          <div id="gst-paper-qr-box" class="gst-doc-qr"></div>
-          <div style="font-size: 0.72rem; color: #475569; line-height: 1.45;">
-            <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.2rem;">🏦 Bank & UPI Details</div>
-            ${bankName ? `<div><strong>Bank:</strong> ${escapeHtml(bankName)}</div>` : ''}
-            ${bankAcc ? `<div><strong>A/C:</strong> <span style="font-family: monospace;">${escapeHtml(bankAcc)}</span></div>` : ''}
-            ${bankIfsc ? `<div><strong>IFSC:</strong> <span style="font-family: monospace;">${escapeHtml(bankIfsc)}</span></div>` : ''}
-            ${upiId ? `<div style="margin-top: 0.15rem; color: ${themePrimary}; font-weight: 700;"><strong>UPI ID:</strong> ${escapeHtml(upiId)}</div>` : ''}
+  // Authentic Indian GST Tax Invoice Markup (Box-in-Box Ruled Structure)
+  paper.innerHTML = `
+    <div class="gst-doc-ledger-box">
+      <!-- 1. Statutory Header Bar (Rule 46 CGST Rules, 2017) -->
+      <div class="gst-doc-stat-header">
+        <div style="flex: 1; text-align: center;">
+          <div style="font-size: 1rem; font-weight: 800; letter-spacing: 0.08em; color: #0f172a;">TAX INVOICE</div>
+          <div style="font-size: 0.58rem; font-style: italic; color: #64748b; margin-top: 0.1rem;">
+            (Issued under Section 31 of CGST Act, 2017 read with Rule 46 of CGST Rules, 2017)
           </div>
         </div>
+        <div class="gst-doc-copy-tag">Original for Recipient</div>
+      </div>
 
-        <div style="font-size: 0.68rem; color: #94a3b8; line-height: 1.35; padding-left: 0.2rem;">
-          Terms: Subject to ${escapeHtml(sellerState)} jurisdiction. Goods / services once invoiced are subject to agreement terms.
+      <!-- 2. Seller / Supplier Details Banner -->
+      <div class="gst-doc-seller-block">
+        <div style="font-size: 1rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em;">
+          ${escapeHtml(sellerName.toUpperCase())}
+        </div>
+        <div style="font-size: 0.68rem; color: #334155; margin-top: 0.15rem;">
+          ${escapeHtml(sellerAddress)}
+        </div>
+        <div style="font-size: 0.68rem; font-weight: 700; color: #0f172a; margin-top: 0.2rem; word-break: break-word;">
+          GSTIN: <span style="font-family: monospace;">${escapeHtml(sellerGstin)}</span>
+          ${sellerPan ? ` &nbsp;|&nbsp; PAN: <span style="font-family: monospace;">${escapeHtml(sellerPan)}</span>` : ''}
+          &nbsp;|&nbsp; State: <span>${escapeHtml(sellerState)} (${escapeHtml(sellerCode)})</span>
+        </div>
+        ${(sellerPhone || sellerPan) ? `
+          <div style="font-size: 0.64rem; color: #64748b; margin-top: 0.1rem;">
+            ${sellerPhone ? `Ph: ${escapeHtml(sellerPhone)} &nbsp;&nbsp;` : ''}
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- 3. Invoice Meta 4-Quadrant Ruled Grid -->
+      <div class="gst-doc-meta-table">
+        <div class="gst-doc-meta-col">
+          <div class="gst-doc-meta-row"><span>Invoice No:</span> <strong>${escapeHtml(invNumber)}</strong></div>
+          <div class="gst-doc-meta-row"><span>Invoice Date:</span> <span>${escapeHtml(invDate)}</span></div>
+          <div class="gst-doc-meta-row"><span>State / Code:</span> <span>${escapeHtml(sellerState)} (${escapeHtml(sellerCode)})</span></div>
+          <div class="gst-doc-meta-row"><span>Reverse Charge:</span> <span>No</span></div>
+        </div>
+        <div class="gst-doc-meta-col">
+          <div class="gst-doc-meta-row"><span>Place of Supply:</span> <strong>${escapeHtml(buyerState)} (${escapeHtml(buyerCode)})</strong></div>
+          <div class="gst-doc-meta-row"><span>Supply Type:</span> <span>${isInterState ? 'Inter-State (IGST 100%)' : 'Intra-State (CGST 50% + SGST 50%)'}</span></div>
+          <div class="gst-doc-meta-row"><span>Payment Due Date:</span> <span>Net 15 Days / Immediate</span></div>
+          <div class="gst-doc-meta-row"><span>Transport / Mode:</span> <span>Direct / Hand Delivery</span></div>
         </div>
       </div>
 
-      <div>
-        <div class="gst-doc-totals-box">
-          <div class="gst-doc-total-row">
-            <span style="color: #64748b;">Taxable Value:</span>
-            <span style="font-weight: 600;">Rs. ${subtotal.toFixed(2)}</span>
+      <!-- 4. Party Details Grid (Receiver Billed To & Consignee Shipped To) -->
+      <div class="gst-doc-party-table">
+        <div class="gst-doc-party-box">
+          <div class="gst-doc-party-label">Details of Receiver | Billed to:</div>
+          <div style="font-weight: 700; font-size: 0.84rem; color: #0f172a;">${escapeHtml(buyerName)}</div>
+          <div style="font-size: 0.74rem; color: #475569; margin-top: 0.15rem;">${escapeHtml(buyerAddress || 'Registered Address on file')}</div>
+          <div style="font-size: 0.74rem; color: #475569; margin-top: 0.15rem;">State: ${escapeHtml(buyerState)} (Code: ${escapeHtml(buyerCode)})</div>
+          <div style="font-size: 0.74rem; font-weight: 700; color: #0f172a; margin-top: 0.25rem;">
+            GSTIN / UIN: <span style="font-family: monospace;">${escapeHtml(buyerGstin || 'Consumer / Unregistered')}</span>
           </div>
-          ${!isInterState ? `
-            <div class="gst-doc-total-row">
-              <span style="color: #64748b;">Central GST (CGST):</span>
-              <span style="font-weight: 600;">Rs. ${cgstTotal.toFixed(2)}</span>
+        </div>
+        <div class="gst-doc-party-box">
+          <div class="gst-doc-party-label">Details of Consignee | Shipped to:</div>
+          <div style="font-weight: 700; font-size: 0.84rem; color: #0f172a;">${escapeHtml(buyerName)}</div>
+          <div style="font-size: 0.74rem; color: #475569; margin-top: 0.15rem;">${escapeHtml(buyerAddress || 'Same as Billed Address')}</div>
+          <div style="font-size: 0.74rem; color: #475569; margin-top: 0.15rem;">State: ${escapeHtml(buyerState)} (Code: ${escapeHtml(buyerCode)})</div>
+          <div style="font-size: 0.74rem; font-weight: 700; color: #0f172a; margin-top: 0.25rem;">
+            GSTIN / UIN: <span style="font-family: monospace;">${escapeHtml(buyerGstin || 'Consumer / Unregistered')}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Main Itemized Goods & Services Table (With Vertical Divider Lines) -->
+      <div class="gst-doc-table-scroll">
+        <table class="gst-doc-table">
+          <thead>
+            <tr>
+              <th style="width: 5%; text-align: center;">S.N.</th>
+              <th style="width: ${isInterState ? '32%' : '27%'}; text-align: left;">Description of Goods / Services</th>
+              <th style="width: ${isInterState ? '10%' : '9%'}; text-align: center;">HSN/SAC</th>
+              <th style="width: ${isInterState ? '6%' : '5%'}; text-align: center;">Qty</th>
+              <th style="width: ${isInterState ? '12%' : '11%'}; text-align: right;">Rate (₹)</th>
+              <th style="width: ${isInterState ? '13%' : '12%'}; text-align: right;">Taxable (₹)</th>
+              ${isInterState ? `
+                <th style="width: 11%; text-align: right;">IGST (₹)</th>
+              ` : `
+                <th style="width: 11%; text-align: right;">CGST (₹)</th>
+                <th style="width: 11%; text-align: right;">SGST (₹)</th>
+              `}
+              <th style="width: ${isInterState ? '11%' : '10%'}; text-align: right;">Total (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemRowsHtml}
+            <!-- Subtotal Row -->
+            <tr style="background: #f8fafc; font-weight: 700; border-top: 2px solid #cbd5e1; font-size: 0.65rem;">
+              <td colspan="2" style="text-align: left; padding-left: 0.5rem; color: #0f172a;">Total Items & Values</td>
+              <td style="text-align: center;">-</td>
+              <td style="text-align: center;">${totalQty}</td>
+              <td style="text-align: right;">-</td>
+              <td style="text-align: right; white-space: nowrap;">₹${formatInrClient(subtotal)}</td>
+              ${isInterState ? `
+                <td style="text-align: right; white-space: nowrap;">₹${formatInrClient(igstTotal)}</td>
+              ` : `
+                <td style="text-align: right; white-space: nowrap;">₹${formatInrClient(cgstTotal)}</td>
+                <td style="text-align: right; white-space: nowrap;">₹${formatInrClient(sgstTotal)}</td>
+              `}
+              <td style="text-align: right; white-space: nowrap; color: #0f172a;">₹${formatInrClient(rawTotal)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 6. Mandatory HSN / SAC Tax Summary Table (Rule 46 Compliance) -->
+      <div style="margin-bottom: 0.65rem;">
+        <div style="font-size: 0.60rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 0.2rem; letter-spacing: 0.04em;">
+          Tax Summary (HSN / SAC Breakup)
+        </div>
+        <table class="gst-doc-hsn-table">
+          <thead>
+            <tr>
+              <th style="text-align: center;">HSN / SAC</th>
+              <th style="text-align: right;">Taxable Value (₹)</th>
+              ${isInterState ? `
+                <th style="text-align: right;">Integrated Tax (IGST Rate & Amt)</th>
+              ` : `
+                <th style="text-align: right;">Central Tax (CGST Rate & Amt)</th>
+                <th style="text-align: right;">State Tax (SGST Rate & Amt)</th>
+              `}
+              <th style="text-align: right;">Total Tax Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${hsnRowsHtml}
+            <tr style="background: #f1f5f9; font-weight: 700;">
+              <td style="text-align: center;">Tax Summary Total</td>
+              <td style="text-align: right;">₹ ${formatInrClient(subtotal)}</td>
+              ${isInterState ? `
+                <td style="text-align: right;">₹ ${formatInrClient(igstTotal)}</td>
+                <td style="text-align: right;">₹ ${formatInrClient(igstTotal)}</td>
+              ` : `
+                <td style="text-align: right;">₹ ${formatInrClient(cgstTotal)}</td>
+                <td style="text-align: right;">₹ ${formatInrClient(sgstTotal)}</td>
+                <td style="text-align: right;">₹ ${formatInrClient(cgstTotal + sgstTotal)}</td>
+              `}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 7. Bottom Details: Amount in Words, Bank + QR, Totals, Declaration & Signatory -->
+      <div class="gst-doc-bottom-grid">
+        <!-- Left Column -->
+        <div class="gst-doc-bottom-left">
+          <!-- Total Amount in Words -->
+          <div class="gst-doc-words-box">
+            <div style="font-size: 0.58rem; font-weight: 800; color: #64748b; text-transform: uppercase;">
+              Total Invoice Amount in Words
             </div>
-            <div class="gst-doc-total-row">
-              <span style="color: #64748b;">State GST (SGST):</span>
-              <span style="font-weight: 600;">Rs. ${sgstTotal.toFixed(2)}</span>
+            <div style="font-size: 0.70rem; font-weight: 700; color: #0f172a; margin-top: 0.15rem; word-break: break-word;">
+              ${escapeHtml(amountInWords)}
             </div>
-          ` : `
-            <div class="gst-doc-total-row">
-              <span style="color: #64748b;">Integrated GST (IGST):</span>
-              <span style="font-weight: 600;">Rs. ${igstTotal.toFixed(2)}</span>
+          </div>
+
+          <!-- Bank & Dynamic UPI QR Box -->
+          <div class="gst-doc-bank-qr-box">
+            <div style="font-size: 0.66rem; color: #334155; line-height: 1.4; min-width: 0; flex: 1;">
+              <div style="font-weight: 800; color: #0f172a; margin-bottom: 0.2rem; font-size: 0.68rem;">
+                BANKING & PAYMENT DETAILS
+              </div>
+              <div><strong>Bank Name:</strong> ${escapeHtml(bankName)}</div>
+              <div><strong>A/C Holder:</strong> ${escapeHtml(sellerName)}</div>
+              <div><strong>Account No:</strong> <span style="font-family: monospace; font-weight: 700; font-size: 0.62rem;">${escapeHtml(bankAcc)}</span></div>
+              <div><strong>IFSC Code:</strong> <span style="font-family: monospace; font-weight: 700; font-size: 0.62rem;">${escapeHtml(bankIfsc)}</span></div>
+              ${upiId ? `<div style="margin-top: 0.15rem; color: #0f172a; font-weight: 700;"><strong>UPI ID:</strong> <span style="font-family: monospace; color: #0284c7; font-size: 0.62rem;">${escapeHtml(upiId)}</span></div>` : ''}
             </div>
-          `}
-          ${roundOff !== 0 ? `
-            <div class="gst-doc-total-row" style="font-size: 0.7rem; color: #94a3b8;">
-              <span>Round Off:</span>
-              <span>${roundOff > 0 ? '+' : ''}${roundOff.toFixed(2)}</span>
+
+            <div style="text-align: center; flex-shrink: 0;">
+              <div id="gst-paper-qr-box" class="gst-doc-qr"></div>
+              <div style="font-size: 0.54rem; font-weight: 700; color: #0f172a; margin-top: 0.15rem;">Scan & Pay via UPI</div>
             </div>
-          ` : ''}
-          <div class="gst-doc-total-row gst-doc-grand-total">
-            <span style="color: ${themePrimary};">Invoice Total:</span>
-            <span style="color: ${themePrimary}; font-size: 1.05rem;">Rs. ${grandTotal.toFixed(2)}</span>
+          </div>
+
+          <!-- Declaration & Terms -->
+          <div style="font-size: 0.60rem; color: #475569; line-height: 1.35; padding-top: 0.15rem;">
+            <div><strong>DECLARATION:</strong> We declare that this invoice shows the actual price of the goods/services described and that all particulars are true and correct.</div>
+            <div style="margin-top: 0.15rem; color: #64748b; font-style: italic;">
+              Terms: 1. Subject to ${escapeHtml(sellerState)} jurisdiction. 2. Goods/services once invoiced are subject to terms of agreement.
+            </div>
           </div>
         </div>
 
-        <div style="margin-top: 1.25rem; text-align: right; padding-right: 0.5rem;">
-          <div style="font-size: 0.72rem; color: #64748b;">For <strong>${escapeHtml(sellerName)}</strong></div>
-          <div style="height: 38px;"></div>
-          <div style="border-top: 1px dashed #cbd5e1; display: inline-block; padding-top: 0.25rem; font-size: 0.72rem; font-weight: 700; color: #334155;">
-            Authorized Signatory
+        <!-- Right Column (Financial Calculations & Signatory Box) -->
+        <div class="gst-doc-bottom-right">
+          <!-- Totals Breakdown -->
+          <div class="gst-doc-calc-table">
+            <div class="gst-doc-calc-row">
+              <span>Taxable Amount:</span>
+              <span>₹${formatInrClient(subtotal)}</span>
+            </div>
+            ${isInterState ? `
+              <div class="gst-doc-calc-row">
+                <span>Add: IGST:</span>
+                <span>₹${formatInrClient(igstTotal)}</span>
+              </div>
+            ` : `
+              <div class="gst-doc-calc-row">
+                <span>Add: CGST:</span>
+                <span>₹${formatInrClient(cgstTotal)}</span>
+              </div>
+              <div class="gst-doc-calc-row">
+                <span>Add: SGST:</span>
+                <span>₹${formatInrClient(sgstTotal)}</span>
+              </div>
+            `}
+            ${roundOff !== 0 ? `
+              <div class="gst-doc-calc-row" style="color: #64748b;">
+                <span>Round Off:</span>
+                <span>${roundOff > 0 ? '+' : ''}₹${formatInrClient(roundOff)}</span>
+              </div>
+            ` : ''}
+            <div class="gst-doc-grand-row">
+              <span>TOTAL VALUE:</span>
+              <span>₹${formatInrClient(grandTotal)}</span>
+            </div>
+          </div>
+
+          <!-- Authorized Signatory Box -->
+          <div class="gst-doc-signatory-block">
+            <div style="font-size: 0.68rem; font-weight: 700; color: #0f172a;">
+              For ${escapeHtml(sellerName.toUpperCase())}
+            </div>
+            <div style="font-size: 0.58rem; font-style: italic; color: #64748b; margin-top: 0.08rem;">
+              (Authorized Signatory / Stamp)
+            </div>
+            <div style="height: 38px;"></div>
+            <div style="border-top: 1px solid #94a3b8; padding-top: 0.2rem; font-size: 0.66rem; font-weight: 700; color: #0f172a; text-align: center;">
+              Authorised Signatory
+            </div>
           </div>
         </div>
       </div>
@@ -435,16 +626,16 @@ export function updateGstInvoicePreview() {
  */
 export async function generateAndDownloadGstInvoicePdf({ startProgress, onJobSubmitted, onError }) {
   const sellerName = document.getElementById('gst-seller-name')?.value || 'Acme Technologies Pvt Ltd';
-  const sellerGstin = document.getElementById('gst-seller-gstin')?.value || '';
-  const sellerAddress = document.getElementById('gst-seller-address')?.value || '';
+  const sellerGstin = document.getElementById('gst-seller-gstin')?.value || '07AAAAA0000A1Z5';
+  const sellerAddress = document.getElementById('gst-seller-address')?.value || 'Plot 42, Okhla Phase 3, New Delhi - 110020';
   const sellerState = document.getElementById('gst-seller-state')?.value || 'Delhi';
   const sellerCode = document.getElementById('gst-seller-code')?.value || '07';
-  const sellerPhone = document.getElementById('gst-seller-phone')?.value || '';
-  const sellerPan = document.getElementById('gst-seller-pan')?.value || '';
+  const sellerPhone = document.getElementById('gst-seller-phone')?.value || '+91 98765 43210';
+  const sellerPan = document.getElementById('gst-seller-pan')?.value || 'AAAAA0000A';
 
   const buyerName = document.getElementById('gst-buyer-name')?.value || 'Apex Retailers LLP';
-  const buyerGstin = document.getElementById('gst-buyer-gstin')?.value || '';
-  const buyerAddress = document.getElementById('gst-buyer-address')?.value || '';
+  const buyerGstin = document.getElementById('gst-buyer-gstin')?.value || '07BBBBB1111B1Z2';
+  const buyerAddress = document.getElementById('gst-buyer-address')?.value || 'Connaught Place, Central Delhi, Delhi - 110001';
   const buyerState = document.getElementById('gst-buyer-state')?.value || 'Delhi';
   const buyerCode = document.getElementById('gst-buyer-code')?.value || '07';
 
@@ -453,10 +644,10 @@ export async function generateAndDownloadGstInvoicePdf({ startProgress, onJobSub
   const taxType = document.getElementById('gst-tax-type')?.value || 'auto';
   const theme = document.getElementById('gst-theme-select')?.value || 'modern';
 
-  const upiId = document.getElementById('gst-upi-id')?.value || '';
-  const bankName = document.getElementById('gst-bank-name')?.value || '';
-  const bankAcc = document.getElementById('gst-bank-acc')?.value || '';
-  const bankIfsc = document.getElementById('gst-bank-ifsc')?.value || '';
+  const upiId = document.getElementById('gst-upi-id')?.value || 'acmetech@hdfcbar';
+  const bankName = document.getElementById('gst-bank-name')?.value || 'HDFC Bank';
+  const bankAcc = document.getElementById('gst-bank-acc')?.value || '50200012345678';
+  const bankIfsc = document.getElementById('gst-bank-ifsc')?.value || 'HDFC0000123';
 
   const options = {
     seller: {
@@ -484,11 +675,13 @@ export async function generateAndDownloadGstInvoicePdf({ startProgress, onJobSub
     bankDetails: {
       bankName: bankName,
       accountNumber: bankAcc,
-      ifscCode: bankIfsc
+      ifscCode: bankIfsc,
+      upiId: upiId
     },
     items: gstItems.map(it => ({
       description: it.description || 'Service',
       hsn: it.hsn || '9983',
+      qty: Number(it.quantity) || 1,
       quantity: Number(it.quantity) || 1,
       rate: Number(it.rate) || 0,
       gstRate: Number(it.gstRate) || 18
@@ -536,6 +729,39 @@ export async function generateAndDownloadGstInvoicePdf({ startProgress, onJobSub
 }
 
 /**
+ * Switches between Edit Form, Live Preview, and Split View on mobile/tablets.
+ */
+export function setGstStudioView(mode) {
+  const formPanel = document.getElementById('gst-form-panel');
+  const previewPanel = document.getElementById('gst-preview-panel');
+  const container = document.getElementById('gst-studio-container');
+  const tabs = ['form', 'preview', 'split'];
+  
+  tabs.forEach(t => {
+    const btn = document.getElementById(`gst-tab-${t}`);
+    if (btn) btn.classList.toggle('active', t === mode);
+  });
+
+  if (!container || !formPanel || !previewPanel) return;
+
+  if (mode === 'form') {
+    formPanel.style.display = 'block';
+    previewPanel.style.display = 'none';
+    container.style.gridTemplateColumns = '1fr';
+  } else if (mode === 'preview') {
+    formPanel.style.display = 'none';
+    previewPanel.style.display = 'block';
+    container.style.gridTemplateColumns = '1fr';
+    updateGstInvoicePreview();
+  } else {
+    formPanel.style.display = 'block';
+    previewPanel.style.display = 'block';
+    container.style.gridTemplateColumns = '';
+    updateGstInvoicePreview();
+  }
+}
+
+/**
  * Triggers standard browser print dialog for the invoice preview paper.
  */
 export function printGstInvoicePreview() {
@@ -552,8 +778,10 @@ if (typeof module !== 'undefined' && module.exports) {
     addGstItemRow,
     deleteGstItemRow,
     numberToWordsClient,
+    formatInrClient,
     updateGstInvoicePreview,
     generateAndDownloadGstInvoicePdf,
-    printGstInvoicePreview
+    printGstInvoicePreview,
+    setGstStudioView
   };
 }

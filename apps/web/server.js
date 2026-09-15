@@ -572,3 +572,5 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`DocPlatform production server running on http://localhost:${PORT}`);
 });
+// Reload trigger: 2026-09-15-gst-invoice-real-engine
+

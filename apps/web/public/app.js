@@ -48,8 +48,10 @@ import {
   numberToWordsClient,
   updateGstInvoicePreview,
   generateAndDownloadGstInvoicePdf,
-  printGstInvoicePreview
-} from './modules/gst-studio.js';
+  printGstInvoicePreview,
+  setGstStudioView,
+  formatInrClient
+} from './modules/gst-studio.js?v=3.1';
 import {
   getStoredGeminiKey,
   hasValidGeminiKey,
@@ -223,20 +225,30 @@ export function switchTool(toolKey, updateUrl = true) {
   const gstStudio = document.getElementById('gst-invoice-studio');
   const dropzone = document.getElementById('dropzone');
 
-  if (toolKey === 'draw-signature') {
-    if (sigStudio) sigStudio.style.display = 'block';
-    if (gstStudio) gstStudio.style.display = 'none';
-    if (dropzone) dropzone.style.display = 'none';
-    switchSignatureTab('draw');
-  } else if (toolKey === 'gst-invoice-pdf') {
+  const mainContent = document.querySelector('.main-content');
+  if (toolKey === 'gst-invoice-pdf') {
+    if (mainContent) mainContent.classList.add('wide-canvas');
     if (sigStudio) sigStudio.style.display = 'none';
     if (gstStudio) gstStudio.style.display = 'block';
     if (dropzone) dropzone.style.display = 'none';
     initGstInvoiceStudio();
+    if (window.innerWidth <= 1024) {
+      setGstStudioView('form');
+    } else {
+      setGstStudioView('split');
+    }
   } else {
-    if (sigStudio) sigStudio.style.display = 'none';
-    if (gstStudio) gstStudio.style.display = 'none';
-    if (dropzone) dropzone.style.display = 'block';
+    if (mainContent) mainContent.classList.remove('wide-canvas');
+    if (toolKey === 'draw-signature') {
+      if (sigStudio) sigStudio.style.display = 'block';
+      if (gstStudio) gstStudio.style.display = 'none';
+      if (dropzone) dropzone.style.display = 'none';
+      switchSignatureTab('draw');
+    } else {
+      if (sigStudio) sigStudio.style.display = 'none';
+      if (gstStudio) gstStudio.style.display = 'none';
+      if (dropzone) dropzone.style.display = 'block';
+    }
   }
 
   // Dynamic Dropzone Labels
@@ -814,6 +826,8 @@ window.numberToWordsClient = numberToWordsClient;
 window.updateGstInvoicePreview = updateGstInvoicePreview;
 window.generateAndDownloadGstInvoicePdf = handleGenerateGstInvoice;
 window.printGstInvoicePreview = printGstInvoicePreview;
+window.setGstStudioView = setGstStudioView;
+window.formatInrClient = formatInrClient;
 
 // AI Preview Binding
 window.copyAiPreviewText = copyAiPreviewText;
