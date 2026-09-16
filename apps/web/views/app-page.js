@@ -49,7 +49,7 @@ export function getRelatedToolsList(key) {
 
 export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, renderNavbar, renderFooter, TOOL_REGISTRY }) {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,7 +57,19 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
   <meta name="description" content="${toolConfig.metaDescription}">
   <meta name="keywords" content="${toolConfig.keywords.join(', ')}">
   <link rel="canonical" href="${toolConfig.canonicalUrl}">
-  <link rel="stylesheet" href="/styles.css?v=2.3">
+  <link rel="stylesheet" href="/styles.css?v=3.0">
+  <script>
+    (function() {
+      const saved = localStorage.getItem('dp_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+    })();
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('dp_theme', next);
+    }
+  </script>
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>

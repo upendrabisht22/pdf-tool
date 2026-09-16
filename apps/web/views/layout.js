@@ -4,30 +4,42 @@
  */
 
 export const renderNavbar = (activeItem = '') => `
-  <div class="navbar-wrapper">
-    <header class="navbar">
-      <a href="/" class="logo-container">
-        <div class="logo-badge">DP</div>
-        <span class="brand-title">DocPlatform</span>
+  <header style="position: sticky; top: 0; z-index: 50; background: var(--bg-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); width: 100%;">
+    <div style="max-width: 64rem; margin: 0 auto; height: 51px; display: flex; align-items: center; justify-content: space-between; border-left: 1px dashed var(--border); border-right: 1px dashed var(--border); border-bottom: 1px dashed var(--border); padding: 0 1.25rem;">
+      
+      <!-- Brand Logo -->
+      <a href="/" style="display: flex; align-items: center; gap: 0.55rem; text-decoration: none; color: var(--text-primary);">
+        <div style="width: 24px; height: 24px; background: #7b61ff; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; color: #ffffff; font-family: 'JetBrains Mono', monospace;">
+          DP
+        </div>
+        <span class="hero-display" style="font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary);">DocPlatform</span>
       </a>
-      <ul class="nav-links">
-        <li><a href="/merge-pdf" class="nav-link ${activeItem === 'tools' ? 'active' : ''}">PDF Tools</a></li>
-        <li><a href="/ai-ask" class="nav-link ${activeItem === 'ai' ? 'active' : ''}">AI & OCR</a></li>
-        <li><a href="/#features" class="nav-link">Features</a></li>
-        <li><a href="/pricing" class="nav-link ${activeItem === 'pricing' ? 'active' : ''}">Pricing & Support</a></li>
-        <li><a href="/#faq" class="nav-link">FAQ</a></li>
-      </ul>
-      <div class="nav-action-area">
-        <button class="nav-byok-btn" id="nav-byok-btn" onclick="openApiKeyModal()" title="Configure your free Google Gemini API Key for AI tools">
-          <span class="byok-status-dot" id="byok-status-dot"></span>
-          <span class="byok-btn-text" id="byok-btn-text">🔑 AI Key</span>
+
+      <!-- Monospace Navigation Links -->
+      <nav class="mono-copy" style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: var(--text-secondary);">
+        <a href="/#featured-tools" style="padding: 0.35rem 0.6rem; text-decoration: none; color: inherit; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">Features</a>
+        <a href="/#all-tools" style="padding: 0.35rem 0.6rem; text-decoration: none; color: inherit; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">Tools</a>
+        <a href="/pricing" style="padding: 0.35rem 0.6rem; text-decoration: none; color: ${activeItem === 'pricing' ? '#7b61ff' : 'inherit'}; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">Pricing</a>
+      </nav>
+
+      <!-- Actions: Theme Toggle, BYOK Key & Support -->
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <button type="button" onclick="toggleTheme()" class="mono-copy" style="display: inline-flex; align-items: center; justify-content: center; height: 30px; width: 30px; border: 1px solid var(--border); background: var(--bg-elevated); color: var(--text-secondary); cursor: pointer;" title="Toggle theme">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         </button>
-        <button class="nav-support-btn" id="nav-support-btn" onclick="openSupportModal()">
-          ☕ Support / Tip
+
+        <button type="button" class="mono-copy" id="nav-byok-btn" onclick="openApiKeyModal()" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.65rem; border: 1px solid var(--border); background: var(--bg-elevated); font-size: 0.7rem; color: var(--text-primary); cursor: pointer;" title="Configure free Google Gemini API Key">
+          <span class="byok-status-dot" id="byok-status-dot" style="width: 6px; height: 6px; border-radius: 50%; background: #94a3b8;"></span>
+          <span>AI Key</span>
+        </button>
+
+        <button type="button" class="mono-copy" id="nav-support-btn" onclick="openSupportModal()" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.65rem; border: 1px solid #7b61ff; background: rgba(123, 97, 255, 0.1); font-size: 0.7rem; color: #7b61ff; cursor: pointer;">
+          ☕ Tip
         </button>
       </div>
-    </header>
-  </div>
+
+    </div>
+  </header>
 
   <!-- Support & Donation Modal -->
   <div class="support-modal-backdrop" id="support-modal-backdrop" onclick="closeSupportModal()"></div>
@@ -271,83 +283,74 @@ export const renderNavbar = (activeItem = '') => `
 `;
 
 export const renderFooter = () => `
-  <footer class="footer">
-    <div class="footer-container">
-      <div class="footer-grid">
-        <!-- Brand Column -->
-        <div class="footer-brand">
-          <a href="/" class="footer-logo">
-            <div class="logo-badge">DP</div>
-            <span class="brand-title">DocPlatform</span>
-          </a>
-          <p class="footer-desc">
-            The private, high-fidelity document platform. Engineered for zero-leak privacy, precision vector fidelity, and enterprise AI intelligence.
-          </p>
-          <div class="footer-social-links">
-            <a href="https://github.com/upendrabisht22/pdf-tool" target="_blank" rel="noopener" class="social-icon-btn" title="GitHub">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+  <footer style="margin-top: auto; border-top: 1px dashed var(--border); background: var(--bg); color: var(--text-muted);">
+    <div style="max-width: 64rem; margin: 0 auto; border-left: 1px dashed var(--border); border-right: 1px dashed var(--border);">
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--border);">
+        
+        <!-- Col 1: Brand -->
+        <div style="background: var(--bg); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;">
+          <div>
+            <a href="/" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text-primary);">
+              <div style="width: 22px; height: 22px; background: #7b61ff; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 10px; color: #ffffff; font-family: 'JetBrains Mono', monospace;">
+                DP
+              </div>
+              <span class="hero-display" style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">DocPlatform</span>
             </a>
-            <a href="https://twitter.com/intent/tweet?text=DocPlatform+-+100%25+free+private+PDF+tools+with+AI&url=https://docplatform.app" target="_blank" rel="noopener" class="social-icon-btn" title="Share on Twitter / X">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
-            </a>
-            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://docplatform.app" target="_blank" rel="noopener" class="social-icon-btn" title="Share on LinkedIn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+            <p class="mono-copy" style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.5;">
+              Precision tools for your PDF workflows. 100% private in-browser document processing.
+            </p>
+          </div>
+          <div class="mono-copy" style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+            Designed for privacy & speed.
+          </div>
+        </div>
+
+        <!-- Col 2: Product -->
+        <div style="background: var(--bg); padding: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem;">
+          <div class="mono-copy" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Product</div>
+          <a href="/merge-pdf" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">PDF Tools</a>
+          <a href="/gst-invoice" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">GST Studio</a>
+          <a href="/chat-with-pdf" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">Chat with PDF</a>
+          <a href="/ocr-pdf" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">OCR Engine</a>
+          <a href="/pricing" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">Pricing</a>
+        </div>
+
+        <!-- Col 3: Company & Security -->
+        <div style="background: var(--bg); padding: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem;">
+          <div class="mono-copy" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Company</div>
+          <a href="/privacy" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">Privacy First</a>
+          <a href="/security" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">Security Model</a>
+          <a href="/terms" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">Terms of Service</a>
+          <a href="https://github.com/upendrabisht22/pdf-tool" target="_blank" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">Architecture Spec</a>
+        </div>
+
+        <!-- Col 4: Connect -->
+        <div style="background: var(--bg); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;">
+          <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+            <div class="mono-copy" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Connect</div>
+            <a href="https://github.com/upendrabisht22/pdf-tool" target="_blank" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">GitHub Repository</a>
+            <a href="mailto:support@docplatform.app" class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;">support@docplatform.app</a>
+          </div>
+
+          <div>
+            <a href="https://github.com/upendrabisht22/pdf-tool" target="_blank" aria-label="GitHub" style="display: inline-flex; align-items: center; justify-content: center; height: 28px; width: 28px; border: 1px solid var(--border); color: var(--text-muted); text-decoration: none;">
+              <svg width="13" height="13" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
             </a>
           </div>
         </div>
 
-        <!-- Product Column -->
-        <div>
-          <h4 class="footer-col-title">Product</h4>
-          <ul class="footer-links-list">
-            <li><a href="/merge-pdf" class="footer-link">PDF Tools</a></li>
-            <li><a href="/word-to-pdf" class="footer-link">Document Convert</a></li>
-            <li><a href="/redact-pdf" class="footer-link">Security & Redaction</a></li>
-            <li><a href="/ocr-pdf" class="footer-link">Multilingual OCR</a></li>
-            <li><a href="/ai-ask" class="footer-link">AI Document Q&A</a></li>
-            <li><a href="/pricing" class="footer-link">Pricing Plans</a></li>
-          </ul>
-        </div>
+      </div>
 
-        <!-- Developers & API Column -->
-        <div>
-          <h4 class="footer-col-title">Developers</h4>
-          <ul class="footer-links-list">
-            <li><a href="/api/v1/health" class="footer-link" target="_blank">REST API Health</a></li>
-            <li><a href="/#features" class="footer-link">Sandboxed Workers</a></li>
-            <li><a href="/pricing" class="footer-link">API Rate Limits</a></li>
-            <li><a href="https://github.com/upendrabisht22/pdf-tool" class="footer-link" target="_blank">Architecture Spec</a></li>
-            <li>
-              <div class="status-pill" style="margin-top: 0.5rem;">
-                <span>●</span> All Systems Operational
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Legal & Contact Column -->
-        <div>
-          <h4 class="footer-col-title">Company & Legal</h4>
-          <ul class="footer-links-list">
-            <li><a href="/privacy" class="footer-link">Privacy Policy</a></li>
-            <li><a href="/terms" class="footer-link">Terms of Service</a></li>
-            <li><a href="/security" class="footer-link">Security Whitepaper</a></li>
-            <li><a href="mailto:support@docplatform.com" class="footer-link">support@docplatform.com</a></li>
-            <li><span style="font-size: 0.85rem; color: var(--text-muted);">Bengaluru, India</span></li>
-          </ul>
+      <!-- Copyright Bar -->
+      <div class="mono-copy" style="border-top: 1px dashed var(--border); padding: 0.9rem 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">
+        <div>© 2026 DOCPLATFORM. ALL RIGHTS RESERVED.</div>
+        <div style="display: flex; align-items: center; gap: 0.4rem;">
+          <span style="width: 4px; height: 4px; background: #7b61ff; border-radius: 50%;"></span>
+          <span>CLIENT-SIDE PRIVACY ARCHITECTURE</span>
         </div>
       </div>
 
-      <!-- Bottom Bar -->
-      <div class="footer-bottom-bar">
-        <div>© 2026 DocPlatform Inc. All rights reserved. Precision vector processing & zero cloud retention.</div>
-        <div class="footer-bottom-links">
-          <a href="/privacy" class="footer-bottom-link">Privacy Policy</a>
-          <a href="/terms" class="footer-bottom-link">Terms of Service</a>
-          <a href="/security" class="footer-bottom-link">Security Whitepaper</a>
-          <a href="mailto:support@docplatform.com" class="footer-bottom-link">Contact Support</a>
-        </div>
-      </div>
     </div>
   </footer>
 `;

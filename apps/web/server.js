@@ -62,6 +62,7 @@ import { handleGrowthRoutes } from './api/growth-routes.js';
 import { renderNavbar, renderFooter } from './views/layout.js';
 import { renderPricingPage, renderPrivacyPage, renderTermsPage, renderSecurityPage } from './views/static-pages.js';
 import { renderAppPage, getToolCategory, getRelatedToolsList } from './views/app-page.js';
+import { renderLandingPage } from './views/landing-page.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -547,9 +548,43 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Serve Main Web Application with Rich SEO & Structured Data
-  const isHomepage = pathname === '/' || pathname === '';
-  const currentToolKey = isHomepage ? 'merge-pdf' : pathname.replace(/^\//, '');
+  // Route: Flagship SaaS Dark Landing Page (Root Route /)
+  if (pathname === '/' || pathname === '') {
+    const landingHtml = renderLandingPage({
+      renderNavbar,
+      renderFooter,
+      TOOL_REGISTRY,
+    });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(landingHtml);
+    return;
+  }
+
+  // Route Aliasing for Paperlab and Friendly Slugs
+  const ROUTE_ALIASES = {
+    'gst-invoice': 'gst-invoice-pdf',
+    'pos-billing': 'gst-invoice-pdf',
+    'chat-with-pdf': 'ai-ask',
+    'summarize-pdf': 'ai-summarize',
+    'organize-pages': 'delete-pdf-pages',
+    'crop-pdf': 'split-pdf',
+    'pdf-to-audio': 'ai-summarize',
+    'edit-pdf': 'sign-pdf',
+    'add-watermark': 'watermark-pdf',
+    'page-numbers': 'page-numbers-pdf',
+    'headers-footers': 'page-numbers-pdf',
+    'extract-text': 'ocr-pdf',
+    'flatten-pdf': 'flatten-pdf',
+    'encrypt-pdf': 'protect-pdf',
+    'remove-password': 'unlock-pdf',
+    'privacy-scanner': 'strip-metadata-pdf',
+    'fingerprint-pdf': 'watermark-pdf',
+    'compare-pdfs': 'compare-pdf',
+  };
+
+  // Serve Dedicated Tool Studio with Rich SEO & Structured Data
+  const rawToolKey = pathname.replace(/^\//, '');
+  const currentToolKey = ROUTE_ALIASES[rawToolKey] || rawToolKey;
   const toolConfig = TOOL_REGISTRY[currentToolKey] || TOOL_REGISTRY['merge-pdf'];
   const jsonLd = generateToolJsonLd(toolConfig);
   const category = getToolCategory(currentToolKey);
@@ -572,5 +607,5 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`DocPlatform production server running on http://localhost:${PORT}`);
 });
-// Reload trigger: 2026-09-15-gst-invoice-real-engine
+// Reload trigger: 2026-09-15-saas-dark-landing-page
 

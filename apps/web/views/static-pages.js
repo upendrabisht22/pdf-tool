@@ -5,14 +5,26 @@
 
 export function renderPricingPage({ renderNavbar, renderFooter }) {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>100% Free Document Tools & Community Support — DocPlatform</title>
   <meta name="description" content="DocPlatform is 100% free with zero login and complete in-browser privacy. Use AI tools with your own free Gemini key (BYOK) or support the project with a tip.">
   <link rel="canonical" href="https://docplatform.app/pricing">
-  <link rel="stylesheet" href="/styles.css?v=2.2">
+  <link rel="stylesheet" href="/styles.css?v=3.0">
+  <script>
+    (function() {
+      const saved = localStorage.getItem('dp_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+    })();
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('dp_theme', next);
+    }
+  </script>
 </head>
 <body>
   ${renderNavbar('pricing')}
