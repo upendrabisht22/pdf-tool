@@ -671,38 +671,43 @@ body {
 }
 
 .dropzone {
-  border: 2px dashed #cbd5e1;
-  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
   padding: 3.25rem 1.5rem;
-  text-align: center;
+  text-align: center !important;
   cursor: pointer;
-  background: var(--bg-subtle);
+  background: var(--bg-elevated);
   transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dropzone:hover, .dropzone.dragover {
-  border-color: var(--brand-primary);
-  background: #fef2f2;
+  border-color: var(--accent);
+  background: var(--bg-surface-hover);
 }
 
-/* Strictly Constrained Upload Icon Tile (48px) */
-.dropzone-icon-box {
-  width: 52px !important;
-  height: 52px !important;
-  max-width: 52px !important;
-  max-height: 52px !important;
-  border-radius: 14px;
-  background: #fee2e2;
-  border: 1px solid #fca5a5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.25rem;
-  color: var(--brand-primary);
+/* Strictly Centered Upload Icon Tile (48px) */
+.dropzone-icon-box,
+#dropzone-icon-container {
+  width: 48px !important;
+  height: 48px !important;
+  max-width: 48px !important;
+  max-height: 48px !important;
+  border-radius: 0px;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-bottom: 1rem !important;
+  color: var(--accent);
 }
 
 .dropzone-icon-box svg,
@@ -2073,14 +2078,14 @@ body {
 }
 .dropzone:hover {
   transform: translateY(-2px);
-  border-color: var(--brand-primary);
-  background: #fef2f2;
+  border-color: var(--accent);
+  background: var(--bg-surface-hover);
 }
 .dropzone.dragover {
-  border-color: var(--brand-primary);
-  background: #fee2e2;
-  transform: scale(1.02);
-  box-shadow: 0 12px 30px rgba(229, 50, 45, 0.15);
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+  transform: scale(1.01);
+  box-shadow: 0 12px 30px rgba(123, 97, 255, 0.15);
 }
 
 /* ── Redesigned Modern Result / Success Card (Architectural Blueprint) ── */
@@ -4737,8 +4742,66 @@ body.theme-blueprint-dark::before {
 }
 
 .anno-whiteout {
-  background: #ffffff !important;
-  box-shadow: inset 0 0 0 1px #cbd5e1;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: move;
+  transition: outline 0.15s ease;
+}
+
+.anno-whiteout:hover {
+  outline: 1px dashed rgba(123, 97, 255, 0.45) !important;
+}
+
+.anno-whiteout.selected {
+  outline: 2px dashed #7b61ff !important;
+  outline-offset: 1px;
+}
+
+.anno-image {
+  cursor: move;
+  user-select: none;
+  display: inline-block;
+}
+
+.anno-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.anno-resize-handle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #7b61ff;
+  border: 1.5px solid #ffffff;
+  border-radius: 2px;
+  z-index: 20;
+}
+
+.anno-resize-handle.handle-se {
+  right: -5px;
+  bottom: -5px;
+  cursor: se-resize;
+}
+
+.anno-resize-handle.handle-sw {
+  left: -5px;
+  bottom: -5px;
+  cursor: sw-resize;
+}
+
+.anno-resize-handle.handle-ne {
+  right: -5px;
+  top: -5px;
+  cursor: ne-resize;
+}
+
+.anno-resize-handle.handle-nw {
+  left: -5px;
+  top: -5px;
+  cursor: nw-resize;
 }
 
 .anno-stamp {

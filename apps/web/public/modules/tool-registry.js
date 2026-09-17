@@ -1022,6 +1022,7 @@ export const TOOL_ALIASES = {
   'extract-text': 'ocr-pdf',
   'extract-tables': 'ai-extract-table',
   'extract-pages': 'extract-pages',
+  'split-pages': 'split-pdf',
   'flatten-pdf': 'flatten-pdf',
   'repair-pdf': 'repair-pdf',
   'encrypt-pdf': 'protect-pdf',

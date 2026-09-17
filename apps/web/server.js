@@ -596,6 +596,7 @@ const server = http.createServer(async (req, res) => {
 
   // Route Aliasing for Friendly Slugs
   const ROUTE_ALIASES = {
+    'image-to-pdf': 'jpg-to-pdf',
     'gst-invoice': 'gst-invoice-pdf',
     'pos-billing': 'pos-billing',
     'clean-billing': 'pos-billing',
@@ -616,6 +617,7 @@ const server = http.createServer(async (req, res) => {
     'extract-text': 'ocr-pdf',
     'extract-tables': 'ai-extract-table',
     'extract-pages': 'extract-pages',
+    'split-pages': 'split-pdf',
     'flatten-pdf': 'flatten-pdf',
     'repair-pdf': 'repair-pdf',
     'encrypt-pdf': 'protect-pdf',
@@ -650,6 +652,7 @@ const server = http.createServer(async (req, res) => {
     renderFooter,
     TOOL_REGISTRY,
     renderGsapScripts,
+    currentToolKey,
   });
 
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });

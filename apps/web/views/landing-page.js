@@ -23,10 +23,11 @@ const TOOLS_CATALOG = [
   },
   {
     slug: '/split-pdf',
-    title: 'Split PDF',
-    desc: 'Extract pages or split into parts',
+    title: 'Split PDF / Pages',
+    desc: 'Extract pages or split into standalone parts',
     category: 'core',
     featured: true,
+    keywords: 'split pages, split-pdf, separate pages, extract page range, page cutter, split document',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7b61ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"></circle><path d="M8.12 8.12 12 12"></path><path d="M20 4 8.12 15.88"></path><circle cx="6" cy="18" r="3"></circle><path d="M14.8 14.8 20 20"></path></svg>`
   },
   {
@@ -55,10 +56,11 @@ const TOOLS_CATALOG = [
   },
   {
     slug: '/crop-pdf',
-    title: 'Crop & Resize',
-    desc: 'Trim margins or resize pages',
+    title: 'Crop & Resize PDF',
+    desc: 'Trim margins, resize page bounds or adjust sheet sizes',
     category: 'core',
-    featured: false,
+    featured: true,
+    keywords: 'crop pdf, crop pages, resize pdf, margin trimmer, page dimensions, a4 letter, trim margins',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7b61ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"></path><path d="M18 22V8a2 2 0 0 0-2-2H2"></path></svg>`
   },
   {
@@ -155,10 +157,11 @@ const TOOLS_CATALOG = [
   // ── Security & Sign ─────────────────────────────────────────────────────────
   {
     slug: '/edit-pdf',
-    title: 'Edit & Sign PDF',
-    desc: 'Draw signature or add text to document',
+    title: 'Visual PDF Editor',
+    desc: 'Seamless whiteout, edit text, draw, insert images & signatures',
     category: 'security',
     featured: true,
+    keywords: 'edit pdf, pdf editor, whiteout, add text, add image, erase, sign pdf, annotate, form filler',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7b61ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16"></path><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"></path><path d="M9 20h6"></path></svg>`
   },
   {
@@ -650,7 +653,7 @@ export function renderLandingPage({ renderNavbar, renderFooter, TOOL_REGISTRY } 
 
         <div class="blueprint-grid" id="all-tools-grid">
           ${allTools.map(t => `
-            <a href="${t.slug}" class="tool-blueprint-card group" data-category="${t.category}" data-title="${t.title.toLowerCase()}" data-desc="${t.desc.toLowerCase()}">
+            <a href="${t.slug}" class="tool-blueprint-card group" data-category="${t.category}" data-title="${t.title.toLowerCase()}" data-desc="${t.desc.toLowerCase()}" data-keywords="${(t.keywords || '').toLowerCase()}">
               <div>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2.5">
@@ -844,8 +847,9 @@ export function renderLandingPage({ renderNavbar, renderFooter, TOOL_REGISTRY } 
         const title = card.getAttribute('data-title') || '';
         const desc = card.getAttribute('data-desc') || '';
         const category = card.getAttribute('data-category') || '';
+        const keywords = card.getAttribute('data-keywords') || '';
 
-        const matchesQuery = currentQuery === '' || title.includes(currentQuery) || desc.includes(currentQuery);
+        const matchesQuery = currentQuery === '' || title.includes(currentQuery) || desc.includes(currentQuery) || keywords.includes(currentQuery);
         const matchesCategory = currentCategory === 'all' || category === currentCategory;
 
         if (matchesQuery && matchesCategory) {

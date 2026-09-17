@@ -32,6 +32,9 @@ let activeStrokeColor = '#0f172a';
 let activeStrokeWidth = 2;
 let activeHighlightColor = 'rgba(254, 240, 138, 0.45)'; // Neon yellow translucent
 let activeShapeType = 'rectangle';
+let activeWhiteoutColor = '#ffffff';
+let clipboardAnnotation = null;
+let isKeyboardPasteInitialized = false;
 
 // Annotations stored per page: { [pageIndex: number]: Array<Annotation> }
 let pageAnnotations = {};
@@ -78,6 +81,7 @@ export async function initPdfEditorStudio(pdfBytes) {
     await renderEditorPage(currentPageNum);
     updateEditorNavigationUI();
     setEditorTool('select');
+    setupEditorKeyboardAndPaste();
   } catch (err) {
     console.error('Failed to load document into Visual PDF Editor:', err);
     alert('Unable to load document into Visual PDF Editor. Please ensure it is a valid PDF.');
@@ -268,8 +272,9 @@ function renderDOMAnnotation(item, overlay) {
     el.appendChild(textSpan);
   } else if (item.type === 'whiteout') {
     el.classList.add('anno-whiteout');
-    el.style.backgroundColor = '#ffffff';
-    el.style.border = '1px dashed #cbd5e1';
+    el.style.backgroundColor = item.backgroundColor || activeWhiteoutColor || '#ffffff';
+    el.style.border = 'none';
+    el.style.boxShadow = 'none';
   } else if (item.type === 'shape') {
     el.classList.add('anno-shape');
     if (item.shapeType === 'circle') {
@@ -294,8 +299,8 @@ function renderDOMAnnotation(item, overlay) {
     el.textContent = item.stampText || 'APPROVED';
     el.style.borderColor = item.color || '#dc2626';
     el.style.color = item.color || '#dc2626';
-  } else if (item.type === 'signature') {
-    el.classList.add('anno-signature');
+  } else if (item.type === 'signature' || item.type === 'image') {
+    el.classList.add(item.type === 'image' ? 'anno-image' : 'anno-signature');
     const img = document.createElement('img');
     img.src = item.imageDataUrl;
     img.style.width = '100%';
@@ -309,10 +314,14 @@ function renderDOMAnnotation(item, overlay) {
   el.onmousedown = (e) => startAnnotationDrag(e, item);
   el.ondblclick = () => {
     selectAnnotation(item.id);
-    const content = el.querySelector('.anno-text-content');
-    if (content) {
-      content.contentEditable = 'true';
-      content.focus();
+    if (item.type === 'text') {
+      const content = el.querySelector('.anno-text-content');
+      if (content) {
+        content.contentEditable = 'true';
+        content.focus();
+      }
+    } else if (item.type === 'whiteout') {
+      redactAndTypeOverSelected();
     }
   };
 
@@ -428,8 +437,9 @@ function startShapeDrag(e, kind, startX, startY) {
   tempBox.style.position = 'absolute';
   tempBox.style.pointerEvents = 'none';
   if (kind === 'whiteout') {
-    tempBox.style.backgroundColor = '#ffffff';
-    tempBox.style.border = '1px dashed #cbd5e1';
+    tempBox.style.backgroundColor = activeWhiteoutColor || '#ffffff';
+    tempBox.style.border = 'none';
+    tempBox.style.outline = '1px dashed #7b61ff';
   } else {
     tempBox.style.border = `${activeStrokeWidth}px solid ${activeStrokeColor}`;
   }
@@ -472,6 +482,7 @@ function startShapeDrag(e, kind, startX, startY) {
         y: Math.min(startY, endY),
         width: w,
         height: h,
+        backgroundColor: kind === 'whiteout' ? (activeWhiteoutColor || '#ffffff') : undefined,
         color: activeStrokeColor,
         strokeWidth: activeStrokeWidth,
         shapeType: activeShapeType,
@@ -562,11 +573,48 @@ export function selectAnnotation(id) {
   selectedAnnotationId = id;
   document.querySelectorAll('.editor-annotation-box').forEach(b => {
     b.classList.toggle('selected', b.dataset.id === id);
+    b.querySelectorAll('.anno-resize-handle').forEach(h => h.remove());
   });
 
   const deleteBtn = document.getElementById('editor-delete-selected-btn');
   if (deleteBtn) {
     deleteBtn.style.display = id ? 'inline-flex' : 'none';
+  }
+
+  const list = pageAnnotations[currentPageNum] || [];
+  const selectedItem = list.find(a => a.id === id);
+
+  const textBar = document.getElementById('editor-text-controls');
+  const whiteoutBar = document.getElementById('editor-whiteout-controls');
+
+  if (selectedItem) {
+    if (selectedItem.type === 'text') {
+      if (textBar) textBar.style.display = 'flex';
+      if (whiteoutBar) whiteoutBar.style.display = 'none';
+    } else if (selectedItem.type === 'whiteout') {
+      if (whiteoutBar) whiteoutBar.style.display = 'flex';
+      if (textBar) textBar.style.display = 'none';
+      updateWhiteoutToolbarButtons(selectedItem.backgroundColor || '#ffffff');
+    } else {
+      if (textBar) textBar.style.display = 'none';
+      if (whiteoutBar) whiteoutBar.style.display = 'none';
+    }
+
+    if (['image', 'signature', 'whiteout', 'shape'].includes(selectedItem.type)) {
+      const el = document.getElementById(`anno-${id}`);
+      if (el) attachResizeHandles(el, selectedItem);
+    }
+  } else {
+    if (activeEditorTool === 'text') {
+      if (textBar) textBar.style.display = 'flex';
+      if (whiteoutBar) whiteoutBar.style.display = 'none';
+    } else if (activeEditorTool === 'whiteout') {
+      if (whiteoutBar) whiteoutBar.style.display = 'flex';
+      if (textBar) textBar.style.display = 'none';
+    } else {
+      if (textBar) textBar.style.display = 'none';
+      if (whiteoutBar) whiteoutBar.style.display = 'none';
+    }
   }
 }
 
@@ -581,6 +629,72 @@ export function deleteSelectedAnnotation() {
   selectedAnnotationId = null;
   renderPageAnnotations();
   selectAnnotation(null);
+}
+
+function attachResizeHandles(el, item) {
+  const positions = ['nw', 'ne', 'se', 'sw'];
+  positions.forEach(pos => {
+    const handle = document.createElement('div');
+    handle.className = `anno-resize-handle handle-${pos}`;
+    handle.onmousedown = (e) => startResizeDrag(e, item, pos);
+    el.appendChild(handle);
+  });
+}
+
+function startResizeDrag(e, item, pos) {
+  e.stopPropagation();
+  e.preventDefault();
+  saveHistoryState();
+
+  const startMouseX = e.clientX;
+  const startMouseY = e.clientY;
+  const startW = item.width || 50;
+  const startH = item.height || 20;
+  const startX = item.x;
+  const startY = item.y;
+
+  const onMouseMove = (moveEvt) => {
+    const dx = moveEvt.clientX - startMouseX;
+    const dy = moveEvt.clientY - startMouseY;
+
+    if (pos === 'se') {
+      item.width = Math.max(15, startW + dx);
+      item.height = Math.max(15, startH + dy);
+    } else if (pos === 'sw') {
+      const newW = Math.max(15, startW - dx);
+      item.x = startX + (startW - newW);
+      item.width = newW;
+      item.height = Math.max(15, startH + dy);
+    } else if (pos === 'ne') {
+      const newH = Math.max(15, startH - dy);
+      item.y = startY + (startH - newH);
+      item.width = Math.max(15, startW + dx);
+      item.height = newH;
+    } else if (pos === 'nw') {
+      const newW = Math.max(15, startW - dx);
+      const newH = Math.max(15, startH - dy);
+      item.x = startX + (startW - newW);
+      item.y = startY + (startH - newH);
+      item.width = newW;
+      item.height = newH;
+    }
+
+    const el = document.getElementById(`anno-${item.id}`);
+    if (el) {
+      el.style.left = `${item.x}px`;
+      el.style.top = `${item.y}px`;
+      el.style.width = `${item.width}px`;
+      el.style.height = `${item.height}px`;
+    }
+  };
+
+  const onMouseUp = () => {
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+  };
+
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
 }
 
 /**
@@ -599,9 +713,237 @@ export function setEditorTool(tool) {
 
   // Toggle contextual sub-bars
   const textBar = document.getElementById('editor-text-controls');
-  const shapeBar = document.getElementById('editor-shape-controls');
+  const whiteoutBar = document.getElementById('editor-whiteout-controls');
   if (textBar) textBar.style.display = (tool === 'text') ? 'flex' : 'none';
-  if (shapeBar) shapeBar.style.display = (tool === 'shape') ? 'flex' : 'none';
+  if (whiteoutBar) whiteoutBar.style.display = (tool === 'whiteout') ? 'flex' : 'none';
+}
+
+/**
+ * Sets active whiteout mask color and updates selected whiteout if any.
+ */
+export function setEditorWhiteoutColor(color) {
+  activeWhiteoutColor = color;
+  updateWhiteoutToolbarButtons(color);
+
+  if (selectedAnnotationId) {
+    const list = pageAnnotations[currentPageNum] || [];
+    const item = list.find(a => a.id === selectedAnnotationId);
+    if (item && item.type === 'whiteout') {
+      saveHistoryState();
+      item.backgroundColor = color;
+      const el = document.getElementById(`anno-${item.id}`);
+      if (el) el.style.backgroundColor = color;
+    }
+  }
+}
+
+function updateWhiteoutToolbarButtons(color) {
+  const btnWhite = document.getElementById('btn-wo-white');
+  const btnCream = document.getElementById('btn-wo-cream');
+  const btnBlack = document.getElementById('btn-wo-black');
+  const colorInput = document.getElementById('editor-whiteout-custom-color');
+  if (btnWhite) btnWhite.classList.toggle('active', color === '#ffffff');
+  if (btnCream) btnCream.classList.toggle('active', color === '#fdfbf7');
+  if (btnBlack) btnBlack.classList.toggle('active', color === '#09090b');
+  if (colorInput && color) colorInput.value = color.startsWith('#') && color.length === 7 ? color : '#ffffff';
+}
+
+/**
+ * Immediately overlays an editable text box on top of the selected whiteout mask.
+ */
+export function redactAndTypeOverSelected() {
+  const list = pageAnnotations[currentPageNum] || [];
+  let targetWhiteout = list.find(a => a.id === selectedAnnotationId && a.type === 'whiteout');
+  if (!targetWhiteout) {
+    targetWhiteout = [...list].reverse().find(a => a.type === 'whiteout');
+  }
+
+  if (!targetWhiteout) {
+    alert('Please draw a whiteout mask first, or use the Text tool to type anywhere.');
+    return;
+  }
+
+  saveHistoryState();
+  const newId = `txt_${Date.now()}`;
+  const calcFontSize = Math.min(20, Math.max(12, Math.round(targetWhiteout.height * 0.75)));
+  const newAnno = {
+    id: newId,
+    type: 'text',
+    pageIndex: currentPageNum - 1,
+    x: targetWhiteout.x + 2,
+    y: targetWhiteout.y + 1,
+    width: Math.max(60, targetWhiteout.width - 4),
+    height: Math.max(20, targetWhiteout.height - 2),
+    text: 'Replacement text',
+    fontSize: calcFontSize,
+    fontFamily: activeFontFamily,
+    bold: isTextBold,
+    italic: isTextItalic,
+    color: '#0f172a',
+    backgroundColor: 'transparent',
+  };
+  addAnnotation(newAnno);
+  selectAnnotation(newId);
+
+  setTimeout(() => {
+    const el = document.getElementById(`anno-${newId}`);
+    if (el) {
+      const content = el.querySelector('.anno-text-content');
+      if (content) {
+        content.contentEditable = 'true';
+        content.focus();
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(content);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch { /* ignore */ }
+      }
+    }
+  }, 60);
+}
+
+/**
+ * Handles image file picker upload.
+ */
+export function handleEditorImageUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    insertImageAnnotation(e.target.result);
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+/**
+ * Inserts an image or logo onto the document canvas.
+ */
+export function insertImageAnnotation(dataUrl) {
+  if (!dataUrl) return;
+  saveHistoryState();
+
+  const tempImg = new Image();
+  tempImg.onload = () => {
+    const canvas = document.getElementById('editor-pdf-canvas');
+    const stageW = canvas ? (parseFloat(canvas.style.width) || canvas.width) : 600;
+    const stageH = canvas ? (parseFloat(canvas.style.height) || canvas.height) : 800;
+
+    let targetW = 180;
+    let targetH = Math.round(targetW * (tempImg.naturalHeight / (tempImg.naturalWidth || 1)));
+    if (targetH > 220) {
+      targetH = 220;
+      targetW = Math.round(targetH * (tempImg.naturalWidth / (tempImg.naturalHeight || 1)));
+    }
+
+    const newId = `img_${Date.now()}`;
+    const newAnno = {
+      id: newId,
+      type: 'image',
+      pageIndex: currentPageNum - 1,
+      x: Math.max(20, Math.round((stageW - targetW) / 2)),
+      y: Math.max(20, Math.round((stageH - targetH) / 2)),
+      width: targetW,
+      height: targetH,
+      imageDataUrl: dataUrl,
+    };
+    addAnnotation(newAnno);
+    selectAnnotation(newId);
+    setEditorTool('select');
+  };
+  tempImg.src = dataUrl;
+}
+
+/**
+ * Sets up global clipboard paste (Ctrl+V) and keyboard shortcuts for the editor.
+ */
+export function setupEditorKeyboardAndPaste() {
+  if (isKeyboardPasteInitialized) return;
+  isKeyboardPasteInitialized = true;
+
+  window.addEventListener('paste', (e) => {
+    const studio = document.getElementById('pdf-editor-studio');
+    if (!studio || studio.style.display === 'none') return;
+
+    if (document.activeElement && (document.activeElement.isContentEditable || ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
+      return;
+    }
+
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const blob = items[i].getAsFile();
+        if (blob) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            insertImageAnnotation(evt.target.result);
+          };
+          reader.readAsDataURL(blob);
+          return;
+        }
+      }
+    }
+
+    if (clipboardAnnotation) {
+      e.preventDefault();
+      saveHistoryState();
+      const newId = `${clipboardAnnotation.type}_${Date.now()}`;
+      const copy = {
+        ...JSON.parse(JSON.stringify(clipboardAnnotation)),
+        id: newId,
+        x: clipboardAnnotation.x + 20,
+        y: clipboardAnnotation.y + 20,
+        pageIndex: currentPageNum - 1,
+      };
+      addAnnotation(copy);
+      selectAnnotation(newId);
+    }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    const studio = document.getElementById('pdf-editor-studio');
+    if (!studio || studio.style.display === 'none') return;
+
+    if (document.activeElement && (document.activeElement.isContentEditable || ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
+      return;
+    }
+
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (selectedAnnotationId) {
+        e.preventDefault();
+        deleteSelectedAnnotation();
+      }
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+      if (selectedAnnotationId) {
+        const list = pageAnnotations[currentPageNum] || [];
+        const item = list.find(a => a.id === selectedAnnotationId);
+        if (item) {
+          clipboardAnnotation = JSON.parse(JSON.stringify(item));
+        }
+      }
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+      if (selectedAnnotationId) {
+        const list = pageAnnotations[currentPageNum] || [];
+        const item = list.find(a => a.id === selectedAnnotationId);
+        if (item) {
+          clipboardAnnotation = JSON.parse(JSON.stringify(item));
+          deleteSelectedAnnotation();
+        }
+      }
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      undoEditor();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+      e.preventDefault();
+      redoEditor();
+    }
+  });
 }
 
 /**
@@ -821,7 +1163,7 @@ export async function exportEditedPdf() {
             y: nativeY,
             width: nativeW,
             height: nativeH,
-            color: PDFLib.rgb(1, 1, 1),
+            color: hexToRgbPdf(item.backgroundColor || '#ffffff'),
           });
         } else if (item.type === 'text') {
           const font = item.fontFamily === 'TimesRoman' ? timesRoman : item.fontFamily === 'Courier' ? courier : item.bold ? helveticaBold : helvetica;
@@ -931,11 +1273,12 @@ export async function exportEditedPdf() {
               borderWidth: item.strokeWidth || 2,
             });
           }
-        } else if (item.type === 'signature' && item.imageDataUrl) {
+        } else if ((item.type === 'signature' || item.type === 'image') && item.imageDataUrl) {
           try {
+            const isJpg = item.imageDataUrl.startsWith('data:image/jpeg') || item.imageDataUrl.startsWith('data:image/jpg');
             const imgRes = await fetch(item.imageDataUrl);
             const imgBuf = await imgRes.arrayBuffer();
-            const embeddedImg = await pdfDoc.embedPng(imgBuf);
+            const embeddedImg = isJpg ? await pdfDoc.embedJpg(imgBuf) : await pdfDoc.embedPng(imgBuf);
             page.drawImage(embeddedImg, {
               x: nativeX,
               y: nativeY,
@@ -943,7 +1286,7 @@ export async function exportEditedPdf() {
               height: nativeH,
             });
           } catch (imgErr) {
-            console.warn('Failed to embed signature image:', imgErr);
+            console.warn('Failed to embed image:', imgErr);
           }
         } else if ((item.type === 'draw' || item.type === 'highlight') && item.points && item.points.length > 1) {
           const isHighlight = item.type === 'highlight';

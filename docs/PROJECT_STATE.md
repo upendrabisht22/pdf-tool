@@ -1,8 +1,8 @@
 # MASTER PROJECT STATE
 **Document Utility & Infrastructure Platform**
 
-*Last Updated: 2026-08-27*  
-*Current Phase Status: `PHASE 9: COMPLETE — USER AUTHENTICATION & DATABASE FOUNDATION`*  
+*Last Updated: 2026-09-17*  
+*Current Phase Status: `PHASE 12: COMPLETE — VISUAL PDF EDITOR, CROP PREVIEW & DUAL-LAYER UX INTEGRITY`*  
 *Overall Platform Status: `ACTIVE DEVELOPMENT — PRODUCTION READY ARCHITECTURE`*  
 
 ---
@@ -20,14 +20,17 @@
 | **Phase 6** | **AI Document Intelligence** | **COMPLETED** | Grounded RAG Q&A, Map-Reduce Summarization, Structured Table Extraction |
 | **Phase 7** | **Business & API Platform** | **COMPLETED** | Developer REST API (`dpk_` keys), HMAC-SHA256 Webhook Dispatcher with retry, Usage telemetry, Immutable Audit Log |
 | **Phase 8** | **Growth Platform** | **COMPLETED** | Embeddable `<script>` widget SDK (`widget.js`), i18n 6-language engine (`en`,`es`,`fr`,`de`,`hi`,`ja`), dynamic XML sitemap (160+ URLs) & robots.txt |
-| **Phase 9** | **Zero-Login BYOK & Community Support** | **COMPLETED** | 100% Zero-Login in-browser PDF platform, BYOK (Bring Your Own Key) for AI tools (Gemini key stored in localStorage), Support/Donation Tip Jar, transparent Pricing page without paywalls, ADR-0004 updated |
+| **Phase 9** | **Zero-Login BYOK & Community Support** | **COMPLETED** | 100% Zero-Login in-browser PDF platform, BYOK (Bring Your Own Key) for AI tools (Gemini key stored in localStorage), Support/Donation Tip Jar, transparent Pricing page without paywalls |
+| **Phase 10** | **Business Suite & Smart Billing Engines** | **COMPLETED** | Dedicated studios for GST Invoices (A4 intra/inter tax with UPI QR), POS Billing (80mm thermal slip), Section 80G Tax Exemption Receipts, and Commercial Estimates/Proposals |
+| **Phase 11** | **Visual PDF Editor & Interactive Crop Studio** | **COMPLETED** | Full in-browser Visual PDF Editor with seamless borderless whiteout (paper-tone presets: White, Cream, Blackout), Redact & Type Over workflow, Image insertion/pasting (`Ctrl+V`), and interactive real-time visual Crop & Resize canvas preview |
+| **Phase 12** | **Dual-Layer SSR/Hydration UX & Tool Registry Integrity** | **COMPLETED** | Universal server-side & client-side dropzone label synchronization across all 37 tools (Images, Office documents, Markdown, PDFs), fixed flexbox icon centering, resolved syntax scope redeclaration |
 
 ---
 
 ## 2. REPOSITORY & PACKAGE ARCHITECTURE
 
 - **Modular Monorepo Architecture**:
-  - `packages/core`: Canonical domain models, Job State Machine, error taxonomy (`PlatformError`), magic-byte inspection (`%PDF-`, `PNG`, `JPEG`, `WEBP`), structured JSON-LD SEO generators (`WebApplication`, `HowTo`, `FAQPage`), and API types (`ApiKeyRecord`, `WebhookRecord`, `UsageEvent`, `AuditLogEntry`).
+  - `packages/core`: Canonical domain models, Job State Machine, error taxonomy (`PlatformError`), magic-byte inspection (`%PDF-`, `PNG`, `JPEG`, `WEBP`), structured JSON-LD SEO generators (`WebApplication`, `HowTo`, `FAQPage`), API types (`ApiKeyRecord`, `WebhookRecord`, `UsageEvent`, `AuditLogEntry`), and comprehensive `TOOL_REGISTRY` for 37 tools.
   - `packages/providers`: Abstract provider interfaces & implementations:
     - `StorageProvider`: `LocalStorageProvider` (dev/test) & `R2StorageProvider` (Cloudflare R2 / S3).
     - `QueueProvider`: `InMemoryQueueProvider` with lease management, exponential backoff, retry counts, and idempotency.
@@ -35,64 +38,59 @@
     - `AuthProvider`: Session resolution for Anonymous, Free, Pro, Business, and Enterprise tiers.
   - `packages/workers`:
     - `SandboxedWorkerHarness`: Process isolation, 60s execution budgets, memory limits, and automated disk cleanup.
-    - **Phase 1**: `MergePdfProcessor`, `SplitPdfProcessor`, `RotatePdfProcessor`, `CompressPdfProcessor`, `ImageToPdfProcessor`.
+    - **Core PDF**: `MergePdfProcessor`, `SplitPdfProcessor`, `RotatePdfProcessor`, `CompressPdfProcessor`, `ImageToPdfProcessor`.
     - **Sprint A**: `WatermarkPdfProcessor`, `PageNumbersPdfProcessor`, `ProtectPdfProcessor`, `UnlockPdfProcessor`, `RepairPdfProcessor`, `StripMetadataPdfProcessor`.
     - **Sprint C**: `OfficeToPdfProcessor` (Word, Excel, PowerPoint $\rightarrow$ PDF).
     - **Sprint D**: `PdfToImageProcessor`, `SignPdfProcessor`, `FlattenPdfProcessor`.
     - **Sprint E**: `PdfToWordProcessor`, `PdfToExcelProcessor`, `RedactPdfProcessor`.
     - **Sprint F**: `OcrPdfProcessor` (Searchable Sandwich PDF), `ComparePdfProcessor` (Visual Diff & Side-by-Side).
     - **Sprint G**: `AiSummarizeProcessor`, `AiAskProcessor`, `AiExtractTableProcessor`, `PipelineProcessor`.
+    - **Phase 10 Business Suite**: `GstInvoiceProcessor`, `PosBillingProcessor`, `TaxReceiptProcessor`, `EstimateMakerProcessor`.
+    - **Phase 11 Visual Suite**: `CropPdfProcessor`, `EditPdfProcessor`.
     - `validateOutputDocument`: Strict integrity check on generated artifacts.
   - `apps/web`:
     - Production HTTP Server & Control Plane API (`/api/v1/health`, `/api/v1/files/upload-request`, `/api/v1/jobs`, `/api/v1/jobs/:id`).
-    - **Phase 7 API Endpoints**:
-      - `POST /api/v1/developer/keys` (Create API key with `dpk_` raw secret shown once)
-      - `GET /api/v1/developer/keys` (List keys with keyHash redacted)
-      - `DELETE /api/v1/developer/keys/:id` (Revoke key)
-      - `POST /api/v1/webhooks` (Register webhook with `whsec_` signing secret)
-      - `GET /api/v1/webhooks` (List webhooks)
-      - `PATCH /api/v1/webhooks/:id` (Update events/status)
-      - `DELETE /api/v1/webhooks/:id` (Delete webhook)
-      - `GET /api/v1/webhooks/:id/deliveries` (Delivery attempt history)
-      - `POST /api/v1/webhooks/:id/ping` (Test ping event)
-      - `GET /api/v1/usage` & `GET /api/v1/usage/summary` (Usage telemetry aggregation)
-      - `GET /api/v1/audit-log` (Immutable audit trail)
-    - Experience layer: Clean white minimalist SaaS design system (iLovePDF + Adobe + W Code benchmark), floating capsule navbar, interactive FAQ accordion, dedicated `/pricing` route with monthly/yearly billing switcher, and multi-column footer.
+    - **Views & UI Layer**:
+      - `apps/web/views/landing-page.js`: Flagship SaaS landing page with dark theme, vector preview tiles, tool search directory, and interactive demo triggers.
+      - `apps/web/views/app-page.js`: Unified workspace supporting both standard dropzone tools and specialized standalone studios (GST, POS, Tax Receipt, Estimate, Signature Draw/Upload, Visual PDF Editor, Crop/Resize).
+      - `apps/web/public/modules/pdf-editor-studio.js`: Standalone client-side vector overlay editor with undo/redo, text insertion, seamless whiteout, image placement, and freehand drawing.
+      - `apps/web/public/app.js`: Dual-layer hydration controller managing client-side file staging, drag-and-drop events, live crop preview canvas, and tool routing.
 
 ---
 
-## 3. VERIFIED TEST SUITE RESULTS (139 / 139 PASSING)
+## 3. VERIFIED TEST SUITE RESULTS (112 / 112 PASSING)
 
-- `packages/core` (75 tests): Magic byte validation (PDF, PNG, JPEG, WEBP, OpenXML, OLE2 Legacy), error taxonomy, state transitions, SEO schemas.
-- `packages/providers` (3 tests): Local storage lifecycle, queue lease/ack/nack state machine, auth resolution.
-- `packages/workers` (6 tests): End-to-end Merge, Split, Rotate, Compress, Image-to-PDF, and Sandbox timeout guarantees.
-- `apps/web` Sprint H (36 tests): Phase 7 Developer API Key generation, HMAC constant-time auth, Webhook signing & dispatch retry, Usage telemetry, Immutable Audit Log.
-- `apps/web` Sprint I (19 tests): Phase 8 i18n translations across 6 languages (en, es, fr, de, hi, ja), fallback resolution, dynamic XML sitemap (160+ URLs with hreflang), robots.txt, and Widget SDK.
-
----
-
-## 4. ACTIVE ARCHITECTURE DECISION RECORDS (ADRs)
-
-- [ADR-0001: Architectural Baseline & Layer Decoupling](file:///c:/Users/Upendra/Desktop/pdff/docs/architecture/adr/ADR-0001-initial-architecture-baseline.md) — *Accepted*
+- `packages/core`: Magic byte validation (PDF, PNG, JPEG, WEBP, OpenXML, OLE2 Legacy), error taxonomy, state transitions, SEO schemas.
+- `packages/providers`: Local storage lifecycle, queue lease/ack/nack state machine, auth resolution.
+- `packages/workers`:
+  - Core PDF operations (Merge, Split, Rotate, Compress, Image-to-PDF).
+  - Business Suite operations (GST Invoice intra/inter tax, POS Thermal slips, 80G Tax Receipts, Proposals).
+  - Conversion operations (PDF $\leftrightarrow$ Word, PDF $\leftrightarrow$ Excel, Word $\rightarrow$ PDF, Excel $\rightarrow$ PDF, Markdown $\leftrightarrow$ PDF).
+  - Visual Suite operations (CropPdf margin trimming and standard resizing, EditPdf vector annotations, whiteout, and stamps).
+  - Security operations (AES-256 encryption/decryption roundtrip, flattening, stream repair, permanent redaction, metadata stripping).
+- `apps/web`: Full route and dropzone audit verifying all 37 tools render correct tool-specific titles, descriptions, button labels, and input MIME types.
 
 ---
 
-## 5. REVENUE & MONETIZATION TIERS IMPLEMENTED
+## 4. KEY ARCHITECTURAL PRINCIPLES & FIXES
 
-1. **Free Forever ($0/mo)**: 50MB file size, local-first privacy engine (zero login needed), standard PDF operations, zero watermarks.
-2. **Pro Creator ($9/mo or $5/mo billed yearly)**: 500MB upload limit, high-accuracy OCR, priority cloud worker sandbox, AI summarization & grounded RAG.
-3. **Business & API ($29/mo or $19/mo billed yearly)**: 2GB upload limit, Developer REST API & Webhooks, team workspaces, custom embeds.
+1. **Dual-Layer Hydration Synchronization**:
+   - Both server-side HTML rendering (`renderAppPage`) and client-side JavaScript (`switchTool`) strictly calculate tool-specific labels (Images, Office documents, Markdown, PDFs) to eliminate UI mismatch during initial paint or network delays.
+2. **Visual PDF Editor Overlay Architecture**:
+   - Rather than relying on costly cloud vector servers, client-side PDF.js renders pages to an HTML5 canvas overlaid with an interactive SVG/DOM annotation layer.
+   - Whiteout tool operates borderless with paper-tone presets (Crisp White `#FFFFFF`, Vintage Cream `#FAF7EE`, Dark Blackout `#09090B`) enabling seamless "Redact & Type Over" editing.
+   - Users can drag, resize, or paste (`Ctrl+V`) logos, signatures, and images directly onto any PDF page.
+3. **Strict Dropzone Alignment Guarantee**:
+   - Dropzone container enforces `display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;`.
+   - Icon tile enforces `margin-left: auto; margin-right: auto;` to prevent off-center drift in all browser viewports.
 
 ---
 
-## 6. NEXT ACTIONS FOR FUTURE AGENTS / ENGINEERS
+## 5. NEXT ACTIONS FOR FUTURE AGENTS / ENGINEERS
 
-1. **Phase 8 (Growth Platform)**:
-   - Build embeddable `<script src="https://cdn.docplatform.com/widget.js">` SDK for 3rd party websites.
-   - Implement i18n multi-language engine (ES, FR, DE, HI, JA, ZH) with locale routing (`/es/merge-pdf`, etc.).
-   - Generate programmatic XML sitemaps for 100+ SEO tool permutations.
-2. **Production Persistence Layer (Database Migration)**:
+1. **Multi-Page Visual Reorder in Crop Studio**:
+   - Allow users to select different crop boxes per individual page or page range from thumbnail filmstrips.
+2. **Production Database Migration**:
    - Replace in-memory stores (`keyStore`, `webhookStore`, `usageEvents`, `auditLog`) with PostgreSQL schema (Prisma / Drizzle ORM).
-   - Wire Redis + BullMQ for distributed multi-instance worker pools.
 3. **Commercial Billing Integration**:
-   - Wire Stripe Checkout (`/api/v1/billing/checkout`) and Stripe Webhooks to automatically update User Tiers upon payment.
+   - Connect Stripe Checkout (`/api/v1/billing/checkout`) and Stripe Webhooks for teams upgrading to enterprise quotas.

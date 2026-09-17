@@ -52,7 +52,37 @@ export function getRelatedToolsList(key) {
   return map[key] || ['merge-pdf', 'pdf-to-word', 'compress-pdf', 'ai-ask'];
 }
 
-export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, renderNavbar, renderFooter, TOOL_REGISTRY, renderGsapScripts }) {
+export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, renderNavbar, renderFooter, TOOL_REGISTRY, renderGsapScripts, currentToolKey }) {
+  const toolKey = currentToolKey || (toolConfig.canonicalUrl ? toolConfig.canonicalUrl.split('/').pop() : 'merge-pdf');
+  const isImageTool = ['jpg-to-pdf', 'image-to-pdf'].includes(toolKey);
+  const isMarkdownTool = toolKey === 'markdown-to-pdf';
+  const isOfficeTool = ['word-to-pdf', 'excel-to-pdf', 'powerpoint-to-pdf', 'ppt-to-pdf'].includes(toolKey);
+  const isSignatureDraw = toolKey === 'draw-signature';
+
+  const initialDropTitle = isSignatureDraw ? 'Upload Signature Photo to Compress' :
+                           isImageTool ? 'Select Image files (JPG, PNG, WebP)' :
+                           isMarkdownTool ? 'Select Markdown file (.md, .txt)' :
+                           isOfficeTool ? 'Select Office Document (.docx, .xlsx, .pptx)' :
+                           'Select PDF files';
+
+  const initialDropDesc = isSignatureDraw ? 'or drop your handwritten signature photo here to auto-compress under 30 KB.' :
+                          isImageTool ? 'or drop JPG, PNG, or WebP images here. Instant client-side PDF creation.' :
+                          isMarkdownTool ? 'or drop Markdown files here. Instant compilation to vector PDF.' :
+                          isOfficeTool ? 'or drop Word, Excel, or PowerPoint files here for instant conversion.' :
+                          'or drop PDFs here. Instant client-side verification with zero data upload.';
+
+  const initialDropBtn = isSignatureDraw ? 'Choose Signature Photo' :
+                         isImageTool ? 'Select Images' :
+                         isMarkdownTool ? 'Select Markdown File' :
+                         isOfficeTool ? 'Select Document' :
+                         'Select PDF files';
+
+  const initialAccept = isImageTool ? '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp' :
+                        isMarkdownTool ? '.md,.txt,text/markdown,text/plain' :
+                        isOfficeTool ? '.docx,.xlsx,.pptx,application/vnd.openxmlformats-officedocument.*' :
+                        '.pdf,application/pdf';
+
+  const isMultiple = toolKey === 'merge-pdf' || toolKey === 'jpg-to-pdf' || toolKey === 'image-to-pdf' || toolKey === 'compare-pdf';
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -179,8 +209,8 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
       <!-- Interactive Dropzone & Studio Workspace Area -->
       <section class="p-6 sm:p-10 border-b border-dashed border-border bg-bg relative">
         <div class="workspace-card max-w-4xl mx-auto" style="border: none; padding: 0; background: transparent; box-shadow: none;">
-          <input type="file" id="file-input" style="display:none;" />
-          <input type="file" id="add-more-input" style="display:none;" />
+          <input type="file" id="file-input" accept="${initialAccept}" ${isMultiple ? 'multiple' : ''} style="display:none;" />
+          <input type="file" id="add-more-input" accept="${initialAccept}" multiple style="display:none;" />
 
           <!-- Dedicated Signature Creator Studio -->
           <div id="signature-studio" style="display: none; padding: 0.5rem 0;">
@@ -943,6 +973,11 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
                     <span style="color: #dc2626; font-weight: bold;">✗</span>
                     <span>Cross</span>
                   </button>
+                  <button type="button" class="editor-tool-btn mono-copy" data-tool="image" onclick="document.getElementById('editor-image-upload-input').click()" title="Insert Image / Logo (or press Ctrl+V to paste)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                    <span>Image</span>
+                  </button>
+                  <input type="file" id="editor-image-upload-input" accept="image/png,image/jpeg,image/webp" style="display: none;" onchange="window.handleEditorImageUpload(event)" />
                 </div>
 
                 <!-- Stamps & Signature Actions -->
@@ -1011,6 +1046,21 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
                 </div>
               </div>
 
+              <!-- Contextual Whiteout Controls (Paper-Tone Match & Redact-and-Replace) -->
+              <div id="editor-whiteout-controls" class="border-b border-dashed border-border p-2 bg-bg-elevated flex items-center gap-3 flex-wrap text-xs mono-copy" style="display: none;">
+                <span class="text-accent font-semibold">[ Whiteout Tone ]:</span>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" class="editor-bg-btn active" id="btn-wo-white" onclick="window.setEditorWhiteoutColor('#ffffff')">⬜ White (#fff)</button>
+                  <button type="button" class="editor-bg-btn" id="btn-wo-cream" style="background:#fdfbf7; color:#0f172a; border-color:#e2e8f0;" onclick="window.setEditorWhiteoutColor('#fdfbf7')">📜 Cream</button>
+                  <button type="button" class="editor-bg-btn" id="btn-wo-black" style="background:#09090b; color:#ffffff;" onclick="window.setEditorWhiteoutColor('#09090b')">⬛ Redact Black</button>
+                  <input type="color" id="editor-whiteout-custom-color" value="#ffffff" onchange="window.setEditorWhiteoutColor(this.value)" class="cursor-pointer" style="width:24px; height:22px; padding:0; border:1px solid var(--border); border-radius:3px;" title="Custom Tone" />
+                </div>
+                <div style="height: 16px; width: 1px; background: var(--border);"></div>
+                <button type="button" class="mono-copy" onclick="window.redactAndTypeOverSelected()" style="padding: 0.25rem 0.65rem; border: 1px dashed var(--accent); background: rgba(123, 97, 255, 0.12); color: var(--accent); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;" title="Mask area and type replacement text directly on top">
+                  <span>✍️ Redact & Type Over</span>
+                </button>
+              </div>
+
               <!-- Studio Body (Thumbnails Sidebar + Canvas Viewport) -->
               <div class="editor-body-grid" style="display: flex; min-height: 580px; position: relative;">
                 <!-- Left Sidebar: Page Thumbnails -->
@@ -1062,21 +1112,43 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
           </div>
 
           <!-- Main Architectural Drag and Drop Zone -->
-          <div class="dropzone p-10 sm:p-14 border border-dashed border-border hover:border-accent bg-bg-elevated cursor-pointer flex flex-col items-center justify-center text-center transition-all group" id="dropzone">
-            <div class="w-12 h-12 border border-dashed border-border flex items-center justify-center mb-4 text-accent bg-bg group-hover:border-accent transition-colors">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="12" y1="18" x2="12" y2="12"></line>
-                <line x1="9" y1="15" x2="15" y2="15"></line>
-              </svg>
+          <div class="dropzone p-10 sm:p-14 border border-dashed border-border hover:border-accent bg-bg-elevated cursor-pointer flex flex-col items-center justify-center text-center transition-all group" id="dropzone" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%;">
+            <div id="dropzone-icon-container" class="dropzone-icon-box w-12 h-12 border border-dashed border-border flex items-center justify-center mb-4 text-accent bg-bg group-hover:border-accent transition-colors mx-auto" style="width: 48px; height: 48px; margin-left: auto; margin-right: auto; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+              ${isImageTool ? `
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                  <circle cx="9" cy="9" r="2"></circle>
+                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                </svg>
+              ` : isMarkdownTool ? `
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <path d="M10 12.5 8 15l2 2.5"></path>
+                  <path d="m14 12.5 2 2.5-2 2.5"></path>
+                </svg>
+              ` : isOfficeTool ? `
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+              ` : `
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="12" y1="18" x2="12" y2="12"></line>
+                  <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+              `}
             </div>
-            <h2 class="hero-display text-2xl sm:text-3xl text-text-primary mb-1" id="dropzone-title">Select PDF files</h2>
-            <p class="mono-copy text-xs text-text-secondary mb-6 max-w-md leading-relaxed" id="dropzone-desc">or drop PDFs here. Instant client-side verification with zero data upload.</p>
+            <h2 class="hero-display text-2xl sm:text-3xl text-text-primary mb-1" id="dropzone-title">${initialDropTitle}</h2>
+            <p class="mono-copy text-xs text-text-secondary mb-6 max-w-md leading-relaxed" id="dropzone-desc">${initialDropDesc}</p>
             <button type="button" class="paper-cta-btn group">
               <span class="cta-fill"></span>
               <span class="relative z-10 flex items-center gap-2 mono-copy" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">
-                <span id="dropzone-btn-text">Select PDF files</span>
+                <span id="dropzone-btn-text">${initialDropBtn}</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </span>
             </button>
