@@ -238,7 +238,7 @@ const TOOLS_CATALOG = [
   }
 ];
 
-export function renderLandingPage() {
+export function renderLandingPage({ renderNavbar, renderFooter, TOOL_REGISTRY } = {}) {
   const featuredTools = TOOLS_CATALOG.filter(t => t.featured);
   const allTools = TOOLS_CATALOG;
 
@@ -257,7 +257,7 @@ export function renderLandingPage() {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/styles.css?v=3.1" />
+  <link rel="stylesheet" href="/styles.css?v=3.5" />
 
   <!-- Tailwind CSS CDN for DocPlatform Architectural Blueprint Utilities -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -338,35 +338,33 @@ export function renderLandingPage() {
 <body class="min-h-screen flex flex-col bg-bg text-text-primary antialiased">
 
   <!-- ========================================================================
-       1. TOP ARCHITECTURAL FIXED NAVBAR
+       1. TOP ARCHITECTURAL FIXED NAVBAR (WITH GSAP COMPATIBLE OUT-OF-TRANSFORM HIERARCHY)
        ======================================================================== -->
-  <header class="site-header fixed top-0 left-0 right-0 z-40 bg-bg/90 backdrop-blur-md" style="background: var(--bg-glass); width: 100%;">
-    <div class="mx-auto flex h-[51px] max-w-5xl items-center justify-between gap-3 border-b border-x border-dashed border-border px-4 sm:px-6">
+  <header class="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: var(--bg-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); width: 100%;">
+    <div style="max-width: 64rem; margin: 0 auto; height: 51px; display: flex; align-items: center; justify-content: space-between; border-left: 1px dashed var(--border); border-right: 1px dashed var(--border); border-bottom: 1px dashed var(--border); padding: 0 1.25rem;">
       
       <!-- Brand Logo -->
-      <a class="flex items-center gap-2 text-text-primary hover:text-text-primary/80 transition-colors" href="/" aria-label="DocPlatform home">
-        <div style="width: 24px; height: 24px; background: #7b61ff; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; color: #ffffff; font-family: 'JetBrains Mono', monospace;">
-          DP
-        </div>
-        <span class="hero-display text-xl font-bold tracking-tight text-text-primary">DocPlatform</span>
+      <a href="/" style="display: flex; align-items: center; gap: 0.55rem; text-decoration: none; color: var(--text-primary);" aria-label="DocPlatform home">
+        <div style="width: 24px; height: 24px; background: #7b61ff; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; color: #ffffff; font-family: 'JetBrains Mono', monospace;">DP</div>
+        <span class="hero-display" style="font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary);">DocPlatform</span>
       </a>
 
-      <!-- Monospace Navigation Links -->
-      <nav class="mono-copy hidden md:flex items-center gap-1 text-xs text-text-secondary">
-        <a class="px-2.5 py-1.5 transition-colors hover:text-text-primary hover:bg-bg-subtle" href="#featured-tools">Features</a>
-        <a class="px-2.5 py-1.5 transition-colors hover:text-text-primary hover:bg-bg-subtle" href="#all-tools">Tools</a>
-        <a class="px-2.5 py-1.5 transition-colors hover:text-text-primary hover:bg-bg-subtle" href="/pricing">Pricing</a>
+      <!-- Monospace Direct Scroll Navigation Links -->
+      <nav class="mono-copy" style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: var(--text-secondary);">
+        <a href="#featured-tools" style="padding: 0.35rem 0.65rem; text-decoration: none; color: inherit; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">Features</a>
+        <a href="#all-tools" style="padding: 0.35rem 0.65rem; text-decoration: none; color: inherit; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">Tools</a>
+        <a href="/pricing" style="padding: 0.35rem 0.65rem; text-decoration: none; color: inherit; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">Pricing</a>
       </nav>
 
-      <!-- Actions: Theme Toggle & BYOK Key & GitHub -->
-      <div class="flex items-center gap-2">
-        <button type="button" onclick="toggleTheme()" class="mono-copy inline-flex items-center justify-center h-8 w-8 border border-border bg-bg-elevated text-text-secondary hover:text-text-primary transition-all cursor-pointer" aria-label="Toggle dark/light theme" title="Toggle theme">
-          <svg id="theme-sun-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+      <!-- Actions: Theme Toggle & Get Started CTA -->
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <button type="button" onclick="toggleTheme()" class="mono-copy" style="display: inline-flex; align-items: center; justify-content: center; height: 30px; width: 30px; border: 1px solid var(--border); background: var(--bg-elevated); color: var(--text-secondary); cursor: pointer;" title="Toggle theme">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         </button>
 
-        <a href="/merge-pdf" class="mono-copy inline-flex items-center gap-1.5 border border-transparent bg-accent text-accent-foreground px-3 py-1 text-[11px] font-medium hover:bg-accent-hover transition-all">
+        <a href="/merge-pdf" class="mono-copy" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.85rem; border: 1px solid var(--accent); background: var(--accent); color: #ffffff; text-decoration: none; font-size: 0.72rem; font-weight: 500; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
           <span>Get Started</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
       </div>
     </div>

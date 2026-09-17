@@ -18,7 +18,7 @@ export function renderPricingPage({ renderNavbar, renderFooter, renderGsapScript
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/styles.css?v=3.2">
+  <link rel="stylesheet" href="/styles.css?v=3.5">
 
   <!-- Tailwind CDN with DocPlatform Architectural Palette Extension -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -321,7 +321,7 @@ export function renderPrivacyPage({ renderNavbar, renderFooter, renderGsapScript
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/styles.css?v=3.2">
+  <link rel="stylesheet" href="/styles.css?v=3.5">
 
   <!-- Tailwind CDN with DocPlatform Blueprint Configuration -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -463,7 +463,7 @@ export function renderTermsPage({ renderNavbar, renderFooter, renderGsapScripts 
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/styles.css?v=3.2">
+  <link rel="stylesheet" href="/styles.css?v=3.5">
 
   <!-- Tailwind CDN with DocPlatform Blueprint Configuration -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -605,7 +605,7 @@ export function renderSecurityPage({ renderNavbar, renderFooter, renderGsapScrip
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/styles.css?v=3.2">
+  <link rel="stylesheet" href="/styles.css?v=3.5">
 
   <!-- Tailwind CDN with DocPlatform Blueprint Configuration -->
   <script src="https://cdn.tailwindcss.com"></script>

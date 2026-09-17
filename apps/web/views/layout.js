@@ -17,11 +17,11 @@ export const renderNavbar = (activeItem = '') => `
 
       <!-- Monospace Navigation Links -->
       <nav class="mono-copy" style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: var(--text-secondary);">
-        <a href="/#featured-tools" style="padding: 0.35rem 0.6rem; text-decoration: none; color: inherit; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">Features</a>
+        <a href="/#featured-tools" style="padding: 0.35rem 0.65rem; text-decoration: none; color: inherit; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">Features</a>
         
         <!-- Tools Dropdown & Mega-Menu Group -->
         <div class="nav-tools-group" id="nav-tools-group">
-          <a href="/#all-tools" class="nav-tools-btn flex items-center gap-1" id="nav-tools-btn" onclick="if (window.innerWidth <= 860) { toggleToolsMenu(event); }" style="padding: 0.35rem 0.6rem; text-decoration: none; color: ${activeItem === 'tools' ? 'var(--text-primary)' : 'inherit'}; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">
+          <a href="/#all-tools" class="nav-tools-btn flex items-center gap-1" id="nav-tools-btn" style="padding: 0.35rem 0.65rem; text-decoration: none; color: ${activeItem === 'tools' ? 'var(--text-primary)' : 'inherit'}; transition: color 0.15s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='inherit'">
             <span>Tools</span>
             <svg class="nav-tools-caret" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </a>
@@ -469,7 +469,7 @@ export const renderNavbar = (activeItem = '') => `
       }
     }
 
-    // ── Mega-Menu Navigation & Touch Handlers ────────────────────────────────
+    // ── Mega-Menu Navigation & Hover Handlers ────────────────────────────────
     function handleMegaMenuNav(event, slug) {
       if (window.switchTool && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
         event.preventDefault();
@@ -479,28 +479,76 @@ export const renderNavbar = (activeItem = '') => `
       }
     }
 
-    function toggleToolsMenu(e) {
-      if (e) e.preventDefault();
+    (function initNavbarToolsMenu() {
+      let timer = null;
       const group = document.getElementById('nav-tools-group');
-      if (group) group.classList.toggle('is-open');
-    }
+      const menu = document.getElementById('nav-mega-menu');
+      const btn = document.getElementById('nav-tools-btn');
+      if (!group || !menu) return;
+
+      function open() {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        group.classList.add('is-open');
+      }
+
+      function closeWithDelay() {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+          group.classList.remove('is-open');
+          timer = null;
+        }, 200);
+      }
+
+      function closeImmediate() {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        group.classList.remove('is-open');
+      }
+
+      group.addEventListener('mouseenter', open);
+      group.addEventListener('mouseleave', closeWithDelay);
+
+      // Immediately close when hovering over any other nav element so buttons are 100% active and unblocked
+      const header = group.closest('header') || document.querySelector('.site-header');
+      if (header) {
+        const otherNavItems = header.querySelectorAll('a:not(.nav-tools-btn):not(.mega-menu-link), button');
+        otherNavItems.forEach(item => {
+          item.addEventListener('mouseenter', closeImmediate);
+        });
+      }
+
+      // Mobile toggle on touch (<860px)
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          if (window.innerWidth <= 860) {
+            e.preventDefault();
+            group.classList.toggle('is-open');
+          }
+        });
+      }
+
+      document.addEventListener('click', (e) => {
+        if (!group.contains(e.target)) {
+          closeImmediate();
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeImmediate();
+          closeApiKeyModal();
+          closeSupportModal();
+        }
+      });
+    })();
 
     document.addEventListener('DOMContentLoaded', () => {
       updateByokBadge();
-    });
-    document.addEventListener('click', (e) => {
-      const group = document.getElementById('nav-tools-group');
-      if (group && !group.contains(e.target)) {
-        group.classList.remove('is-open');
-      }
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeApiKeyModal();
-        closeSupportModal();
-        const group = document.getElementById('nav-tools-group');
-        if (group) group.classList.remove('is-open');
-      }
     });
   </script>
 `;

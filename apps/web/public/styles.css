@@ -4247,6 +4247,7 @@ body.theme-blueprint-dark::before {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
   cursor: pointer;
   user-select: none;
 }
@@ -4264,7 +4265,7 @@ body.theme-blueprint-dark::before {
 
 .nav-mega-menu {
   position: absolute;
-  top: 100%;
+  top: 51px;
   left: 0;
   right: 0;
   width: 100%;
@@ -4275,9 +4276,11 @@ body.theme-blueprint-dark::before {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(-4px);
-  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
-  z-index: 100;
+  transform: translateY(-6px);
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              visibility 0.2s;
+  z-index: 45;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.35);

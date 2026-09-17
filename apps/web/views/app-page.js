@@ -64,7 +64,7 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/styles.css?v=3.2">
+  <link rel="stylesheet" href="/styles.css?v=3.5">
 
   <!-- Tailwind CDN with DocPlatform Blueprint Configuration -->
   <script src="https://cdn.tailwindcss.com"></script>
