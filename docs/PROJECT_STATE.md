@@ -86,7 +86,14 @@
 
 ---
 
-## 5. NEXT ACTIONS FOR FUTURE AGENTS / ENGINEERS
+## 5. PRODUCTION DEPLOYMENT & COST ARCHITECTURE
+
+- For zero-cost and ultra-low-cost bootstrap cloud deployment guidelines, Cloudflare R2 setup, and server configuration, refer to:
+  - **[Production Deployment & Cost Architecture Guide](file:///c:/Users/Bhanu%20Bisht/pdf-tool/docs/architecture/production-deployment-and-cost-guide.md)**
+
+---
+
+## 6. NEXT ACTIONS FOR FUTURE AGENTS / ENGINEERS
 
 1. **Multi-Page Visual Reorder in Crop Studio**:
    - Allow users to select different crop boxes per individual page or page range from thumbnail filmstrips.
