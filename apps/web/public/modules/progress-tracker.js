@@ -358,58 +358,70 @@ export function renderSuccessDownload(url, filename, { activeTool, stagedFiles }
     }
   }
 
-  // Next Steps Recommendations
+  // Next Steps Recommendations with Professional Vector Stroke Icons
   const nextStepsChips = document.getElementById('next-steps-chips');
   if (nextStepsChips) {
+    const STEP_ICONS = {
+      compress: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>',
+      protect: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+      sign: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 2 4 4-12 12H6v-4L18 2z"/></svg>',
+      word: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+      markdown: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><path d="M20 21H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"/></svg>',
+      merge: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="13" height="13" rx="2"/><path d="M4 8v11a2 2 0 0 0 2 2h11"/></svg>',
+      ai: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>',
+      table: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>'
+    };
+
     const nextStepsMap = {
       'pdf-to-markdown': [
-        { label: '📄 Markdown to PDF', link: '/markdown-to-pdf' },
-        { label: '📝 Convert to Word', link: '/pdf-to-word' },
-        { label: '⚡ Compress PDF', link: '/compress-pdf' }
+        { label: 'Markdown to PDF', link: '/markdown-to-pdf', icon: 'markdown' },
+        { label: 'Convert to Word', link: '/pdf-to-word', icon: 'word' },
+        { label: 'Compress PDF', link: '/compress-pdf', icon: 'compress' }
       ],
       'markdown-to-pdf': [
-        { label: '📝 PDF to Markdown', link: '/pdf-to-markdown' },
-        { label: '⚡ Compress PDF', link: '/compress-pdf' },
-        { label: '🔒 Protect PDF', link: '/protect-pdf' }
+        { label: 'PDF to Markdown', link: '/pdf-to-markdown', icon: 'markdown' },
+        { label: 'Compress PDF', link: '/compress-pdf', icon: 'compress' },
+        { label: 'Protect PDF', link: '/protect-pdf', icon: 'protect' }
       ],
       'gst-invoice-pdf': [
-        { label: '✍️ Draw & Sign Document', link: '/draw-signature' },
-        { label: '🔒 Password Protect Invoice', link: '/protect-pdf' },
-        { label: '⚡ Compress PDF', link: '/compress-pdf' }
+        { label: 'Draw & Sign Document', link: '/draw-signature', icon: 'sign' },
+        { label: 'Password Protect Invoice', link: '/protect-pdf', icon: 'protect' },
+        { label: 'Compress PDF', link: '/compress-pdf', icon: 'compress' }
       ],
       'pdf-to-word': [
-        { label: '⚡ Compress Word / PDF', link: '/compress-pdf' },
-        { label: '🔒 Protect with Password', link: '/protect-pdf' },
-        { label: '✍️ Draw / Add Signature', link: '/draw-signature' }
+        { label: 'Compress Word / PDF', link: '/compress-pdf', icon: 'compress' },
+        { label: 'Protect with Password', link: '/protect-pdf', icon: 'protect' },
+        { label: 'Draw / Add Signature', link: '/draw-signature', icon: 'sign' }
       ],
       'word-to-pdf': [
-        { label: '⚡ Compress PDF', link: '/compress-pdf' },
-        { label: '🔒 Protect PDF', link: '/protect-pdf' },
-        { label: '📑 Merge with other PDFs', link: '/merge-pdf' }
+        { label: 'Compress PDF', link: '/compress-pdf', icon: 'compress' },
+        { label: 'Protect PDF', link: '/protect-pdf', icon: 'protect' },
+        { label: 'Merge with other PDFs', link: '/merge-pdf', icon: 'merge' }
       ],
       'merge-pdf': [
-        { label: '⚡ Compress Merged PDF', link: '/compress-pdf' },
-        { label: '🔒 Protect PDF', link: '/protect-pdf' },
-        { label: '📝 Convert to Word', link: '/pdf-to-word' }
+        { label: 'Compress Merged PDF', link: '/compress-pdf', icon: 'compress' },
+        { label: 'Protect PDF', link: '/protect-pdf', icon: 'protect' },
+        { label: 'Convert to Word', link: '/pdf-to-word', icon: 'word' }
       ],
       'compress-pdf': [
-        { label: '🔒 Protect PDF', link: '/protect-pdf' },
-        { label: '✍️ Sign Document', link: '/draw-signature' },
-        { label: '📝 Convert to Word', link: '/pdf-to-word' }
+        { label: 'Protect PDF', link: '/protect-pdf', icon: 'protect' },
+        { label: 'Sign Document', link: '/draw-signature', icon: 'sign' },
+        { label: 'Convert to Word', link: '/pdf-to-word', icon: 'word' }
       ],
       'ai-ask': [
-        { label: '💡 Generate Full Summary', link: '/ai-summarize' },
-        { label: '📋 Extract Tables to Excel', link: '/ai-extract-table' },
-        { label: '📝 Convert to Word', link: '/pdf-to-word' }
+        { label: 'Generate Full Summary', link: '/ai-summarize', icon: 'ai' },
+        { label: 'Extract Tables to Excel', link: '/ai-extract-table', icon: 'table' },
+        { label: 'Convert to Word', link: '/pdf-to-word', icon: 'word' }
       ]
     };
     const steps = (activeTool && nextStepsMap[activeTool]) || [
-      { label: '⚡ Compress File', link: '/compress-pdf' },
-      { label: '🔒 Protect with Password', link: '/protect-pdf' },
-      { label: '📝 Convert to Word', link: '/pdf-to-word' }
+      { label: 'Compress File', link: '/compress-pdf', icon: 'compress' },
+      { label: 'Protect with Password', link: '/protect-pdf', icon: 'protect' },
+      { label: 'Convert to Word', link: '/pdf-to-word', icon: 'word' }
     ];
     nextStepsChips.innerHTML = steps.map(s => `
       <a href="${s.link}" class="next-step-chip" onclick="event.preventDefault(); if (window.switchTool) window.switchTool('${s.link.replace(/^\//, '')}')">
+        ${STEP_ICONS[s.icon] || STEP_ICONS.compress}
         <span>${s.label}</span>
       </a>
     `).join('');

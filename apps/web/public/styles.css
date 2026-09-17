@@ -9,7 +9,7 @@
 @import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,700,600,500,400&display=swap');
 
 :root, [data-theme="dark"] {
-  /* Paperlab Architectural Blueprint System Tokens (Dark Mode Default) */
+  /* DocPlatform Architectural Blueprint System Tokens (Dark Mode Default) */
   --bg: #09090b;
   --bg-base: #09090b;
   --bg-page: #09090b;
@@ -32,7 +32,7 @@
   --text-secondary: #a1a1aa;
   --text-muted: #71717a;
   
-  /* Electric Violet Accent (Paperlab Signature) */
+  /* Electric Violet Accent */
   --accent: #7b61ff;
   --accent-hover: #6b50f6;
   --accent-foreground: #ffffff;
@@ -59,7 +59,7 @@
 }
 
 [data-theme="light"] {
-  /* Paperlab Clean White Light Mode */
+  /* DocPlatform Clean White Light Mode */
   --bg: #ffffff;
   --bg-base: #ffffff;
   --bg-page: #ffffff;
@@ -123,7 +123,7 @@ body {
 }
 
 /* ==========================================================================
-   PAPERLAB ARCHITECTURAL BLUEPRINT CORE UTILITIES & SYSTEM
+   DOCPLATFORM ARCHITECTURAL BLUEPRINT CORE UTILITIES & SYSTEM
    ========================================================================== */
 .paper-frame {
   max-width: 64rem;
@@ -262,7 +262,7 @@ body {
 }
 
 /* ==========================================================================
-   PAPERLAB NATIVE ARCHITECTURAL UTILITIES (VANILLA FALLBACK & COMPATIBILITY)
+   DOCPLATFORM NATIVE ARCHITECTURAL UTILITIES (VANILLA FALLBACK & COMPATIBILITY)
    ========================================================================== */
 .max-w-5xl { max-width: 64rem; }
 .max-w-2xl { max-width: 42rem; }
@@ -1772,18 +1772,18 @@ body {
   transform: translateY(0);
 }
 
-/* ── Modal Backdrops & Cards ──────────────────────────────────────────────── */
+/* ── Modal Backdrops & Cards (Architectural Blueprint) ────────────────── */
 .support-modal-backdrop,
 .byok-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(9, 9, 11, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 9000;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.22s ease;
+  transition: opacity 0.2s ease;
 }
 .support-modal-backdrop.open,
 .byok-modal-backdrop.open {
@@ -1797,16 +1797,16 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -46%);
-  width: min(480px, 94vw);
-  background: #ffffff;
-  border: 1px solid var(--border-subtle);
-  border-radius: 24px;
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18), 0 4px 16px rgba(15, 23, 42, 0.08);
+  width: min(520px, 94vw);
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.6);
   z-index: 9001;
-  padding: 2.25rem;
+  padding: 2rem;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .support-modal.open,
 .byok-modal.open {
@@ -1817,116 +1817,64 @@ body {
 
 .modal-close-btn {
   position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
-  background: var(--bg-subtle);
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  top: 1rem;
+  right: 1rem;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--text-muted);
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.15s;
 }
 .modal-close-btn:hover {
-  background: #fee2e2;
-  color: var(--brand-primary);
+  border-color: #7b61ff;
+  color: #7b61ff;
 }
 
 /* ── Support & Tip Modal Content ──────────────────────────────────────────── */
 .support-modal-header,
 .byok-modal-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-.support-icon-badge,
-.byok-icon-badge {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-.support-modal-title,
-.byok-modal-title {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: var(--text-hero);
-  margin-bottom: 0.4rem;
-  letter-spacing: -0.02em;
-}
-.support-modal-desc,
-.byok-modal-desc {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0;
+  text-align: left;
+  margin-bottom: 1.25rem;
 }
 
 .tip-tiers-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
 }
 .tip-tier-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 0.9rem 0.5rem;
-  background: #f8fafc;
-  border: 2px solid var(--border-subtle);
-  border-radius: 14px;
+  align-items: flex-start;
+  padding: 0.75rem;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
   cursor: pointer;
-  transition: all 0.18s ease;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: all 0.15s ease;
+  font-family: 'JetBrains Mono', monospace;
+  gap: 0.25rem;
 }
 .tip-tier-card:hover {
-  border-color: #e5322d;
-  background: #fef2f2;
-  transform: translateY(-2px);
+  border-color: #7b61ff;
+  background: rgba(123, 97, 255, 0.04);
 }
 .tip-tier-card.active {
-  border-color: #e5322d;
-  background: #fef2f2;
-  box-shadow: 0 0 0 3px rgba(229, 50, 45, 0.15);
+  border-color: #7b61ff;
+  background: rgba(123, 97, 255, 0.1);
 }
-.tip-emoji { font-size: 1.3rem; margin-bottom: 0.2rem; }
-.tip-amount { font-size: 1.15rem; font-weight: 800; color: var(--text-hero); }
-.tip-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
 
 .support-cta-box {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  align-items: center;
-}
-.support-submit-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-  padding: 0.85rem 1.5rem;
-  background: var(--brand-primary);
-  color: #fff;
-  border-radius: 12px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 4px 14px rgba(229, 50, 45, 0.3);
-  transition: background 0.15s, transform 0.1s;
-}
-.support-submit-btn:hover {
-  background: #c92a2a;
-  transform: scale(1.01);
-}
-.support-note {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-align: center;
-  margin: 0;
 }
 
 /* ── BYOK (Bring Your Own Key) Form ───────────────────────────────────────── */
@@ -2135,30 +2083,29 @@ body {
   box-shadow: 0 12px 30px rgba(229, 50, 45, 0.15);
 }
 
-/* ── Redesigned Modern Result / Success Card ─────────────────────────────── */
+/* ── Redesigned Modern Result / Success Card (Architectural Blueprint) ── */
 .result-card {
   display: none;
   text-align: center;
-  padding: 2.75rem 2rem;
-  background: #ffffff;
-  border-radius: 24px;
-  animation: springIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  padding: 2.5rem 1.5rem;
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
+  animation: springIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .result-icon-box {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
+  width: 48px;
+  height: 48px;
+  border-radius: 0px;
+  border: 1px dashed #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0 auto 1.25rem;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
-  animation: successPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards, pulseGlow 2.5s infinite;
+  font-size: 1.4rem;
+  margin: 0 auto 1rem;
 }
 
 .result-title {
@@ -2180,11 +2127,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: 14px;
-  padding: 0.9rem 1.25rem;
-  margin: 0 auto 1.75rem;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
+  padding: 0.85rem 1.25rem;
+  margin: 0 auto 1.5rem;
   max-width: 520px;
   text-align: left;
 }
@@ -2414,46 +2361,52 @@ body {
   background: var(--bg-subtle);
 }
 
-/* Next Steps Recommendations Bar */
+/* Next Steps Recommendations Bar (DocPlatform Architectural Blueprint) */
 .next-steps-container {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px dashed var(--border);
 }
 .next-steps-label {
-  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.85rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
 }
 .next-steps-chips {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 .next-step-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.45rem 0.95rem;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: 999px;
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  padding: 0.4rem 0.85rem;
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--text-secondary);
   text-decoration: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: -0.01em;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.next-step-chip svg {
+  color: #7b61ff;
+  flex-shrink: 0;
 }
 .next-step-chip:hover {
-  background: #ffffff;
-  border-color: var(--brand-primary);
-  color: var(--brand-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  background: var(--bg-subtle);
+  border-color: #7b61ff;
+  color: var(--text-primary);
+  transform: translateY(-1px);
 }
 
 /* ── Tool-Specific Content Sections ──────────────────────────────────────── */
@@ -2487,44 +2440,48 @@ body {
   margin-bottom: 3.5rem;
 }
 .tool-step-card {
-  background: #ffffff;
-  border: 1px solid var(--border-subtle);
-  border-radius: 18px;
-  padding: 1.75rem 1.5rem;
-  box-shadow: var(--shadow-card);
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
+  padding: 1.5rem;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+  transition: border-color 0.2s ease;
 }
 .tool-step-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.08);
+  border-color: #7b61ff;
 }
 .tool-step-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: #fee2e2;
-  color: var(--brand-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 0px;
+  background: rgba(123, 97, 255, 0.1);
+  border: 1px dashed #7b61ff;
+  color: #7b61ff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
-  margin-bottom: 1.1rem;
+  margin-bottom: 1rem;
 }
 .tool-step-title {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-hero);
-  margin-bottom: 0.4rem;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 .tool-step-desc {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
   line-height: 1.55;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 /* Feature Highlights Grid */
@@ -2535,42 +2492,42 @@ body {
   margin-bottom: 3.5rem;
 }
 .tool-feature-card {
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: 18px;
-  padding: 1.75rem 1.5rem;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
+  padding: 1.5rem;
+  transition: border-color 0.2s ease;
 }
 .tool-feature-card:hover {
-  background: #ffffff;
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-card);
-  border-color: var(--border-medium);
+  border-color: #7b61ff;
 }
 .tool-feature-icon {
-  font-size: 1.75rem;
   margin-bottom: 0.9rem;
+  color: #7b61ff;
 }
 .tool-feature-title {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-hero);
-  margin-bottom: 0.4rem;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
 }
 .tool-feature-desc {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
   line-height: 1.55;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 /* Related Tools / Smart Backlinks Grid */
 .related-tools-section {
-  background: #ffffff;
-  border: 1px solid var(--border-subtle);
-  border-radius: 24px;
-  padding: 2.5rem 2rem;
+  background: transparent;
+  border: none;
+  border-radius: 0px;
+  padding: 0;
   margin-bottom: 3.5rem;
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 .related-tools-grid {
   display: grid;
@@ -2582,36 +2539,35 @@ body {
   flex-direction: column;
   align-items: flex-start;
   padding: 1.15rem;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: 0px;
   text-decoration: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.2s ease;
 }
 .related-tool-card:hover {
-  background: #ffffff;
-  border-color: var(--brand-primary);
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px -4px rgba(229, 50, 45, 0.12);
+  border-color: #7b61ff;
 }
 .related-tool-icon {
-  font-size: 1.6rem;
-  margin-bottom: 0.6rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 .related-tool-title {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 700;
-  color: var(--text-hero);
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
   transition: color 0.15s ease;
+  font-family: 'JetBrains Mono', monospace;
 }
 .related-tool-card:hover .related-tool-title {
-  color: var(--brand-primary);
+  color: #7b61ff;
 }
 .related-tool-desc {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   line-height: 1.45;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 /* ── Homepage All-Tools Category Directory ───────────────────────────────── */
@@ -3297,8 +3253,7 @@ body {
 }
 
 /* ==========================================================================
-   Paperlab Architectural Minimalist Design System (DocPlatform Flagship)
-   Reference: https://paperlabb.vercel.app/
+   DocPlatform Architectural Minimalist Blueprint Design System
    - Canvas: Deep Zinc / Charcoal #09090b (Dark) / Clean Neutral (Light)
    - Accent: #7b61ff Electric Violet
    - Typography: 
@@ -3311,7 +3266,7 @@ body {
    ========================================================================== */
 
 :root,
-body.theme-paperlab {
+body.theme-blueprint {
   --paper-bg: #ffffff;
   --paper-bg-subtle: #f4f4f5;
   --paper-bg-elevated: #ffffff;
@@ -3331,8 +3286,8 @@ body.theme-paperlab {
 }
 
 [data-theme="dark"],
-body.theme-paperlab[data-theme="dark"],
-body.theme-paperlab-dark {
+body.theme-blueprint[data-theme="dark"],
+body.theme-blueprint-dark {
   --paper-bg: #09090b !important;
   --paper-bg-subtle: #18181b !important;
   --paper-bg-elevated: #121215 !important;
@@ -3351,9 +3306,9 @@ body.theme-paperlab-dark {
   --paper-origami-lines: #2e2e38 !important;
 }
 
-/* Base Body Application for Paperlab Landing */
-body.theme-paperlab,
-body.theme-paperlab-dark {
+/* Base Body Application for DocPlatform Landing */
+body.theme-blueprint,
+body.theme-blueprint-dark {
   background-color: var(--paper-bg) !important;
   color: var(--paper-text-primary) !important;
   font-family: 'JetBrains Mono', monospace !important;
@@ -3363,8 +3318,8 @@ body.theme-paperlab-dark {
   overflow-x: hidden;
 }
 
-body.theme-paperlab::before,
-body.theme-paperlab-dark::before {
+body.theme-blueprint::before,
+body.theme-blueprint-dark::before {
   display: none !important;
 }
 
@@ -4276,5 +4231,240 @@ body.theme-paperlab-dark::before {
 @media (min-width: 640px) {
   .paper-footer-subbar {
     flex-direction: row;
+  }
+}
+
+/* ==========================================================================
+   ARCHITECTURAL NAVBAR MEGA-MENU DROPDOWN
+   ========================================================================== */
+.nav-tools-group {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-tools-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.nav-tools-caret {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--text-muted);
+}
+
+.nav-tools-group:hover .nav-tools-caret,
+.nav-tools-group.is-open .nav-tools-caret {
+  transform: rotate(180deg);
+  color: #7b61ff;
+}
+
+.nav-mega-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: var(--bg-elevated);
+  border-left: 1px dashed var(--border);
+  border-right: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
+  z-index: 100;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.35);
+}
+
+.nav-tools-group:hover .nav-mega-menu,
+.nav-tools-group.is-open .nav-mega-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.mega-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: var(--border);
+}
+
+.mega-menu-col {
+  background: var(--bg-elevated);
+  padding: 0.85rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mega-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px dashed var(--border);
+}
+
+.mega-menu-cat-num {
+  color: #7b61ff;
+  font-weight: 800;
+}
+
+.mega-menu-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.mega-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  border-left: 2px solid transparent;
+  border-radius: 0px;
+}
+
+.mega-menu-link svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.mega-menu-link:hover {
+  color: var(--text-primary);
+  background: var(--bg-subtle);
+  border-left-color: #7b61ff;
+  padding-left: 0.55rem;
+}
+
+.mega-menu-link:hover svg {
+  color: #7b61ff;
+}
+
+.mega-badge {
+  font-size: 0.52rem;
+  font-weight: 800;
+  color: #7b61ff;
+  background: rgba(123, 97, 255, 0.12);
+  border: 1px solid rgba(123, 97, 255, 0.3);
+  padding: 0.1rem 0.25rem;
+  margin-left: auto;
+  line-height: 1;
+}
+
+.mega-menu-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background: var(--bg);
+  border-top: 1px dashed var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+}
+
+.mega-menu-footer-privacy {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.privacy-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #7b61ff;
+}
+
+.mega-menu-footer-all {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: color 0.15s ease;
+}
+
+.mega-menu-footer-all:hover {
+  color: #7b61ff;
+}
+
+@media (max-width: 860px) {
+  .mega-menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 540px) {
+  .mega-menu-grid {
+    grid-template-columns: 1fr;
+  }
+  .mega-menu-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}
+
+/* ==========================================================================
+   GSAP SCROLLSMOOTHER ARCHITECTURAL CORE
+   ========================================================================== */
+#smooth-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+#smooth-content {
+  width: 100%;
+  min-height: 100%;
+  overflow: visible;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure fixed architectural site-header stays above smooth canvas */
+.site-header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 50 !important;
+}
+
+/* Fallback native smooth scrolling */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }

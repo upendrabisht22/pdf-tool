@@ -1,6 +1,6 @@
 /**
  * DocPlatform Architectural Minimalist Landing Page View
- * Strictly inspired by & conforming to Paperlab (https://paperlabb.vercel.app/):
+ * DocPlatform Blueprint System (Client-Side Privacy Engine):
  * - Architectural dashed blueprint framing (max-w-5xl border-x border-dashed border-border)
  * - Typography: Instrument Serif for hero headlines, JetBrains Mono for monospace labels/cards, Plus Jakarta Sans for body
  * - Exact 3-layer folded origami paper graphic with polygon clip paths & signature SVG
@@ -249,7 +249,7 @@ export function renderLandingPage() {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DocPlatform — Architecture-Grade PDF & Document Studio</title>
   <meta name="description" content="30+ free, precision PDF and document tools. 100% in-browser, no uploads, no sign-up, zero watermarks. Built with architectural minimalism." />
-  <meta name="keywords" content="pdf tools, merge pdf, split pdf, gst invoice generator, private pdf suite, webassembly pdf, ocr pdf, paperlab" />
+  <meta name="keywords" content="pdf tools, merge pdf, split pdf, gst invoice generator, private pdf suite, webassembly pdf, ocr pdf" />
   <link rel="canonical" href="https://docplatform.app/" />
 
   <!-- Preconnect & Fonts -->
@@ -259,7 +259,7 @@ export function renderLandingPage() {
   
   <link rel="stylesheet" href="/styles.css?v=3.1" />
 
-  <!-- Tailwind CSS CDN for Paperlab Architectural Blueprint Utilities -->
+  <!-- Tailwind CSS CDN for DocPlatform Architectural Blueprint Utilities -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -338,9 +338,9 @@ export function renderLandingPage() {
 <body class="min-h-screen flex flex-col bg-bg text-text-primary antialiased">
 
   <!-- ========================================================================
-       1. TOP ARCHITECTURAL STICKY NAVBAR
+       1. TOP ARCHITECTURAL FIXED NAVBAR
        ======================================================================== -->
-  <header class="sticky top-0 z-40 bg-bg/90 backdrop-blur-md" style="background: var(--bg-glass);">
+  <header class="site-header fixed top-0 left-0 right-0 z-40 bg-bg/90 backdrop-blur-md" style="background: var(--bg-glass); width: 100%;">
     <div class="mx-auto flex h-[51px] max-w-5xl items-center justify-between gap-3 border-b border-x border-dashed border-border px-4 sm:px-6">
       
       <!-- Brand Logo -->
@@ -373,25 +373,27 @@ export function renderLandingPage() {
   </header>
 
   <!-- ========================================================================
-       2. MAIN FRAMED CONTENT CONTAINER
+       2. GSAP SCROLLSMOOTHER WRAPPER & MAIN CANVAS
        ======================================================================== -->
-  <main class="w-full flex-1">
+  <div id="smooth-wrapper">
+    <div id="smooth-content" style="padding-top: 51px;">
+      <main class="w-full flex-1">
     
     <!-- Hero Section -->
     <section class="mx-auto max-w-5xl border-x border-dashed border-border relative">
-      <div class="relative flex min-h-fit md:min-h-[460px] flex-col md:flex-row items-center overflow-hidden border-b border-dashed border-border py-12 px-6 sm:px-10">
+      <div class="relative flex min-h-fit md:min-h-[380px] flex-col justify-center overflow-hidden border-b border-dashed border-border py-14 px-6 sm:px-10">
         
         <!-- Architectural Linework Background -->
         <div class="linework pointer-events-none absolute inset-0"></div>
 
-        <!-- Left Hero Content -->
-        <div class="z-10 flex w-full flex-col gap-4 md:w-[62%]">
+        <!-- Hero Content -->
+        <div class="z-10 flex w-full max-w-3xl flex-col gap-4">
           
-          <!-- Star Badge + Gradient Divider -->
+          <!-- Tool Count Badge + Gradient Divider -->
           <div class="flex items-center gap-3">
             <span class="mono-copy inline-flex items-center gap-1.5 border border-border bg-bg-elevated px-2.5 py-1 text-[11px] text-text-primary tracking-wide">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#7b61ff" stroke="#7b61ff" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              ★ 30+ Free Tools
+              ★ ${allTools.length} Free Tools
             </span>
             <div style="height: 1px; width: 120px; background: linear-gradient(to right, var(--border), transparent);"></div>
           </div>
@@ -399,35 +401,30 @@ export function renderLandingPage() {
           <!-- Editorial Instrument Serif Headline -->
           <div class="hero-display flex flex-col gap-1 text-5xl sm:text-7xl hero-title-responsive">
             <h1 class="text-text-secondary leading-[1.08]">
-              <span class="text-balance sm:whitespace-nowrap">Everything your PDFs need,</span><br/>
-              <span class="text-text-primary whitespace-nowrap">in one click.</span>
+              <span>Everything your PDFs need,</span><br/>
+              <span class="text-text-primary">in one click.</span>
             </h1>
           </div>
 
-          <!-- Action Buttons + Doodle Star Note -->
+          <!-- Action Buttons -->
           <div class="mt-4 flex flex-wrap items-center gap-4 relative">
-            <a href="/merge-pdf" class="mono-copy inline-flex items-center gap-1.5 border border-transparent bg-accent text-accent-foreground px-4 py-2 text-xs font-medium hover:bg-accent-hover transition-all">
-              <span>Get Started</span>
-              <svg height="14" width="14" viewBox="0 0 18 18" fill="currentColor" class="-rotate-45">
-                <g fill="currentColor">
-                  <path d="M9 1C4.589 1 1 4.589 1 9C1 13.411 4.589 17 9 17C13.411 17 17 13.411 17 9C17 4.589 13.411 1 9 1Z" opacity="0.4"></path>
-                  <path d="M8.47 11.72C8.177 12.013 8.177 12.488 8.47 12.781C8.616 12.927 8.808 13.001 9 13.001C9.192 13.001 9.384 12.928 9.53 12.781L12.78 9.53103C13.073 9.23803 13.073 8.76299 12.78 8.46999L9.53 5.21999C9.237 4.92699 8.762 4.92699 8.469 5.21999C8.176 5.51299 8.176 5.98803 8.469 6.28103L10.439 8.251H1.75C1.336 8.251 1 8.587 1 9.001C1 9.415 1.336 9.751 1.75 9.751H10.439L8.469 11.721L8.47 11.72Z"></path>
-                </g>
-              </svg>
+            <a href="/merge-pdf" class="paper-cta-btn group">
+              <span class="cta-fill"></span>
+              <span class="relative z-10 flex items-center gap-1.5">
+                <span>Get Started</span>
+                <svg height="14" width="14" viewBox="0 0 18 18" fill="currentColor" class="-rotate-45 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">
+                  <g fill="currentColor">
+                    <path d="M9 1C4.589 1 1 4.589 1 9C1 13.411 4.589 17 9 17C13.411 17 17 13.411 17 9C17 4.589 13.411 1 9 1Z" opacity="0.4"></path>
+                    <path d="M8.47 11.72C8.177 12.013 8.177 12.488 8.47 12.781C8.616 12.927 8.808 13.001 9 13.001C9.192 13.001 9.384 12.928 9.53 12.781L12.78 9.53103C13.073 9.23803 13.073 8.76299 12.78 8.46999L9.53 5.21999C9.237 4.92699 8.762 4.92699 8.469 5.21999C8.176 5.51299 8.176 5.98803 8.469 6.28103L10.439 8.251H1.75C1.336 8.251 1 8.587 1 9.001C1 9.415 1.336 9.751 1.75 9.751H10.439L8.469 11.721L8.47 11.72Z"></path>
+                  </g>
+                </svg>
+              </span>
             </a>
 
-            <div class="relative">
-              <a target="_blank" rel="noopener noreferrer" href="https://github.com/upendrabisht22/pdf-tool" class="mono-copy inline-flex items-center gap-1.5 border border-border bg-bg-elevated text-text-primary px-4 py-2 text-xs font-medium hover:bg-bg-subtle transition-all">
-                <span>Open Source</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
-              </a>
-
-              <!-- Handwritten Star Doodle -->
-              <span class="mono-copy text-text-muted pointer-events-none absolute -top-9 left-28 whitespace-nowrap text-[10px] leading-tight -rotate-12">
-                Give Star please :3 <br/> for cookie
-              </span>
-              <svg class="text-text-muted/40 pointer-events-none absolute -top-4 left-18 w-6 h-6 rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg>
-            </div>
+            <a href="#featured-tools" class="mono-copy inline-flex items-center gap-1.5 border border-border bg-bg-elevated text-text-primary px-4 py-2 text-xs font-medium hover:border-[#7b61ff] hover:text-[#7b61ff] transition-all">
+              <span>Explore Tools</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
           </div>
 
           <!-- Monospace Tagline -->
@@ -435,65 +432,6 @@ export function renderLandingPage() {
             No watermark. No upload. No sign-up. <br/>
             Your files never leave your browser WebAssembly sandbox.
           </p>
-        </div>
-
-        <!-- Right Hero Graphic: 3-Layer Folded Origami Paper Illustration -->
-        <div class="z-10 hidden md:flex w-full items-center justify-center p-4 md:w-[38%] origami-container-mobile">
-          <div class="relative w-full max-w-[340px] h-[320px] flex items-center justify-center">
-            
-            <!-- Back Left Sheet (Tilted) -->
-            <div class="origami-sheet origami-sheet-back-left">
-              <div class="origami-dogear"></div>
-              <div class="p-5 flex flex-col gap-2.5 mt-2">
-                <div style="width: 45%; height: 8px; background: #818cf8;"></div>
-                <div style="width: 75%; height: 6px; background: #d4d4d8;"></div>
-                <div class="mt-2 flex flex-col gap-2">
-                  <div style="width: 100%; height: 5px; background: #e4e4e7;"></div>
-                  <div style="width: 95%; height: 5px; background: #e4e4e7;"></div>
-                  <div style="width: 85%; height: 5px; background: #e4e4e7;"></div>
-                  <div style="width: 100%; height: 5px; background: #e4e4e7;"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Back Right Sheet (Tilted) -->
-            <div class="origami-sheet origami-sheet-back-right">
-              <div class="origami-dogear"></div>
-              <div class="p-5 flex flex-col gap-2.5 mt-2">
-                <div style="width: 40%; height: 8px; background: #818cf8;"></div>
-                <div style="width: 80%; height: 6px; background: #d4d4d8;"></div>
-                <div class="mt-2 flex flex-col gap-2">
-                  <div style="width: 100%; height: 5px; background: #e4e4e7;"></div>
-                  <div style="width: 90%; height: 5px; background: #e4e4e7;"></div>
-                  <div style="width: 100%; height: 5px; background: #e4e4e7;"></div>
-                  <div style="width: 75%; height: 5px; background: #e4e4e7;"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Front Sheet (Main Focus) -->
-            <div class="origami-sheet origami-sheet-front">
-              <div class="origami-dogear"></div>
-              <div class="p-5 flex flex-col gap-2.5 mt-2">
-                <div style="width: 45%; height: 9px; background: #6366f1;"></div>
-                <div style="width: 70%; height: 7px; background: #a1a1aa;"></div>
-                <div class="mt-3 flex flex-col gap-2">
-                  <div style="width: 100%; height: 5px; background: #d4d4d8;"></div>
-                  <div style="width: 100%; height: 5px; background: #d4d4d8;"></div>
-                  <div style="width: 85%; height: 5px; background: #d4d4d8;"></div>
-                  <div style="width: 95%; height: 5px; background: #d4d4d8;"></div>
-                  <div style="width: 60%; height: 5px; background: #d4d4d8;"></div>
-                </div>
-                <!-- Signature Vector Curve -->
-                <div class="mt-5 self-end mr-3">
-                  <svg width="45" height="14" viewBox="0 0 50 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2 10C8 10 12 2 18 2C24 2 28 14 34 14C40 14 44 6 48 6" stroke="#6366f1" stroke-width="2" stroke-linecap="round"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-          </div>
         </div>
 
       </div>
@@ -767,21 +705,19 @@ export function renderLandingPage() {
           <a href="/privacy" class="mono-copy text-xs text-text-secondary hover:text-text-primary transition-colors">Privacy First</a>
           <a href="/security" class="mono-copy text-xs text-text-secondary hover:text-text-primary transition-colors">Security Model</a>
           <a href="/terms" class="mono-copy text-xs text-text-secondary hover:text-text-primary transition-colors">Terms of Service</a>
-          <a href="https://github.com/upendrabisht22/pdf-tool" target="_blank" class="mono-copy text-xs text-text-secondary hover:text-text-primary transition-colors">Architecture Spec</a>
         </div>
 
-        <!-- Col 4: Connect -->
+        <!-- Col 4: Architecture & Trust -->
         <div class="p-6 flex flex-col justify-between gap-4">
           <div class="flex flex-col gap-2.5">
-            <div class="mono-copy text-[10px] uppercase tracking-wider text-text-muted">Connect</div>
-            <a href="https://github.com/upendrabisht22/pdf-tool" target="_blank" class="mono-copy text-xs text-text-secondary hover:text-text-primary transition-colors">GitHub Repository</a>
-            <a href="mailto:support@docplatform.app" class="mono-copy text-xs text-text-secondary hover:text-text-primary transition-colors">support@docplatform.app</a>
+            <div class="mono-copy text-[10px] uppercase tracking-wider text-text-muted">Architecture</div>
+            <span class="mono-copy text-xs text-text-secondary">Client-Side WebAssembly</span>
+            <span class="mono-copy text-xs text-text-secondary">Zero Server Retention</span>
+            <span class="mono-copy text-xs text-text-secondary">Local RAM Sandbox</span>
           </div>
 
-          <div class="flex items-center gap-2">
-            <a href="https://github.com/upendrabisht22/pdf-tool" target="_blank" aria-label="GitHub" class="h-7 w-7 border border-border flex items-center justify-center text-text-muted hover:text-text-primary hover:border-text-primary transition-all">
-              <svg width="13" height="13" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
-            </a>
+          <div class="mono-copy text-[10px] uppercase tracking-wider text-text-muted">
+            100% Private Processing
           </div>
         </div>
 
@@ -798,6 +734,8 @@ export function renderLandingPage() {
 
     </div>
   </footer>
+    </div>
+  </div>
 
   <!-- ========================================================================
        6. CLIENT-SIDE INTERACTIVITY SCRIPTS
@@ -880,7 +818,67 @@ export function renderLandingPage() {
       if (noResults) {
         noResults.style.display = visibleCount === 0 ? 'block' : 'none';
       }
+
+      // Refresh ScrollSmoother layout height on filter
+      if (typeof ScrollTrigger !== 'undefined') {
+        ScrollTrigger.refresh();
+      }
     }
+  </script>
+
+  <!-- GSAP Core, ScrollTrigger & ScrollSmoother Engine (Local Offline-First) -->
+  <script src="/vendor/gsap/gsap.min.js"></script>
+  <script src="/vendor/gsap/ScrollTrigger.min.js"></script>
+  <script src="/vendor/gsap/ScrollSmoother.min.js"></script>
+  <script>
+    (function() {
+      function initSmoother() {
+        if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' || typeof ScrollSmoother === 'undefined') return;
+        if (window.smoother) return;
+
+        gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+
+        const wrapper = document.getElementById('smooth-wrapper');
+        const content = document.getElementById('smooth-content');
+        if (!wrapper || !content) return;
+
+        try {
+          const smoother = ScrollSmoother.create({
+            wrapper: '#smooth-wrapper',
+            content: '#smooth-content',
+            smooth: 1.15,
+            effects: true,
+            smoothTouch: 0.1,
+            normalizeScroll: false,
+            ignoreMobileResize: true
+          });
+
+          window.smoother = smoother;
+
+          // Smooth anchor links with ScrollSmoother
+          document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+              const href = this.getAttribute('href');
+              if (href && href.length > 1) {
+                const target = document.querySelector(href);
+                if (target) {
+                  e.preventDefault();
+                  smoother.scrollTo(target, true, 'top 65px');
+                }
+              }
+            });
+          });
+        } catch (err) {
+          console.warn('ScrollSmoother initialization skipped:', err);
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSmoother);
+      } else {
+        initSmoother();
+      }
+    })();
   </script>
 
 </body>

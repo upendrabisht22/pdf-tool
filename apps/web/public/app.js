@@ -107,10 +107,19 @@ function renderToolTabs() {
 
 function initFaqAccordion() {
   document.querySelectorAll('.faq-question').forEach(q => {
+    if (q.dataset.bound === 'true') return;
+    q.dataset.bound = 'true';
     q.addEventListener('click', () => {
       const item = q.closest('.faq-item');
       if (item) {
-        item.classList.toggle('open');
+        item.classList.toggle('active');
+        const ans = item.querySelector('.faq-answer');
+        const icon = item.querySelector('.faq-icon');
+        if (ans) {
+          const isBlock = ans.style.display === 'block';
+          ans.style.display = isBlock ? 'none' : 'block';
+          if (icon) icon.textContent = isBlock ? '+' : '−';
+        }
       }
     });
   });
@@ -285,10 +294,12 @@ export function switchTool(toolKey, updateUrl = true) {
   const stepsContainer = document.getElementById('tool-steps-container');
   if (stepsContainer && details.howToSteps) {
     stepsContainer.innerHTML = details.howToSteps.map((step, idx) => `
-      <div class="tool-step-card">
-        <div class="tool-step-badge">${idx + 1}</div>
-        <h3 class="tool-step-title">${step.name}</h3>
-        <p class="tool-step-desc">${step.text}</p>
+      <div class="border border-dashed border-border bg-bg-elevated p-5 flex flex-col justify-between">
+        <div>
+          <div class="mono-copy text-xs text-accent font-semibold mb-3">[ 0${idx + 1} ]</div>
+          <h3 class="mono-copy text-xs font-bold text-text-primary uppercase tracking-wide mb-2">${step.name}</h3>
+          <p class="mono-copy text-xs text-text-secondary leading-relaxed">${step.text}</p>
+        </div>
       </div>
     `).join('');
   }
@@ -296,10 +307,21 @@ export function switchTool(toolKey, updateUrl = true) {
   const featuresContainer = document.getElementById('tool-features-container');
   if (featuresContainer && details.features) {
     featuresContainer.innerHTML = details.features.map((feat, idx) => `
-      <div class="tool-feature-card">
-        <div class="tool-feature-icon">${idx === 0 ? '🔒' : idx === 1 ? '⚡' : '✨'}</div>
-        <h3 class="tool-feature-title">Feature ${idx + 1}</h3>
-        <p class="tool-feature-desc">${feat}</p>
+      <div class="border border-dashed border-border bg-bg-elevated p-5 flex flex-col justify-between">
+        <div>
+          <div class="w-8 h-8 border border-dashed border-border flex items-center justify-center text-accent mb-3 bg-bg">
+            ${idx === 0 ? `
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            ` : idx === 1 ? `
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            ` : `
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            `}
+          </div>
+          <div class="mono-copy text-[10px] text-text-muted uppercase tracking-widest mb-1.5">FEATURE_0${idx + 1}</div>
+          <h3 class="mono-copy text-xs font-bold text-text-primary uppercase tracking-wide mb-2">${idx === 0 ? 'Client-Side Privacy' : idx === 1 ? 'High-Performance Engine' : 'Vector Precision'}</h3>
+          <p class="mono-copy text-xs text-text-secondary leading-relaxed">${feat}</p>
+        </div>
       </div>
     `).join('');
   }
@@ -310,10 +332,15 @@ export function switchTool(toolKey, updateUrl = true) {
       const relTool = TOOL_DEFINITIONS[slug];
       if (!relTool) return '';
       return `
-        <a href="/${slug}" class="related-tool-card" onclick="event.preventDefault(); window.switchTool('${slug}')">
-          <span class="related-tool-icon">${TOOL_ICONS[slug] || '📄'}</span>
-          <span class="related-tool-title">${relTool.title}</span>
-          <span class="related-tool-desc">${relTool.subtitle.substring(0, 80)}...</span>
+        <a href="/${slug}" class="tool-blueprint-card group relative p-4 bg-bg-elevated border border-dashed border-border hover:border-accent transition-all flex flex-col justify-between" onclick="event.preventDefault(); window.switchTool('${slug}')" style="text-decoration: none;">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="mono-copy text-[10px] text-text-muted uppercase tracking-wider">${relTool.category || 'PDF'}</span>
+              <span class="mono-copy text-xs text-text-muted group-hover:text-accent transition-colors">↗</span>
+            </div>
+            <h4 class="mono-copy text-xs font-bold text-text-primary group-hover:text-accent transition-colors mb-1.5">${relTool.title}</h4>
+            <p class="mono-copy text-[11px] text-text-secondary leading-relaxed">${relTool.subtitle.substring(0, 70)}...</p>
+          </div>
         </a>
       `;
     }).join('');
@@ -322,12 +349,14 @@ export function switchTool(toolKey, updateUrl = true) {
   const faqContainer = document.getElementById('faq-list-container');
   if (faqContainer && details.faqs) {
     faqContainer.innerHTML = details.faqs.map(faq => `
-      <div class="faq-item">
-        <div class="faq-question">
-          <span>${faq.question}</span>
-          <div class="faq-icon">+</div>
+      <div class="faq-item border border-dashed border-border bg-bg-elevated overflow-hidden transition-all">
+        <div class="faq-question p-4 flex items-center justify-between cursor-pointer select-none">
+          <span class="mono-copy text-xs font-semibold text-text-primary pr-4">${faq.question}</span>
+          <div class="faq-icon mono-copy text-sm text-text-muted font-mono transition-transform duration-200">+</div>
         </div>
-        <div class="faq-answer">${faq.answer}</div>
+        <div class="faq-answer px-4 pb-4 mono-copy text-xs text-text-secondary leading-relaxed border-t border-dashed border-border/50 pt-3" style="display: none;">
+          ${faq.answer}
+        </div>
       </div>
     `).join('');
     initFaqAccordion();
@@ -832,6 +861,32 @@ window.formatInrClient = formatInrClient;
 // AI Preview Binding
 window.copyAiPreviewText = copyAiPreviewText;
 
+const CLIENT_ROUTE_ALIASES = {
+  'gst-invoice': 'gst-invoice-pdf',
+  'pos-billing': 'gst-invoice-pdf',
+  'chat-with-pdf': 'ai-ask',
+  'summarize-pdf': 'ai-summarize',
+  'organize-pages': 'delete-pdf-pages',
+  'crop-pdf': 'split-pdf',
+  'pdf-to-audio': 'ai-summarize',
+  'edit-pdf': 'sign-pdf',
+  'add-watermark': 'watermark-pdf',
+  'page-numbers': 'page-numbers-pdf',
+  'headers-footers': 'page-numbers-pdf',
+  'extract-text': 'ocr-pdf',
+  'flatten-pdf': 'flatten-pdf',
+  'encrypt-pdf': 'protect-pdf',
+  'remove-password': 'unlock-pdf',
+  'privacy-scanner': 'strip-metadata-pdf',
+  'fingerprint-pdf': 'watermark-pdf',
+  'compare-pdfs': 'compare-pdf',
+};
+
+function resolveToolKey(path) {
+  const raw = (path || '').replace(/^\//, '') || 'merge-pdf';
+  return CLIENT_ROUTE_ALIASES[raw] || raw;
+}
+
 // ── Lifecycle Initialization ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   renderToolTabs();
@@ -839,16 +894,16 @@ document.addEventListener('DOMContentLoaded', () => {
   initFaqAccordion();
 
   // Set active tab on tool load based on URL path
-  const currentPath = window.location.pathname.replace(/^\//, '') || 'merge-pdf';
-  if (TOOL_DEFINITIONS[currentPath]) {
-    switchTool(currentPath, false);
+  const resolved = resolveToolKey(window.location.pathname);
+  if (TOOL_DEFINITIONS[resolved]) {
+    switchTool(resolved, false);
   } else {
     switchTool('merge-pdf', false);
   }
 
   // Handle browser Back / Forward Navigation
   window.addEventListener('popstate', () => {
-    const slug = window.location.pathname.replace(/^\//, '') || 'merge-pdf';
+    const slug = resolveToolKey(window.location.pathname);
     if (TOOL_DEFINITIONS[slug]) {
       switchTool(slug, false);
     }

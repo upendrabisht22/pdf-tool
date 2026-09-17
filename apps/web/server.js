@@ -59,7 +59,7 @@ import { dispatchWebhookEvent } from './api/webhook-store.js';
 // ── Phase 8: Growth Platform & i18n SEO ──────────────────────────────────────
 import { handleGrowthRoutes } from './api/growth-routes.js';
 // ── Modular View Templates (Layout, Static Pages, Main App Page) ────────────
-import { renderNavbar, renderFooter } from './views/layout.js';
+import { renderNavbar, renderFooter, renderGsapScripts } from './views/layout.js';
 import { renderPricingPage, renderPrivacyPage, renderTermsPage, renderSecurityPage } from './views/static-pages.js';
 import { renderAppPage, getToolCategory, getRelatedToolsList } from './views/app-page.js';
 import { renderLandingPage } from './views/landing-page.js';
@@ -516,9 +516,31 @@ const server = http.createServer(async (req, res) => {
       }
     }
   }
+
+  // Serve Static Vendor Files (GSAP, ScrollSmoother, etc.)
+  if (pathname.startsWith('/vendor/')) {
+    const safePath = path.normalize(path.join(__dirname, 'public', pathname));
+    if (safePath.startsWith(path.join(__dirname, 'public', 'vendor'))) {
+      try {
+        const file = await fs.readFile(safePath);
+        const ext = path.extname(safePath).toLowerCase();
+        const contentType = ext === '.css' ? 'text/css' : (ext === '.js' ? 'application/javascript; charset=utf-8' : 'application/octet-stream');
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400',
+        });
+        res.end(file);
+        return;
+      } catch {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Vendor File Not Found');
+        return;
+      }
+    }
+  }
   // Route: Dedicated /pricing Page (100% Free & Community Supported Transparency Page)
   if (pathname === '/pricing') {
-    const pricingHtml = renderPricingPage({ renderNavbar, renderFooter });
+    const pricingHtml = renderPricingPage({ renderNavbar, renderFooter, renderGsapScripts });
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(pricingHtml);
     return;
@@ -526,7 +548,7 @@ const server = http.createServer(async (req, res) => {
 
   // Route: Dedicated /privacy Page (Zero-Retention & In-Browser Privacy Policy)
   if (pathname === '/privacy') {
-    const privacyHtml = renderPrivacyPage({ renderNavbar, renderFooter });
+    const privacyHtml = renderPrivacyPage({ renderNavbar, renderFooter, renderGsapScripts });
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(privacyHtml);
     return;
@@ -534,7 +556,7 @@ const server = http.createServer(async (req, res) => {
 
   // Route: Dedicated /terms Page (Terms of Service)
   if (pathname === '/terms') {
-    const termsHtml = renderTermsPage({ renderNavbar, renderFooter });
+    const termsHtml = renderTermsPage({ renderNavbar, renderFooter, renderGsapScripts });
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(termsHtml);
     return;
@@ -542,7 +564,7 @@ const server = http.createServer(async (req, res) => {
 
   // Route: Dedicated /security Page (Security Architecture Whitepaper)
   if (pathname === '/security') {
-    const securityHtml = renderSecurityPage({ renderNavbar, renderFooter });
+    const securityHtml = renderSecurityPage({ renderNavbar, renderFooter, renderGsapScripts });
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(securityHtml);
     return;
@@ -560,7 +582,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Route Aliasing for Paperlab and Friendly Slugs
+  // Route Aliasing for Friendly Slugs
   const ROUTE_ALIASES = {
     'gst-invoice': 'gst-invoice-pdf',
     'pos-billing': 'gst-invoice-pdf',
@@ -598,6 +620,7 @@ const server = http.createServer(async (req, res) => {
     renderNavbar,
     renderFooter,
     TOOL_REGISTRY,
+    renderGsapScripts,
   });
 
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
