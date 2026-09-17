@@ -53,6 +53,24 @@ import {
   formatInrClient
 } from './modules/gst-studio.js?v=3.1';
 import {
+  initPosStudio,
+  updatePosReceiptPreview,
+  generatePosReceiptPdf,
+  setPosStudioView
+} from './modules/pos-studio.js?v=3.5';
+import {
+  initTaxReceiptStudio,
+  updateTaxReceiptPreview,
+  generateTaxReceiptPdf,
+  setTaxReceiptStudioView
+} from './modules/tax-receipt-studio.js?v=3.5';
+import {
+  initEstimateStudio,
+  updateEstimatePreview,
+  generateEstimatePdf,
+  setEstimateStudioView
+} from './modules/estimate-studio.js?v=3.5';
+import {
   getStoredGeminiKey,
   hasValidGeminiKey,
   copyAiPreviewText,
@@ -69,6 +87,35 @@ import {
   canHandleLocally,
   executeLocalOperation
 } from './modules/local-engine.js';
+
+// ── Client Route Aliases ───────────────────────────────────────────────────
+export const CLIENT_ROUTE_ALIASES = {
+  'gst-invoice': 'gst-invoice-pdf',
+  'pos-billing': 'pos-billing',
+  'clean-billing': 'pos-billing',
+  'tax-receipt': 'tax-receipt',
+  'estimate-maker': 'estimate-maker',
+  'chat-with-pdf': 'ai-ask',
+  'summarize-pdf': 'ai-summarize',
+  'organize-pages': 'delete-pdf-pages',
+  'crop-pdf': 'split-pdf',
+  'pdf-to-audio': 'ai-summarize',
+  'edit-pdf': 'draw-signature',
+  'sign-pdf': 'draw-signature',
+  'add-watermark': 'watermark-pdf',
+  'page-numbers': 'page-numbers-pdf',
+  'headers-footers': 'page-numbers-pdf',
+  'extract-text': 'ocr-pdf',
+  'flatten-pdf': 'flatten-pdf',
+  'repair-pdf': 'repair-pdf',
+  'encrypt-pdf': 'protect-pdf',
+  'remove-password': 'unlock-pdf',
+  'privacy-scanner': 'strip-metadata-pdf',
+  'fingerprint-pdf': 'watermark-pdf',
+  'compare-pdfs': 'compare-pdf',
+  'extract-tables': 'ai-extract-table',
+  'extract-pages': 'extract-pages',
+};
 
 // ── Application Workspace State ─────────────────────────────────────────────
 let stagedFiles = [];
@@ -172,21 +219,29 @@ export function filterCategory(catKey) {
 }
 
 export function switchTool(toolKey, updateUrl = true) {
-  if (!TOOL_DEFINITIONS[toolKey]) return;
+  const originalKey = toolKey;
+  const resolved = CLIENT_ROUTE_ALIASES[toolKey] || toolKey;
+  if (!TOOL_DEFINITIONS[resolved]) {
+    // If not found in client definitions, let browser navigate normally!
+    window.location.href = '/' + originalKey;
+    return;
+  }
+  toolKey = resolved;
   activeTool = toolKey;
   stagedFiles = [];
   perPageRotations = {};
 
   // 1. Sync Browser URL and History
-  if (updateUrl && window.location.pathname !== '/' + toolKey) {
+  const targetUrl = '/' + originalKey;
+  if (updateUrl && window.location.pathname !== targetUrl) {
     try {
-      window.history.pushState({ tool: toolKey }, '', '/' + toolKey);
+      window.history.pushState({ tool: toolKey }, '', targetUrl);
     } catch { /* ignore in non-browser environments */ }
   }
 
   // 2. Update Active Tab Pill
   document.querySelectorAll('.tool-tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tool === toolKey);
+    btn.classList.toggle('active', btn.dataset.tool === toolKey || btn.dataset.tool === originalKey);
   });
 
   const config = TOOL_DEFINITIONS[toolKey];
@@ -229,35 +284,61 @@ export function switchTool(toolKey, updateUrl = true) {
     fileInput.multiple = config.multiple;
   }
 
-  // Toggle Signature Studio vs GST Invoice Studio vs standard PDF dropzone
+  // Toggle Signature Studio vs GST vs POS vs Tax Receipt vs Estimate Studio vs standard PDF dropzone
   const sigStudio = document.getElementById('signature-studio');
   const gstStudio = document.getElementById('gst-invoice-studio');
+  const posStudio = document.getElementById('pos-billing-studio');
+  const trStudio = document.getElementById('tax-receipt-studio');
+  const estStudio = document.getElementById('estimate-studio');
   const dropzone = document.getElementById('dropzone');
 
-  const mainContent = document.querySelector('.main-content');
-  if (toolKey === 'gst-invoice-pdf') {
-    if (mainContent) mainContent.classList.add('wide-canvas');
+  const hideAllStudios = () => {
     if (sigStudio) sigStudio.style.display = 'none';
-    if (gstStudio) gstStudio.style.display = 'block';
+    if (gstStudio) gstStudio.style.display = 'none';
+    if (posStudio) posStudio.style.display = 'none';
+    if (trStudio) trStudio.style.display = 'none';
+    if (estStudio) estStudio.style.display = 'none';
     if (dropzone) dropzone.style.display = 'none';
+  };
+
+  const mainContent = document.querySelector('.main-content');
+  if (toolKey === 'gst-invoice-pdf' || toolKey === 'gst-invoice') {
+    if (mainContent) mainContent.classList.add('wide-canvas');
+    hideAllStudios();
+    if (gstStudio) gstStudio.style.display = 'block';
     initGstInvoiceStudio();
-    if (window.innerWidth <= 1024) {
-      setGstStudioView('form');
-    } else {
-      setGstStudioView('split');
-    }
+    if (window.innerWidth <= 1024) setGstStudioView('form');
+    else setGstStudioView('split');
+  } else if (toolKey === 'pos-billing' || toolKey === 'clean-billing') {
+    if (mainContent) mainContent.classList.add('wide-canvas');
+    hideAllStudios();
+    if (posStudio) posStudio.style.display = 'block';
+    initPosStudio();
+    if (window.innerWidth <= 1024) setPosStudioView('form');
+    else setPosStudioView('split');
+  } else if (toolKey === 'tax-receipt') {
+    if (mainContent) mainContent.classList.add('wide-canvas');
+    hideAllStudios();
+    if (trStudio) trStudio.style.display = 'block';
+    initTaxReceiptStudio();
+    if (window.innerWidth <= 1024) setTaxReceiptStudioView('form');
+    else setTaxReceiptStudioView('split');
+  } else if (toolKey === 'estimate-maker') {
+    if (mainContent) mainContent.classList.add('wide-canvas');
+    hideAllStudios();
+    if (estStudio) estStudio.style.display = 'block';
+    initEstimateStudio();
+    if (window.innerWidth <= 1024) setEstimateStudioView('form');
+    else setEstimateStudioView('split');
+  } else if (toolKey === 'draw-signature') {
+    if (mainContent) mainContent.classList.remove('wide-canvas');
+    hideAllStudios();
+    if (sigStudio) sigStudio.style.display = 'block';
+    switchSignatureTab('draw');
   } else {
     if (mainContent) mainContent.classList.remove('wide-canvas');
-    if (toolKey === 'draw-signature') {
-      if (sigStudio) sigStudio.style.display = 'block';
-      if (gstStudio) gstStudio.style.display = 'none';
-      if (dropzone) dropzone.style.display = 'none';
-      switchSignatureTab('draw');
-    } else {
-      if (sigStudio) sigStudio.style.display = 'none';
-      if (gstStudio) gstStudio.style.display = 'none';
-      if (dropzone) dropzone.style.display = 'block';
-    }
+    hideAllStudios();
+    if (dropzone) dropzone.style.display = 'block';
   }
 
   // Dynamic Dropzone Labels
@@ -399,21 +480,34 @@ export function resetWorkspace() {
 
   const sigStudio = document.getElementById('signature-studio');
   const gstStudio = document.getElementById('gst-invoice-studio');
+  const posStudio = document.getElementById('pos-billing-studio');
+  const trStudio = document.getElementById('tax-receipt-studio');
+  const estStudio = document.getElementById('estimate-studio');
   const dropzone = document.getElementById('dropzone');
+
+  if (sigStudio) sigStudio.style.display = 'none';
+  if (gstStudio) gstStudio.style.display = 'none';
+  if (posStudio) posStudio.style.display = 'none';
+  if (trStudio) trStudio.style.display = 'none';
+  if (estStudio) estStudio.style.display = 'none';
+  if (dropzone) dropzone.style.display = 'none';
 
   if (activeTool === 'draw-signature') {
     if (sigStudio) sigStudio.style.display = 'block';
-    if (gstStudio) gstStudio.style.display = 'none';
-    if (dropzone) dropzone.style.display = 'none';
     switchSignatureTab('draw');
-  } else if (activeTool === 'gst-invoice-pdf') {
-    if (sigStudio) sigStudio.style.display = 'none';
+  } else if (activeTool === 'gst-invoice-pdf' || activeTool === 'gst-invoice') {
     if (gstStudio) gstStudio.style.display = 'block';
-    if (dropzone) dropzone.style.display = 'none';
     initGstInvoiceStudio();
+  } else if (activeTool === 'pos-billing' || activeTool === 'clean-billing') {
+    if (posStudio) posStudio.style.display = 'block';
+    initPosStudio();
+  } else if (activeTool === 'tax-receipt') {
+    if (trStudio) trStudio.style.display = 'block';
+    initTaxReceiptStudio();
+  } else if (activeTool === 'estimate-maker') {
+    if (estStudio) estStudio.style.display = 'block';
+    initEstimateStudio();
   } else {
-    if (sigStudio) sigStudio.style.display = 'none';
-    if (gstStudio) gstStudio.style.display = 'none';
     if (dropzone) dropzone.style.display = 'block';
   }
 
@@ -768,6 +862,84 @@ async function handleGenerateGstInvoice() {
   });
 }
 
+async function handleGeneratePosReceipt() {
+  await generatePosReceiptPdf({
+    startProgress: (tool) => startLiveProgressTracking(tool),
+    onJobSubmitted: (jobId) => {
+      currentJobId = jobId;
+      pollJobStatus(jobId, {
+        activeTool: 'pos-billing',
+        stagedFiles,
+        onComplete: (url, filename) => renderSuccessDownload(url, filename, { activeTool: 'pos-billing', stagedFiles }),
+        onError: (err) => {
+          alert(`Worker error: ${err.message}`);
+          resetWorkspace();
+        }
+      });
+    },
+    onError: (err) => {
+      stopLiveProgressTracking(false);
+      alert(`Error generating POS receipt: ${err.message}`);
+      const posStudio = document.getElementById('pos-billing-studio');
+      const progContainer = document.getElementById('progress-container');
+      if (posStudio) posStudio.style.display = 'block';
+      if (progContainer) progContainer.style.display = 'none';
+    }
+  });
+}
+
+async function handleGenerateTaxReceipt() {
+  await generateTaxReceiptPdf({
+    startProgress: (tool) => startLiveProgressTracking(tool),
+    onJobSubmitted: (jobId) => {
+      currentJobId = jobId;
+      pollJobStatus(jobId, {
+        activeTool: 'tax-receipt',
+        stagedFiles,
+        onComplete: (url, filename) => renderSuccessDownload(url, filename, { activeTool: 'tax-receipt', stagedFiles }),
+        onError: (err) => {
+          alert(`Worker error: ${err.message}`);
+          resetWorkspace();
+        }
+      });
+    },
+    onError: (err) => {
+      stopLiveProgressTracking(false);
+      alert(`Error generating Tax Receipt: ${err.message}`);
+      const trStudio = document.getElementById('tax-receipt-studio');
+      const progContainer = document.getElementById('progress-container');
+      if (trStudio) trStudio.style.display = 'block';
+      if (progContainer) progContainer.style.display = 'none';
+    }
+  });
+}
+
+async function handleGenerateEstimate() {
+  await generateEstimatePdf({
+    startProgress: (tool) => startLiveProgressTracking(tool),
+    onJobSubmitted: (jobId) => {
+      currentJobId = jobId;
+      pollJobStatus(jobId, {
+        activeTool: 'estimate-maker',
+        stagedFiles,
+        onComplete: (url, filename) => renderSuccessDownload(url, filename, { activeTool: 'estimate-maker', stagedFiles }),
+        onError: (err) => {
+          alert(`Worker error: ${err.message}`);
+          resetWorkspace();
+        }
+      });
+    },
+    onError: (err) => {
+      stopLiveProgressTracking(false);
+      alert(`Error generating estimate: ${err.message}`);
+      const estStudio = document.getElementById('estimate-studio');
+      const progContainer = document.getElementById('progress-container');
+      if (estStudio) estStudio.style.display = 'block';
+      if (progContainer) progContainer.style.display = 'none';
+    }
+  });
+}
+
 function setupEventListeners() {
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('file-input');
@@ -858,29 +1030,26 @@ window.printGstInvoicePreview = printGstInvoicePreview;
 window.setGstStudioView = setGstStudioView;
 window.formatInrClient = formatInrClient;
 
+// POS Studio Bindings
+window.initPosStudio = initPosStudio;
+window.updatePosReceiptPreview = updatePosReceiptPreview;
+window.generatePosReceiptPdf = handleGeneratePosReceipt;
+window.setPosStudioView = setPosStudioView;
+
+// Tax Receipt Studio Bindings
+window.initTaxReceiptStudio = initTaxReceiptStudio;
+window.updateTaxReceiptPreview = updateTaxReceiptPreview;
+window.generateTaxReceiptPdf = handleGenerateTaxReceipt;
+window.setTaxReceiptStudioView = setTaxReceiptStudioView;
+
+// Estimate Studio Bindings
+window.initEstimateStudio = initEstimateStudio;
+window.updateEstimatePreview = updateEstimatePreview;
+window.generateEstimatePdf = handleGenerateEstimate;
+window.setEstimateStudioView = setEstimateStudioView;
+
 // AI Preview Binding
 window.copyAiPreviewText = copyAiPreviewText;
-
-const CLIENT_ROUTE_ALIASES = {
-  'gst-invoice': 'gst-invoice-pdf',
-  'pos-billing': 'gst-invoice-pdf',
-  'chat-with-pdf': 'ai-ask',
-  'summarize-pdf': 'ai-summarize',
-  'organize-pages': 'delete-pdf-pages',
-  'crop-pdf': 'split-pdf',
-  'pdf-to-audio': 'ai-summarize',
-  'edit-pdf': 'sign-pdf',
-  'add-watermark': 'watermark-pdf',
-  'page-numbers': 'page-numbers-pdf',
-  'headers-footers': 'page-numbers-pdf',
-  'extract-text': 'ocr-pdf',
-  'flatten-pdf': 'flatten-pdf',
-  'encrypt-pdf': 'protect-pdf',
-  'remove-password': 'unlock-pdf',
-  'privacy-scanner': 'strip-metadata-pdf',
-  'fingerprint-pdf': 'watermark-pdf',
-  'compare-pdfs': 'compare-pdf',
-};
 
 function resolveToolKey(path) {
   const raw = (path || '').replace(/^\//, '') || 'merge-pdf';
@@ -909,3 +1078,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+

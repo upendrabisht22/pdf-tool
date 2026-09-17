@@ -40,6 +40,10 @@ export type OperationType =
   | 'pdf-to-markdown'
   | 'markdown-to-pdf'
   | 'gst-invoice-pdf'
+  | 'pos-billing'
+  | 'clean-billing'
+  | 'tax-receipt'
+  | 'estimate-maker'
   | 'pipeline';
 
 // ============================================================================
@@ -511,6 +515,84 @@ export interface GstInvoiceOptions {
   theme?: 'modern' | 'corporate' | 'emerald' | 'minimal';
 }
 
+export interface PosBillingItem {
+  id?: number | string;
+  name: string;
+  qty: number;
+  rate: number;
+  taxPct?: number;
+}
+
+export interface PosBillingOptions {
+  storeName: string;
+  tagline?: string;
+  address?: string;
+  phone?: string;
+  orderNumber: string;
+  cashier?: string;
+  dateTime?: string;
+  items: PosBillingItem[];
+  discountPct?: number;
+  taxPct?: number;
+  paymentMethod?: 'Cash' | 'UPI' | 'Card';
+  upiId?: string;
+  footerMessage?: string;
+  paperWidth?: '80mm' | '58mm' | 'standard';
+}
+
+export interface TaxReceiptOptions {
+  trustName: string;
+  registrationNumber: string;
+  section80GNumber?: string;
+  panNumber?: string;
+  trustAddress: string;
+  trustEmail?: string;
+  trustPhone?: string;
+  receiptNumber: string;
+  receiptDate: string;
+  donorName: string;
+  donorPan?: string;
+  donorAddress?: string;
+  donorEmail?: string;
+  donorPhone?: string;
+  amount: number;
+  paymentMode: 'UPI' | 'NEFT/RTGS' | 'Cheque' | 'Cash';
+  paymentReference?: string;
+  purpose?: string;
+  exemptionClause?: string;
+  signatoryName?: string;
+  signatoryDesignation?: string;
+}
+
+export interface EstimateItem {
+  id?: number | string;
+  description: string;
+  unit?: string;
+  qty: number;
+  rate: number;
+}
+
+export interface EstimateOptions {
+  businessName: string;
+  businessAddress?: string;
+  businessEmail?: string;
+  businessPhone?: string;
+  clientName: string;
+  clientCompany?: string;
+  clientAddress?: string;
+  clientEmail?: string;
+  estimateNumber: string;
+  estimateDate: string;
+  validUntilDate?: string;
+  projectTitle?: string;
+  currency?: string;
+  items: EstimateItem[];
+  discountPct?: number;
+  taxPct?: number;
+  notes?: string;
+  terms?: string;
+}
+
 export interface PipelineStep {
   operation: OperationType;
   options: Record<string, unknown>;
@@ -556,6 +638,10 @@ export interface OperationOptionsMap {
   'pdf-to-markdown': PdfToMarkdownOptions;
   'markdown-to-pdf': MarkdownToPdfOptions;
   'gst-invoice-pdf': GstInvoiceOptions;
+  'pos-billing': PosBillingOptions;
+  'clean-billing': PosBillingOptions;
+  'tax-receipt': TaxReceiptOptions;
+  'estimate-maker': EstimateOptions;
   'pipeline': PipelineOptions;
 }
 

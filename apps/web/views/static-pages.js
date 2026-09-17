@@ -732,12 +732,221 @@ export function renderSecurityPage({ renderNavbar, renderFooter, renderGsapScrip
 </html>`;
 }
 
+export function render404Page({ renderNavbar, renderFooter, renderGsapScripts }) {
+  return `<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Document Not Found | DocPlatform</title>
+  <meta name="description" content="The requested route or tool does not exist. Explore our 30+ free, client-side WebAssembly PDF and document tools.">
+  <meta name="robots" content="noindex, nofollow">
+  
+  <!-- Preconnect & Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/styles.css?v=3.5">
+
+  <!-- Tailwind CDN with DocPlatform Architectural Palette Extension -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: ['selector', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          colors: {
+            bg: 'var(--bg)',
+            'bg-subtle': 'var(--bg-subtle)',
+            'bg-elevated': 'var(--bg-elevated)',
+            border: 'var(--border)',
+            accent: 'var(--accent)',
+            'accent-hover': 'var(--accent-hover)',
+            'accent-foreground': 'var(--accent-foreground)',
+            'text-primary': 'var(--text-primary)',
+            'text-secondary': 'var(--text-secondary)',
+            'text-muted': 'var(--text-muted)',
+          },
+          fontFamily: {
+            display: ['"Instrument Serif"', 'Georgia', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <script>
+    (function() {
+      const saved = localStorage.getItem('dp_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+    })();
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('dp_theme', next);
+    }
+  </script>
+</head>
+<body class="min-h-screen flex flex-col bg-bg text-text-primary antialiased">
+  ${renderNavbar('404')}
+
+  <!-- GSAP ScrollSmoother Wrapper & Blueprint Canvas -->
+  <div id="smooth-wrapper">
+    <div id="smooth-content" style="padding-top: 51px;">
+      <main class="w-full flex-1">
+    <div class="mx-auto max-w-5xl border-x border-dashed border-border flex flex-col">
+      
+      <!-- Architectural 404 Hero Header -->
+      <div class="relative overflow-hidden border-b border-dashed border-border py-16 px-6 sm:px-12">
+        <div class="linework pointer-events-none absolute inset-0 opacity-40"></div>
+
+        <div class="relative z-10 max-w-2xl flex flex-col gap-4">
+          <div class="flex items-center gap-3">
+            <span class="mono-copy inline-flex items-center gap-1.5 border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-400 tracking-wider">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>
+              HTTP_404 // VOID_VECTOR_STREAM
+            </span>
+            <span class="mono-copy text-[11px] text-text-muted hidden sm:inline">[ COORD: 0x404_PAGE_NOT_FOUND ]</span>
+          </div>
+
+          <h1 class="hero-display text-5xl sm:text-7xl text-text-primary leading-[1.05]">
+            Document Not Found.
+          </h1>
+
+          <p class="mono-copy text-xs sm:text-sm leading-relaxed text-text-secondary">
+            The requested blueprint route or document tool does not exist in the active DocPlatform registry. The URL may be mistyped, moved, or deleted.
+          </p>
+
+          <div class="pt-3 flex flex-wrap items-center gap-3">
+            <a href="/" class="mono-copy inline-flex items-center gap-2 border border-accent bg-accent/15 px-4 py-2.5 text-xs font-semibold text-accent hover:bg-accent hover:text-white transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Return to Home Directory</span>
+            </a>
+            <a href="/#all-tools" class="mono-copy inline-flex items-center gap-2 border border-border bg-bg-elevated px-4 py-2.5 text-xs text-text-primary hover:border-accent hover:text-accent transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+              <span>Browse All Tools</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verified Available Tools Grid -->
+      <div class="p-6 sm:p-10">
+        <div class="mb-5 flex items-center justify-between">
+          <div class="mono-copy text-[11px] uppercase tracking-widest text-text-muted">
+            [ DIRECTORY: POPULAR_AUTHENTIC_TOOLS ]
+          </div>
+          <span class="mono-copy text-[10px] text-accent">100% In-Browser Engine</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <a href="/merge-pdf" class="p-4 border border-dashed border-border bg-bg-elevated hover:border-accent group transition-all">
+            <div class="mono-copy text-[10px] text-text-muted mb-1">01 // CORE</div>
+            <div class="mono-copy text-sm font-semibold text-text-primary group-hover:text-accent flex items-center justify-between">
+              <span>Merge PDF</span>
+              <span>&rarr;</span>
+            </div>
+            <p class="mono-copy text-[11px] text-text-secondary mt-1">Combine multiple PDFs into one unified file</p>
+          </a>
+
+          <a href="/split-pdf" class="p-4 border border-dashed border-border bg-bg-elevated hover:border-accent group transition-all">
+            <div class="mono-copy text-[10px] text-text-muted mb-1">02 // CORE</div>
+            <div class="mono-copy text-sm font-semibold text-text-primary group-hover:text-accent flex items-center justify-between">
+              <span>Split PDF</span>
+              <span>&rarr;</span>
+            </div>
+            <p class="mono-copy text-[11px] text-text-secondary mt-1">Separate pages or extract page ranges</p>
+          </a>
+
+          <a href="/compress-pdf" class="p-4 border border-dashed border-border bg-bg-elevated hover:border-accent group transition-all">
+            <div class="mono-copy text-[10px] text-text-muted mb-1">03 // CORE</div>
+            <div class="mono-copy text-sm font-semibold text-text-primary group-hover:text-accent flex items-center justify-between">
+              <span>Compress PDF</span>
+              <span>&rarr;</span>
+            </div>
+            <p class="mono-copy text-[11px] text-text-secondary mt-1">Shrink file size with zero quality loss</p>
+          </a>
+
+          <a href="/gst-invoice" class="p-4 border border-dashed border-border bg-bg-elevated hover:border-accent group transition-all">
+            <div class="mono-copy text-[10px] text-text-muted mb-1">04 // BUSINESS</div>
+            <div class="mono-copy text-sm font-semibold text-text-primary group-hover:text-accent flex items-center justify-between">
+              <span>GST Tax Invoice</span>
+              <span>&rarr;</span>
+            </div>
+            <p class="mono-copy text-[11px] text-text-secondary mt-1">Generate compliant Indian GST invoices with QR</p>
+          </a>
+
+          <a href="/pos-billing" class="p-4 border border-dashed border-border bg-bg-elevated hover:border-accent group transition-all">
+            <div class="mono-copy text-[10px] text-text-muted mb-1">05 // BUSINESS</div>
+            <div class="mono-copy text-sm font-semibold text-text-primary group-hover:text-accent flex items-center justify-between">
+              <span>Minimal POS Billing</span>
+              <span>&rarr;</span>
+            </div>
+            <p class="mono-copy text-[11px] text-text-secondary mt-1">Counter thermal receipt printer with UPI QR</p>
+          </a>
+
+          <a href="/tax-receipt" class="p-4 border border-dashed border-border bg-bg-elevated hover:border-accent group transition-all">
+            <div class="mono-copy text-[10px] text-text-muted mb-1">06 // BUSINESS</div>
+            <div class="mono-copy text-sm font-semibold text-text-primary group-hover:text-accent flex items-center justify-between">
+              <span>Tax Receipt Maker</span>
+              <span>&rarr;</span>
+            </div>
+            <p class="mono-copy text-[11px] text-text-secondary mt-1">Official 80G tax exemption donation certificate</p>
+          </a>
+
+          <a href="/estimate-maker" class="p-4 border border-dashed border-border bg-bg-elevated hover:border-accent group transition-all">
+            <div class="mono-copy text-[10px] text-text-muted mb-1">07 // BUSINESS</div>
+            <div class="mono-copy text-sm font-semibold text-text-primary group-hover:text-accent flex items-center justify-between">
+              <span>Estimates & Quotes</span>
+              <span>&rarr;</span>
+            </div>
+            <p class="mono-copy text-[11px] text-text-secondary mt-1">Professional proposal with scope and terms</p>
+          </a>
+
+          <a href="/flatten-pdf" class="p-4 border border-dashed border-border bg-bg-elevated hover:border-accent group transition-all">
+            <div class="mono-copy text-[10px] text-text-muted mb-1">08 // CORE</div>
+            <div class="mono-copy text-sm font-semibold text-text-primary group-hover:text-accent flex items-center justify-between">
+              <span>Flatten PDF</span>
+              <span>&rarr;</span>
+            </div>
+            <p class="mono-copy text-[11px] text-text-secondary mt-1">Make interactive forms and annotations read-only</p>
+          </a>
+
+          <a href="/chat-with-pdf" class="p-4 border border-dashed border-border bg-bg-elevated hover:border-accent group transition-all">
+            <div class="mono-copy text-[10px] text-text-muted mb-1">09 // AI</div>
+            <div class="mono-copy text-sm font-semibold text-text-primary group-hover:text-accent flex items-center justify-between">
+              <span>Chat with PDF</span>
+              <span>&rarr;</span>
+            </div>
+            <p class="mono-copy text-[11px] text-text-secondary mt-1">Ask questions and cite source pages with AI</p>
+          </a>
+        </div>
+      </div>
+
+    </div>
+    </main>
+
+    ${renderFooter()}
+    </div>
+  </div>
+  ${typeof renderGsapScripts === 'function' ? renderGsapScripts() : ''}
+  <script type="module" src="/app.js?v=3.2"></script>
+</body>
+</html>`;
+}
+
 // CommonJS fallback
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     renderPricingPage,
     renderPrivacyPage,
     renderTermsPage,
-    renderSecurityPage
+    renderSecurityPage,
+    render404Page
   };
 }
+

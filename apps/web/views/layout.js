@@ -471,12 +471,9 @@ export const renderNavbar = (activeItem = '') => `
 
     // ── Mega-Menu Navigation & Hover Handlers ────────────────────────────────
     function handleMegaMenuNav(event, slug) {
-      if (window.switchTool && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
-        event.preventDefault();
-        window.switchTool(slug);
-        const group = document.getElementById('nav-tools-group');
-        if (group) group.classList.remove('is-open');
-      }
+      const group = document.getElementById('nav-tools-group');
+      if (group) group.classList.remove('is-open');
+      // Allow browser to follow href directly so all tool routes redirect reliably
     }
 
     (function initNavbarToolsMenu() {

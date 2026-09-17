@@ -43,6 +43,9 @@ import {
   PdfToMarkdownProcessor,
   MarkdownToPdfProcessor,
   GstInvoiceProcessor,
+  PosBillingProcessor,
+  TaxReceiptProcessor,
+  EstimateMakerProcessor,
   SandboxedWorkerHarness,
 } from '@doc-platform/workers';
 import { TOOL_REGISTRY, generateToolJsonLd } from '@doc-platform/core';
@@ -60,7 +63,7 @@ import { dispatchWebhookEvent } from './api/webhook-store.js';
 import { handleGrowthRoutes } from './api/growth-routes.js';
 // ── Modular View Templates (Layout, Static Pages, Main App Page) ────────────
 import { renderNavbar, renderFooter, renderGsapScripts } from './views/layout.js';
-import { renderPricingPage, renderPrivacyPage, renderTermsPage, renderSecurityPage } from './views/static-pages.js';
+import { renderPricingPage, renderPrivacyPage, renderTermsPage, renderSecurityPage, render404Page } from './views/static-pages.js';
 import { renderAppPage, getToolCategory, getRelatedToolsList } from './views/app-page.js';
 import { renderLandingPage } from './views/landing-page.js';
 
@@ -122,6 +125,10 @@ async function startWorkerLoop() {
     'pdf-to-markdown': new PdfToMarkdownProcessor(),
     'markdown-to-pdf': new MarkdownToPdfProcessor(),
     'gst-invoice-pdf': new GstInvoiceProcessor(),
+    'pos-billing': new PosBillingProcessor(),
+    'clean-billing': new PosBillingProcessor(),
+    'tax-receipt': new TaxReceiptProcessor(),
+    'estimate-maker': new EstimateMakerProcessor(),
   };
 
   while (true) {
@@ -585,18 +592,25 @@ const server = http.createServer(async (req, res) => {
   // Route Aliasing for Friendly Slugs
   const ROUTE_ALIASES = {
     'gst-invoice': 'gst-invoice-pdf',
-    'pos-billing': 'gst-invoice-pdf',
+    'pos-billing': 'pos-billing',
+    'clean-billing': 'pos-billing',
+    'tax-receipt': 'tax-receipt',
+    'estimate-maker': 'estimate-maker',
     'chat-with-pdf': 'ai-ask',
     'summarize-pdf': 'ai-summarize',
     'organize-pages': 'delete-pdf-pages',
     'crop-pdf': 'split-pdf',
     'pdf-to-audio': 'ai-summarize',
-    'edit-pdf': 'sign-pdf',
+    'edit-pdf': 'draw-signature',
+    'sign-pdf': 'draw-signature',
     'add-watermark': 'watermark-pdf',
     'page-numbers': 'page-numbers-pdf',
     'headers-footers': 'page-numbers-pdf',
     'extract-text': 'ocr-pdf',
+    'extract-tables': 'ai-extract-table',
+    'extract-pages': 'extract-pages',
     'flatten-pdf': 'flatten-pdf',
+    'repair-pdf': 'repair-pdf',
     'encrypt-pdf': 'protect-pdf',
     'remove-password': 'unlock-pdf',
     'privacy-scanner': 'strip-metadata-pdf',
@@ -607,7 +621,15 @@ const server = http.createServer(async (req, res) => {
   // Serve Dedicated Tool Studio with Rich SEO & Structured Data
   const rawToolKey = pathname.replace(/^\//, '');
   const currentToolKey = ROUTE_ALIASES[rawToolKey] || rawToolKey;
-  const toolConfig = TOOL_REGISTRY[currentToolKey] || TOOL_REGISTRY['merge-pdf'];
+  const toolConfig = TOOL_REGISTRY[currentToolKey];
+
+  if (!toolConfig) {
+    const notFoundHtml = render404Page({ renderNavbar, renderFooter, renderGsapScripts });
+    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(notFoundHtml);
+    return;
+  }
+
   const jsonLd = generateToolJsonLd(toolConfig);
   const category = getToolCategory(currentToolKey);
   const relatedSlugs = getRelatedToolsList(currentToolKey);

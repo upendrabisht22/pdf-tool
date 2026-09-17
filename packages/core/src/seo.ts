@@ -508,7 +508,245 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
       { question: 'Can customers pay via the QR code on the invoice?', answer: 'Yes! The dynamic UPI QR code encodes your VPA and the exact invoice amount, allowing instant scan-and-pay via GPay, PhonePe, Paytm, or BHIM.' },
     ],
   },
+  'pos-billing': {
+    slug: 'pos-billing',
+    title: 'Minimal POS Billing & Thermal Slip Maker',
+    metaTitle: 'Free Minimal POS Billing & Thermal Receipt Maker | DocPlatform',
+    metaDescription: 'Generate clean retail counter bills and standard 80mm thermal receipt slips with itemized pricing, discounts, tax, and scannable UPI QR payment.',
+    canonicalUrl: 'https://docplatform.app/pos-billing',
+    keywords: ['pos billing', 'thermal receipt maker', 'retail counter billing', 'thermal bill generator', 'pos receipt online free'],
+    features: [
+      'Compact 80mm & 58mm thermal printer roll format ready for direct printing',
+      'Dynamic UPI QR code for instant counter scan-and-pay',
+      'Itemized pricing with discount %, tax %, and real-time total calculations',
+      '100% private in-browser generation with zero cloud storage',
+    ],
+    howToSteps: [
+      { name: 'Enter Store & Order Info', text: 'Set your merchant/store name, cashier ID, and receipt order number.' },
+      { name: 'Add Bill Items', text: 'Quickly enter items, quantities, and rates with auto-calculating subtotals.' },
+      { name: 'Print or Download', text: 'Click Print Thermal Slip or Download PDF for instant paperless receipt generation.' },
+    ],
+    faqs: [
+      { question: 'Can I print this on a standard thermal POS printer?', answer: 'Yes! The layout is optimized for standard 80mm thermal receipt printers as well as standard office printers.' },
+      { question: 'Can customers pay directly using the receipt QR code?', answer: 'Yes! Simply enter your UPI ID and the receipt generates a dynamic NPCI UPI QR code with the exact bill amount.' },
+    ],
+  },
+  'clean-billing': {
+    slug: 'clean-billing',
+    title: 'Minimal POS Billing & Thermal Slip Maker',
+    metaTitle: 'Free Minimal POS Billing & Thermal Receipt Maker | DocPlatform',
+    metaDescription: 'Generate clean retail counter bills and standard 80mm thermal receipt slips with itemized pricing, discounts, tax, and scannable UPI QR payment.',
+    canonicalUrl: 'https://docplatform.app/clean-billing',
+    keywords: ['pos billing', 'clean billing', 'thermal receipt maker', 'retail counter billing'],
+    features: [
+      'Compact 80mm & 58mm thermal printer roll format ready for direct printing',
+      'Dynamic UPI QR code for instant counter scan-and-pay',
+      'Itemized pricing with discount %, tax %, and real-time total calculations',
+      '100% private in-browser generation with zero cloud storage',
+    ],
+    howToSteps: [
+      { name: 'Enter Store & Order Info', text: 'Set your merchant/store name, cashier ID, and receipt order number.' },
+      { name: 'Add Bill Items', text: 'Quickly enter items, quantities, and rates with auto-calculating subtotals.' },
+      { name: 'Print or Download', text: 'Click Print Thermal Slip or Download PDF for instant paperless receipt generation.' },
+    ],
+    faqs: [
+      { question: 'Is clean billing free?', answer: 'Yes, 100% free with unlimited receipts and zero sign-up required.' },
+    ],
+  },
+  'tax-receipt': {
+    slug: 'tax-receipt',
+    title: 'Tax Receipt & 80G Donation Receipt Maker',
+    metaTitle: 'Free Tax Receipt & 80G Donation Receipt Generator | DocPlatform',
+    metaDescription: 'Create official Section 80G donation receipts, charitable trust tax deduction slips, and income tax deduction certificates with Rupee words and digital seal.',
+    canonicalUrl: 'https://docplatform.app/tax-receipt',
+    keywords: ['tax receipt maker', '80g donation receipt', 'charity tax receipt generator', 'donation receipt online', 'income tax 80g certificate'],
+    features: [
+      'Compliant with Section 80G and 12A trust receipt guidelines',
+      'Automated Amount in Words conversion in Indian numbering (Rupees Lakhs & Crores)',
+      'Statutory tax exemption declaration clause with Trust PAN and 80G URN',
+      'Official seal, stamp, and authorized signatory signature block',
+    ],
+    howToSteps: [
+      { name: 'Enter Trust / NGO Info', text: 'Provide organization name, registration number, 80G URN, and address.' },
+      { name: 'Enter Donor Details', text: 'Add donor name, PAN number, address, and donation amount.' },
+      { name: 'Download PDF', text: 'Download official certificate-grade tax deduction receipt instantly.' },
+    ],
+    faqs: [
+      { question: 'Is this receipt valid for claiming income tax deduction?', answer: 'Yes, when issued by an eligible registered trust with valid 80G registration numbers and donor PAN.' },
+    ],
+  },
+  'estimate-maker': {
+    slug: 'estimate-maker',
+    title: 'Estimates & Quotation Maker',
+    metaTitle: 'Free Business Estimate & Quotation Maker Online | DocPlatform',
+    metaDescription: 'Generate professional project estimates, client sales quotations, and proforma proposals with scope of work, validity timelines, and acceptance sign-offs.',
+    canonicalUrl: 'https://docplatform.app/estimate-maker',
+    keywords: ['estimate maker', 'quotation generator', 'project estimate pdf', 'sales quote maker', 'proforma quote online'],
+    features: [
+      'Professional agency and business proposal format with project title and scope',
+      'Line items table with deliverables, units, quantities, and rates',
+      'Configurable validity timeline and commercial payment terms',
+      'Client acceptance signature block for quick formal sign-off',
+    ],
+    howToSteps: [
+      { name: 'Enter Business & Client Details', text: 'Add your business branding and client recipient info.' },
+      { name: 'Define Scope & Deliverables', text: 'Add line items, units, quantities, and pricing.' },
+      { name: 'Download Proposal PDF', text: 'Download a clean, high-resolution vector PDF quotation ready to send.' },
+    ],
+    faqs: [
+      { question: 'Can I add custom payment terms to the quote?', answer: 'Yes! You can specify delivery timelines, advance payment requirements, and terms directly on the estimate.' },
+    ],
+  },
+  'flatten-pdf': {
+    slug: 'flatten-pdf',
+    title: 'Flatten PDF Online',
+    metaTitle: 'Flatten PDF Online — Lock Form Fields & Annotations Free | DocPlatform',
+    metaDescription: 'Flatten interactive PDF forms, annotations, and markup layers into non-editable, read-only static pages.',
+    canonicalUrl: 'https://docplatform.app/flatten-pdf',
+    keywords: ['flatten pdf', 'make pdf read only', 'lock form fields pdf', 'flatten annotations'],
+    features: [
+      'Bakes interactive AcroForm text fields into immutable vector content',
+      'Flattens digital signatures, highlight annotations, and comments',
+      'Prevents tampering or post-signing form alterations',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Drop your fillable PDF form or marked-up document.' },
+      { name: 'Flatten', text: 'Our engine renders all form values directly into the page geometry.' },
+      { name: 'Download', text: 'Download your static, tamper-proof PDF.' },
+    ],
+    faqs: [
+      { question: 'Can form fields still be edited after flattening?', answer: 'No. Flattening converts active form inputs into permanent vector page elements, making them impossible to alter.' },
+    ],
+  },
+  'repair-pdf': {
+    slug: 'repair-pdf',
+    title: 'Repair PDF Online',
+    metaTitle: 'Repair PDF Online — Fix Corrupted & Broken PDF Files Free | DocPlatform',
+    metaDescription: 'Recover and restore corrupted, unreadable, or broken PDF documents with automatic XRef reconstruction and stream decompression.',
+    canonicalUrl: 'https://docplatform.app/repair-pdf',
+    keywords: ['repair pdf', 'fix corrupted pdf', 'restore broken pdf', 'recover damaged pdf file'],
+    features: [
+      'Reconstructs damaged cross-reference (XRef) tables and trailers',
+      'Recovers readable content from truncated or broken byte streams',
+      '100% private local repair with zero data retention',
+    ],
+    howToSteps: [
+      { name: 'Upload Corrupted PDF', text: 'Select the broken or unreadable PDF file.' },
+      { name: 'Analyze & Repair', text: 'The engine parses corrupted byte offsets and reconstructs valid PDF structures.' },
+      { name: 'Download Restored PDF', text: 'Download your recovered, fully readable document.' },
+    ],
+    faqs: [
+      { question: 'Can all damaged PDFs be repaired?', answer: 'Our multi-stage recovery fixes standard byte corruption, broken XRefs, and stream errors. Files with completely overwritten bytes may only be partially recovered.' },
+    ],
+  },
+  'page-numbers-pdf': {
+    slug: 'page-numbers-pdf',
+    title: 'Add Page Numbers to PDF',
+    metaTitle: 'Add Page Numbers to PDF Online — Custom Numbering & Headers | DocPlatform',
+    metaDescription: 'Insert automated page numbers and headers/footers to your PDF documents with customizable positioning, font size, and numbering formats.',
+    canonicalUrl: 'https://docplatform.app/page-numbers-pdf',
+    keywords: ['page numbers pdf', 'add page numbers to pdf', 'number pdf pages online', 'pdf header footer'],
+    features: [
+      'Custom placement: Top-Left, Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right',
+      'Format styles: "1", "Page 1", "Page 1 of N", and Roman numerals',
+      'Exclude cover page and set custom starting page numbers',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select your document.' },
+      { name: 'Choose Position & Format', text: 'Pick header or footer alignment and numbering style.' },
+      { name: 'Download Numbered PDF', text: 'Download your cleanly paginated document.' },
+    ],
+    faqs: [
+      { question: 'Can I skip numbering on the first page?', answer: 'Yes, check "Exclude First Page" to keep cover pages clean.' },
+    ],
+  },
+  'strip-metadata-pdf': {
+    slug: 'strip-metadata-pdf',
+    title: 'Privacy Scanner & Strip PDF Metadata',
+    metaTitle: 'Privacy Scanner & Strip PDF Metadata — Purge Tracking & PII | DocPlatform',
+    metaDescription: 'Sanitize PDF files by permanently removing hidden author names, timestamps, software history, GPS tags, and embedded metadata.',
+    canonicalUrl: 'https://docplatform.app/strip-metadata-pdf',
+    keywords: ['strip pdf metadata', 'pdf privacy scanner', 'remove author from pdf', 'sanitize pdf online'],
+    features: [
+      'Purges standard Info dictionary (Author, Creator, Producer, ModDate)',
+      'Removes XMP metadata streams and hidden software footprints',
+      '100% private local client-side sanitation',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Drop your document into the Privacy Scanner.' },
+      { name: 'Scan & Strip', text: 'Review hidden metadata and click "Sanitize Document".' },
+      { name: 'Download Clean PDF', text: 'Download a clean document with zero tracking fingerprints.' },
+    ],
+    faqs: [
+      { question: 'Does stripping metadata change document text or formatting?', answer: 'No. Only hidden metadata streams and tracking properties are removed. All visible text and layouts remain identical.' },
+    ],
+  },
+  'ai-extract-table': {
+    slug: 'ai-extract-table',
+    title: 'Extract Tables from PDF (AI Table Extractor)',
+    metaTitle: 'AI PDF Table Extractor — Extract Tables to Excel & JSON | DocPlatform',
+    metaDescription: 'Extract complex and unstructured tabular data from PDF invoices, statements, and reports into structured Excel (.xlsx), CSV, and JSON.',
+    canonicalUrl: 'https://docplatform.app/ai-extract-table',
+    keywords: ['extract tables from pdf', 'ai table extractor', 'pdf table to excel', 'convert pdf table to json'],
+    features: [
+      'Combines Python coordinate layout parsing with AI table reconstruction',
+      'Extracts structured CSV, clean Excel (.xlsx), and JSON data',
+      'Handles borderless tables, multi-line cells, and financial statements',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select your tabular document or invoice.' },
+      { name: 'Extract Tables', text: 'The engine identifies row/column boundaries and cell alignments.' },
+      { name: 'Download Data', text: 'Download as Excel workbook, CSV, or raw JSON.' },
+    ],
+    faqs: [
+      { question: 'Does it work on borderless tables?', answer: 'Yes! Our geometric analysis detects text alignment gaps even when tables have no visible border lines.' },
+    ],
+  },
+  'extract-pages': {
+    slug: 'extract-pages',
+    title: 'Extract PDF Pages Online',
+    metaTitle: 'Extract PDF Pages Online — Save Specific Pages Free | DocPlatform',
+    metaDescription: 'Extract specific pages or page ranges from any PDF document into a clean, unified new file.',
+    canonicalUrl: 'https://docplatform.app/extract-pages',
+    keywords: ['extract pdf pages', 'save specific pages pdf', 'extract pages online'],
+    features: [
+      'Extract single pages or custom ranges (e.g. 1-3, 5, 8-10)',
+      'Instant client-side vector extraction with zero quality loss',
+      'Preserves original bookmarks and links',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Drop your document into the extractor.' },
+      { name: 'Enter Pages', text: 'Specify the page numbers to extract.' },
+      { name: 'Save', text: 'Download your extracted PDF.' },
+    ],
+    faqs: [
+      { question: 'Can I extract non-consecutive pages?', answer: 'Yes! Simply separate individual pages or ranges with commas.' },
+    ],
+  },
 };
+
+// Aliases for friendly routing slugs
+if (TOOL_REGISTRY['ai-ask']) {
+  TOOL_REGISTRY['chat-with-pdf'] = {
+    ...TOOL_REGISTRY['ai-ask'],
+    slug: 'chat-with-pdf',
+    canonicalUrl: 'https://docplatform.app/chat-with-pdf',
+  };
+}
+if (TOOL_REGISTRY['pos-billing']) {
+  TOOL_REGISTRY['clean-billing'] = {
+    ...TOOL_REGISTRY['pos-billing'],
+    slug: 'clean-billing',
+    canonicalUrl: 'https://docplatform.app/clean-billing',
+  };
+}
+if (TOOL_REGISTRY['gst-invoice-pdf']) {
+  TOOL_REGISTRY['gst-invoice'] = {
+    ...TOOL_REGISTRY['gst-invoice-pdf'],
+    slug: 'gst-invoice',
+    canonicalUrl: 'https://docplatform.app/gst-invoice',
+  };
+}
 
 /**
  * Generates JSON-LD Structured Data for Google Search Engine Optimization

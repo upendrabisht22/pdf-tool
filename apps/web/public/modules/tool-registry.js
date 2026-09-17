@@ -483,6 +483,116 @@ export const TOOL_DEFINITIONS = {
     multiple: false,
     accept: '.pdf,application/pdf',
     optionsHtml: ``
+  },
+  'pos-billing': {
+    category: 'business',
+    title: 'Minimal POS Billing & Thermal Slip Maker',
+    badge: 'Split-Screen Live Thermal Preview & UPI QR',
+    subtitle: 'Generate clean retail counter receipts and standard 80mm thermal paper slips with instant print and vector PDF export.',
+    actionName: 'Generate POS Receipt PDF',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
+  },
+  'clean-billing': {
+    category: 'business',
+    title: 'Minimal POS Billing & Thermal Slip Maker',
+    badge: 'Split-Screen Live Thermal Preview & UPI QR',
+    subtitle: 'Generate clean retail counter receipts and standard 80mm thermal paper slips with instant print and vector PDF export.',
+    actionName: 'Generate POS Receipt PDF',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
+  },
+  'tax-receipt': {
+    category: 'business',
+    title: 'Tax Receipt & 80G Donation Receipt Maker',
+    badge: 'Certificate-Grade 80G Exemption Receipt Studio',
+    subtitle: 'Create official Section 80G charitable donation receipts, Trust exemption certificates, and deduction slips in seconds.',
+    actionName: 'Generate 80G Receipt PDF',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
+  },
+  'estimate-maker': {
+    category: 'business',
+    title: 'Estimates & Quotation Maker',
+    badge: 'Live Scope Proposal & Acceptance Sign-off',
+    subtitle: 'Create professional project estimates, client sales proposals, and proforma quotations with deliverables grids and terms.',
+    actionName: 'Generate Estimate PDF',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
+  },
+  'flatten-pdf': {
+    category: 'core',
+    title: 'Flatten PDF Online',
+    badge: 'Lock Interactive Forms & Markup',
+    subtitle: 'Convert fillable form fields and annotations into permanent, read-only static pages.',
+    actionName: 'Flatten PDF Document',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
+  },
+  'repair-pdf': {
+    category: 'core',
+    title: 'Repair PDF Online',
+    badge: 'Fix Corrupted & Damaged Files',
+    subtitle: 'Recover unreadable PDF files with automatic cross-reference reconstruction and stream repair.',
+    actionName: 'Repair & Recover PDF',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
+  },
+  'page-numbers-pdf': {
+    category: 'security',
+    title: 'Add Page Numbers to PDF',
+    badge: 'Custom Alignment & Numbering Styles',
+    subtitle: 'Insert clean automated page numbers and headers/footers with custom positioning and numbering formats.',
+    actionName: 'Apply Page Numbers',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <select id="opt-page-pos" class="select-control">
+        <option value="bottom-right" selected>Bottom Right</option>
+        <option value="bottom-center">Bottom Center</option>
+        <option value="bottom-left">Bottom Left</option>
+        <option value="top-right">Top Right</option>
+        <option value="top-center">Top Center</option>
+        <option value="top-left">Top Left</option>
+      </select>
+      <select id="opt-page-format" class="select-control">
+        <option value="n" selected>1, 2, 3</option>
+        <option value="page-n">Page 1, Page 2</option>
+        <option value="page-n-of-total">Page 1 of 5</option>
+      </select>
+    `
+  },
+  'strip-metadata-pdf': {
+    category: 'security',
+    title: 'Privacy Scanner & Strip Metadata',
+    badge: 'Purge Hidden PII & Tracking Tags',
+    subtitle: 'Sanitize confidential PDFs by removing author names, creation software history, and hidden metadata.',
+    actionName: 'Sanitize & Strip Metadata',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
+  },
+  'ai-extract-table': {
+    category: 'ai',
+    title: 'Extract Tables from PDF',
+    badge: 'AI & Layout Reconstruction to Excel / JSON',
+    subtitle: 'Extract complex tabular data from PDF invoices, bank statements, and reports into Excel (.xlsx) and CSV.',
+    actionName: 'Extract Tables Now',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <select id="opt-table-format" class="select-control">
+        <option value="excel" selected>Microsoft Excel (.xlsx)</option>
+        <option value="csv">Comma-Separated Values (.csv)</option>
+        <option value="json">Structured JSON (.json)</option>
+      </select>
+    `
   }
 };
 
@@ -517,6 +627,10 @@ export const TOOL_ICONS = {
   'pdf-to-markdown': '📝',
   'markdown-to-pdf': '📄',
   'gst-invoice-pdf': '🧾',
+  'pos-billing': '🧾',
+  'clean-billing': '🧾',
+  'tax-receipt': '📜',
+  'estimate-maker': '📊',
   'pipeline': '⚡'
 };
 
@@ -684,5 +798,88 @@ export const TOOL_DETAILS_DATA = {
       { question: 'Is my financial invoice data kept private?', answer: 'Yes. Invoices are generated locally or in ephemeral worker tasks that never log or store your sensitive customer information.' }
     ],
     related: ['pdf-to-excel', 'ai-extract-table', 'draw-signature', 'sign-pdf']
+  },
+  'pos-billing': {
+    category: 'Business & Tax', categoryLink: '/pos-billing',
+    features: ['Instant 80mm and 58mm thermal slip generation ready for direct ESC/POS and standard printers', 'Dynamic UPI QR Code embedding for instant counter scannable mobile payments', 'Split-screen live interactive receipt preview with cash calculation and itemization'],
+    howToSteps: [
+      { name: 'Enter Store & Bill Info', text: 'Enter your business name, counter/terminal ID, and invoice number.' },
+      { name: 'Add Items & Rates', text: 'Add line items, quantities, and prices — subtotal and GST compute automatically.' },
+      { name: 'Print or Download', text: 'Click Print Thermal Slip or Download PDF for instant paperless receipt generation.' }
+    ],
+    faqs: [
+      { question: 'Can I print directly to my 80mm thermal receipt printer?', answer: 'Yes! Clicking "Print Thermal Slip" opens the native browser print dialogue configured with 80mm receipt dimensions for thermal printers.' },
+      { question: 'Is POS billing free and private?', answer: 'Yes, 100% free with unlimited receipts and zero server tracking. All receipt computation runs entirely in your browser.' }
+    ],
+    related: ['gst-invoice-pdf', 'tax-receipt', 'estimate-maker', 'compress-pdf']
+  },
+  'tax-receipt': {
+    category: 'Business & Tax', categoryLink: '/tax-receipt',
+    features: ['Compliant with Section 80G and 12A trust donation receipt guidelines', 'Automated Amount in Words conversion in Indian numbering (Rupees Lakhs & Crores)', 'Statutory tax exemption declaration clause with Trust PAN and 80G URN', 'Official certificate-grade double border, seal, and authorized signatory signature block'],
+    howToSteps: [
+      { name: 'Enter Trust / NGO Info', text: 'Provide organization name, registration number, 80G URN, and address.' },
+      { name: 'Enter Donor Details', text: 'Add donor name, PAN number, address, and donation amount.' },
+      { name: 'Download PDF', text: 'Download official certificate-grade tax deduction receipt instantly.' }
+    ],
+    faqs: [
+      { question: 'Is this receipt valid for claiming income tax deduction under Section 80G?', answer: 'Yes, when issued by an eligible registered NGO or trust with valid 80G registration numbers and donor PAN.' },
+      { question: 'Does it convert the donation amount to words automatically?', answer: 'Yes! The tool automatically formats the total in standard Indian numbering words (e.g. Rupees Five Thousand Only).' }
+    ],
+    related: ['gst-invoice-pdf', 'pos-billing', 'estimate-maker', 'sign-pdf']
+  },
+  'estimate-maker': {
+    category: 'Business & Tax', categoryLink: '/estimate-maker',
+    features: ['Professional agency and business proposal format with project title and scope', 'Line items table with deliverables, units, quantities, and rates', 'Configurable validity timeline and commercial payment terms', 'Client acceptance signature block for quick formal sign-off'],
+    howToSteps: [
+      { name: 'Enter Business & Client Details', text: 'Add your business branding and client recipient info.' },
+      { name: 'Define Scope & Deliverables', text: 'Add line items, units, quantities, and pricing.' },
+      { name: 'Download Proposal PDF', text: 'Download a clean, high-resolution vector PDF quotation ready to send.' }
+    ],
+    faqs: [
+      { question: 'Can I add custom payment terms to the quote?', answer: 'Yes! You can specify delivery timelines, advance payment requirements, and acceptance terms directly on the estimate.' },
+      { question: 'Can clients sign off on this quotation?', answer: 'Yes! The document includes a dedicated Client Acceptance & Authorization signature line at the bottom.' }
+    ],
+    related: ['gst-invoice-pdf', 'pos-billing', 'tax-receipt', 'pdf-to-word']
   }
 };
+
+// ── Defensive Alias Registration ──────────────────────────────────────────────
+export const TOOL_ALIASES = {
+  'chat-with-pdf': 'ai-ask',
+  'gst-invoice': 'gst-invoice-pdf',
+  'pos-billing': 'pos-billing',
+  'clean-billing': 'pos-billing',
+  'tax-receipt': 'tax-receipt',
+  'estimate-maker': 'estimate-maker',
+  'summarize-pdf': 'ai-summarize',
+  'organize-pages': 'delete-pdf-pages',
+  'crop-pdf': 'split-pdf',
+  'pdf-to-audio': 'ai-summarize',
+  'edit-pdf': 'draw-signature',
+  'sign-pdf': 'draw-signature',
+  'add-watermark': 'watermark-pdf',
+  'page-numbers': 'page-numbers-pdf',
+  'headers-footers': 'page-numbers-pdf',
+  'extract-text': 'ocr-pdf',
+  'extract-tables': 'ai-extract-table',
+  'extract-pages': 'extract-pages',
+  'flatten-pdf': 'flatten-pdf',
+  'repair-pdf': 'repair-pdf',
+  'encrypt-pdf': 'protect-pdf',
+  'remove-password': 'unlock-pdf',
+  'privacy-scanner': 'strip-metadata-pdf',
+  'fingerprint-pdf': 'watermark-pdf',
+  'compare-pdfs': 'compare-pdf',
+};
+
+for (const [alias, target] of Object.entries(TOOL_ALIASES)) {
+  if (TOOL_DEFINITIONS[target] && !TOOL_DEFINITIONS[alias]) {
+    TOOL_DEFINITIONS[alias] = TOOL_DEFINITIONS[target];
+  }
+  if (TOOL_ICONS[target] && !TOOL_ICONS[alias]) {
+    TOOL_ICONS[alias] = TOOL_ICONS[target];
+  }
+  if (TOOL_DETAILS_DATA[target] && !TOOL_DETAILS_DATA[alias]) {
+    TOOL_DETAILS_DATA[alias] = TOOL_DETAILS_DATA[target];
+  }
+}
