@@ -46,6 +46,8 @@ import {
   PosBillingProcessor,
   TaxReceiptProcessor,
   EstimateMakerProcessor,
+  CropPdfProcessor,
+  EditPdfProcessor,
   SandboxedWorkerHarness,
 } from '@doc-platform/workers';
 import { TOOL_REGISTRY, generateToolJsonLd } from '@doc-platform/core';
@@ -129,6 +131,9 @@ async function startWorkerLoop() {
     'clean-billing': new PosBillingProcessor(),
     'tax-receipt': new TaxReceiptProcessor(),
     'estimate-maker': new EstimateMakerProcessor(),
+    'crop-pdf': new CropPdfProcessor(),
+    'edit-pdf': new EditPdfProcessor(),
+    'pdf-editor': new EditPdfProcessor(),
   };
 
   while (true) {
@@ -599,9 +604,11 @@ const server = http.createServer(async (req, res) => {
     'chat-with-pdf': 'ai-ask',
     'summarize-pdf': 'ai-summarize',
     'organize-pages': 'delete-pdf-pages',
-    'crop-pdf': 'split-pdf',
+    'crop-pdf': 'crop-pdf',
+    'resize-pdf': 'crop-pdf',
     'pdf-to-audio': 'ai-summarize',
-    'edit-pdf': 'draw-signature',
+    'edit-pdf': 'edit-pdf',
+    'pdf-editor': 'edit-pdf',
     'sign-pdf': 'draw-signature',
     'add-watermark': 'watermark-pdf',
     'page-numbers': 'page-numbers-pdf',

@@ -723,6 +723,54 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
       { question: 'Can I extract non-consecutive pages?', answer: 'Yes! Simply separate individual pages or ranges with commas.' },
     ],
   },
+  'crop-pdf': {
+    slug: 'crop-pdf',
+    title: 'Crop & Resize PDF Online',
+    metaTitle: 'Crop & Resize PDF Online — Trim Margins & Change Page Sizes Free | DocPlatform',
+    metaDescription: 'Crop PDF margins and resize PDF documents to standard sheet sizes (A4, Letter, Legal) with precise millimeter adjustments and zero data upload.',
+    canonicalUrl: 'https://docplatform.app/crop-pdf',
+    keywords: ['crop pdf', 'resize pdf pages', 'trim pdf margins', 'change pdf page size', 'crop pdf online free'],
+    features: [
+      'Trim top, bottom, left, and right margins with precise millimeter controls',
+      'Resize pages to standard international formats (A4, US Letter, Legal, A3, A5)',
+      'Scale page content to fit or pad and center with vector geometry retention',
+      'Apply margin changes across all pages, odd/even pages, or custom ranges',
+    ],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select or drag your PDF document into the workspace.' },
+      { name: 'Set Margins or Target Size', text: 'Enter trim margins or choose a standard sheet size preset (e.g. A4).' },
+      { name: 'Download Resized PDF', text: 'Download your cropped or resized PDF document instantly.' },
+    ],
+    faqs: [
+      { question: 'Does cropping delete content permanently?', answer: 'Cropping adjusts the visible viewport bounding box (CropBox and MediaBox) according to PDF specifications.' },
+      { question: 'Can I resize US Letter documents to A4 format?', answer: 'Yes! Select the Resize Page Dimensions mode, pick A4, and choose whether to scale the content to fit.' },
+    ],
+  },
+  'edit-pdf': {
+    slug: 'edit-pdf',
+    title: 'Visual PDF Editor & Form Filler',
+    metaTitle: 'Free Visual PDF Editor Online — Edit Text, Fill Forms & Whiteout | DocPlatform',
+    metaDescription: 'Edit PDF documents directly in your browser. Add text, erase typos with whiteout, draw annotations, place checkmarks, insert signatures, and export high-resolution vector PDFs.',
+    canonicalUrl: 'https://docplatform.app/edit-pdf',
+    keywords: ['edit pdf online', 'free visual pdf editor', 'add text to pdf', 'fill out pdf forms', 'pdf whiteout online'],
+    features: [
+      'Interactive visual canvas with zoom and multi-page thumbnail navigation',
+      'Add editable text with font family, size, color, and background styling',
+      'Clean whiteout eraser to cover up sensitive numbers, names, and typos',
+      'Freehand drawing pen, translucent highlighter, shapes, and checkmarks',
+      'One-click insertion of digital signatures and official approval stamps',
+      '100% private in-browser vector compilation with zero server upload',
+    ],
+    howToSteps: [
+      { name: 'Open Document in Editor', text: 'Upload any PDF file to load into the visual canvas.' },
+      { name: 'Annotate, Edit & Fill', text: 'Add text boxes, erase areas with whiteout, or place signatures and stamps.' },
+      { name: 'Export Vector PDF', text: 'Click Export to bake your changes directly into a pristine vector PDF.' },
+    ],
+    faqs: [
+      { question: 'Is my document uploaded to a server while editing?', answer: 'No! The visual editor runs 100% locally in your browser using canvas and vector libraries. Your document never leaves your device.' },
+      { question: 'Can I fill out non-editable scanned forms?', answer: 'Yes! Use the Text tool and Checkmark tool to easily type into form fields and check off boxes on any scanned document.' },
+    ],
+  },
 };
 
 // Aliases for friendly routing slugs

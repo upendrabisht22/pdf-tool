@@ -98,6 +98,54 @@ export const TOOL_DEFINITIONS = {
       <input type="text" id="opt-extract-pages" placeholder="Pages to extract (e.g. 1-3, 5)" class="select-control" style="width: 240px;" />
     `
   },
+  'crop-pdf': {
+    category: 'core',
+    title: 'Crop & Resize PDF Online',
+    badge: 'Precision Margin Trimming & Standard Sizing',
+    subtitle: 'Crop document margins, trim white borders, and resize pages to standard A4, Letter, and Legal formats.',
+    actionName: 'Crop & Resize Document',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.5rem;">
+        <select id="opt-crop-mode" class="select-control" onchange="window.toggleCropMode(this.value)">
+          <option value="trim" selected>Trim Margins (Crop Bounding Box)</option>
+          <option value="resize">Resize Page Dimensions (A4, Letter, etc.)</option>
+        </select>
+        <select id="opt-crop-unit" class="select-control">
+          <option value="mm" selected>Millimeters (mm)</option>
+          <option value="pt">Points (pt)</option>
+          <option value="in">Inches (in)</option>
+        </select>
+        <select id="opt-crop-pages" class="select-control" onchange="const c = document.getElementById('opt-crop-custom-pages'); if(c) c.style.display = this.value === 'custom' ? 'inline-block' : 'none';">
+          <option value="all" selected>All Pages</option>
+          <option value="odd">Odd Pages Only</option>
+          <option value="even">Even Pages Only</option>
+          <option value="custom">Custom Range (e.g. 1-3)</option>
+        </select>
+        <input type="text" id="opt-crop-custom-pages" placeholder="e.g. 1-3, 5" class="select-control" style="display:none; width: 120px;" />
+      </div>
+      <div id="crop-trim-inputs" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <input type="number" id="opt-crop-top" placeholder="Top (e.g. 10)" value="10" min="0" step="1" class="select-control" style="width: 100px;" title="Top Margin" />
+        <input type="number" id="opt-crop-bottom" placeholder="Bottom (e.g. 10)" value="10" min="0" step="1" class="select-control" style="width: 100px;" title="Bottom Margin" />
+        <input type="number" id="opt-crop-left" placeholder="Left (e.g. 10)" value="10" min="0" step="1" class="select-control" style="width: 100px;" title="Left Margin" />
+        <input type="number" id="opt-crop-right" placeholder="Right (e.g. 10)" value="10" min="0" step="1" class="select-control" style="width: 100px;" title="Right Margin" />
+      </div>
+      <div id="crop-resize-inputs" style="display: none; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <select id="opt-resize-size" class="select-control">
+          <option value="A4" selected>A4 (210 × 297 mm)</option>
+          <option value="LETTER">US Letter (8.5 × 11 in)</option>
+          <option value="LEGAL">US Legal (8.5 × 14 in)</option>
+          <option value="A3">A3 (297 × 420 mm)</option>
+          <option value="A5">A5 (148 × 210 mm)</option>
+        </select>
+        <select id="opt-resize-scale" class="select-control">
+          <option value="fit" selected>Scale content to fit</option>
+          <option value="pad">Keep original scale & pad center</option>
+        </select>
+      </div>
+    `
+  },
   'jpg-to-pdf': {
     category: 'convert',
     title: 'JPG / PNG / WebP to PDF Converter',
@@ -279,6 +327,16 @@ export const TOOL_DEFINITIONS = {
     actionName: 'Compress & Download Signature',
     multiple: false,
     accept: 'image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp',
+    optionsHtml: ``
+  },
+  'edit-pdf': {
+    category: 'security',
+    title: 'Visual PDF Editor & Form Filler',
+    badge: '100% In-Browser Interactive Vector Editor',
+    subtitle: 'Add text, erase with whiteout, draw annotations, place checkmarks, and sign documents with zero server upload.',
+    actionName: 'Open Visual PDF Editor',
+    multiple: false,
+    accept: '.pdf,application/pdf',
     optionsHtml: ``
   },
   'flatten-pdf': {
@@ -593,6 +651,73 @@ export const TOOL_DEFINITIONS = {
         <option value="json">Structured JSON (.json)</option>
       </select>
     `
+  },
+  'crop-pdf': {
+    category: 'core',
+    title: 'Crop & Resize PDF',
+    badge: 'Trim Margins & Standard Paper Sizing',
+    subtitle: 'Trim unwanted white space or margins from PDF pages, or resize pages to standard A4, Letter, or Legal dimensions.',
+    actionName: 'Crop & Resize PDF',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: `
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <span style="font-weight: 600; color: var(--text-primary);">Mode:</span>
+          <select id="opt-crop-mode" class="select-control" onchange="window.toggleCropMode(this.value)">
+            <option value="trim" selected>Trim Margins</option>
+            <option value="resize">Resize to Standard Paper</option>
+          </select>
+        </div>
+        <div id="crop-trim-inputs" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+          <span>Top: <input type="number" id="opt-crop-top" value="20" min="0" style="width: 50px; padding: 2px 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary);"></span>
+          <span>Bottom: <input type="number" id="opt-crop-bottom" value="20" min="0" style="width: 50px; padding: 2px 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary);"></span>
+          <span>Left: <input type="number" id="opt-crop-left" value="20" min="0" style="width: 50px; padding: 2px 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary);"></span>
+          <span>Right: <input type="number" id="opt-crop-right" value="20" min="0" style="width: 50px; padding: 2px 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary);"></span>
+          <select id="opt-crop-unit" class="select-control">
+            <option value="pt" selected>Points (pt)</option>
+            <option value="mm">Millimeters (mm)</option>
+            <option value="in">Inches (in)</option>
+          </select>
+        </div>
+        <div id="crop-resize-inputs" style="display: none; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+          <span>Paper Size:</span>
+          <select id="opt-crop-target-size" class="select-control">
+            <option value="A4" selected>A4 (210 × 297 mm)</option>
+            <option value="LETTER">US Letter (8.5 × 11 in)</option>
+            <option value="LEGAL">US Legal (8.5 × 14 in)</option>
+            <option value="A3">A3 (297 × 420 mm)</option>
+            <option value="A5">A5 (148 × 210 mm)</option>
+          </select>
+          <span>Fit Mode:</span>
+          <select id="opt-crop-scale-mode" class="select-control">
+            <option value="fit" selected>Scale & Center</option>
+            <option value="stretch">Stretch to Fill</option>
+            <option value="pad">Pad Canvas</option>
+          </select>
+        </div>
+      </div>
+    `
+  },
+  'edit-pdf': {
+    category: 'core',
+    title: 'Visual PDF Editor',
+    badge: '100% In-Browser Interactive Studio',
+    subtitle: 'Add text, whiteout typos, draw freehand lines, highlight, add stamps, and insert signatures directly on your PDF pages.',
+    actionName: 'Open Visual PDF Editor',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
+  },
+  'pdf-editor': {
+    category: 'core',
+    title: 'Visual PDF Editor',
+    badge: '100% In-Browser Interactive Studio',
+    subtitle: 'Add text, whiteout typos, draw freehand lines, highlight, add stamps, and insert signatures directly on your PDF pages.',
+    actionName: 'Open Visual PDF Editor',
+    multiple: false,
+    accept: '.pdf,application/pdf',
+    optionsHtml: ``
   }
 };
 
@@ -631,6 +756,10 @@ export const TOOL_ICONS = {
   'clean-billing': '🧾',
   'tax-receipt': '📜',
   'estimate-maker': '📊',
+  'crop-pdf': '✂️',
+  'edit-pdf': '📝',
+  'pdf-editor': '📝',
+  'resize-pdf': '✂️',
   'pipeline': '⚡'
 };
 
@@ -840,6 +969,34 @@ export const TOOL_DETAILS_DATA = {
       { question: 'Can clients sign off on this quotation?', answer: 'Yes! The document includes a dedicated Client Acceptance & Authorization signature line at the bottom.' }
     ],
     related: ['gst-invoice-pdf', 'pos-billing', 'tax-receipt', 'pdf-to-word']
+  },
+  'crop-pdf': {
+    category: 'Core PDF', categoryLink: '/crop-pdf',
+    features: ['Millimeter-accurate margin trimming on all four sides', 'Resize to standard international sheet formats (A4, Letter, Legal, A3, A5)', 'Scale content to fit or pad and center with vector geometry retention'],
+    howToSteps: [
+      { name: 'Upload PDF', text: 'Select or drag your PDF document into the workspace.' },
+      { name: 'Set Margins or Format', text: 'Enter trim margins or choose a standard sheet size preset (e.g. A4).' },
+      { name: 'Crop & Download', text: 'Download your cropped or resized PDF document instantly.' }
+    ],
+    faqs: [
+      { question: 'Does cropping delete content permanently?', answer: 'Cropping adjusts the visible viewport bounding box (CropBox and MediaBox) according to PDF specifications.' },
+      { question: 'Can I resize US Letter documents to A4 format?', answer: 'Yes! Select the Resize Page Dimensions mode, pick A4, and choose whether to scale the content to fit.' }
+    ],
+    related: ['split-pdf', 'merge-pdf', 'compress-pdf', 'rotate-pdf']
+  },
+  'edit-pdf': {
+    category: 'Security & Sign', categoryLink: '/edit-pdf',
+    features: ['Interactive visual canvas with zoom and multi-page thumbnail navigation', 'Add editable text with font family, size, color, and background styling', 'Clean whiteout eraser, freehand drawing pen, translucent highlighter, shapes, checkmarks, and signature stamps'],
+    howToSteps: [
+      { name: 'Upload Document', text: 'Upload any PDF file to load into the visual editor canvas.' },
+      { name: 'Edit, Fill & Annotate', text: 'Add text boxes, erase areas with whiteout, draw highlighters, or place signatures.' },
+      { name: 'Export Vector PDF', text: 'Click Export to bake your changes directly into a crisp vector PDF.' }
+    ],
+    faqs: [
+      { question: 'Is my document uploaded to a server while editing?', answer: 'No! The visual editor runs 100% locally in your browser using canvas and vector libraries. Your document never leaves your device.' },
+      { question: 'Can I fill out non-editable scanned forms?', answer: 'Yes! Use the Text tool and Checkmark tool to easily type into form fields and check off boxes on any scanned document.' }
+    ],
+    related: ['draw-signature', 'sign-pdf', 'flatten-pdf', 'protect-pdf']
   }
 };
 
@@ -853,9 +1010,11 @@ export const TOOL_ALIASES = {
   'estimate-maker': 'estimate-maker',
   'summarize-pdf': 'ai-summarize',
   'organize-pages': 'delete-pdf-pages',
-  'crop-pdf': 'split-pdf',
+  'crop-pdf': 'crop-pdf',
+  'resize-pdf': 'crop-pdf',
   'pdf-to-audio': 'ai-summarize',
-  'edit-pdf': 'draw-signature',
+  'edit-pdf': 'edit-pdf',
+  'pdf-editor': 'edit-pdf',
   'sign-pdf': 'draw-signature',
   'add-watermark': 'watermark-pdf',
   'page-numbers': 'page-numbers-pdf',

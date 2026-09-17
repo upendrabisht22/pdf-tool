@@ -33,6 +33,7 @@ export function canHandleLocally(activeTool, stagedFiles) {
   if (activeTool === 'flatten-pdf' && hasPdfLib && stagedFiles.length === 1) return true;
   if (activeTool === 'repair-pdf' && hasPdfLib && stagedFiles.length === 1) return true;
   if (activeTool === 'redact-pdf' && hasPdfLib && stagedFiles.length === 1) return true;
+  if (activeTool === 'crop-pdf' && hasPdfLib && stagedFiles.length === 1) return true;
 
   return false;
 }
@@ -658,6 +659,76 @@ export async function executeLocalOperation(activeTool, stagedFiles, { perPageRo
     const pdfBytes = await doc.save({ useObjectStreams: true });
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename(stagedFiles, 'redacted', 'pdf'));
+    return;
+  }
+
+  // 17. Crop & Resize PDF
+  if (activeTool === 'crop-pdf' && stagedFiles.length === 1) {
+    updateProgress(35, 'Analyzing document dimensions in browser...');
+    const doc = await PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0));
+    const pages = doc.getPages();
+    const mode = document.getElementById('opt-crop-mode')?.value || 'trim';
+    const unit = document.getElementById('opt-crop-unit')?.value || 'mm';
+    const pageSelection = document.getElementById('opt-crop-pages')?.value || 'all';
+    const customRange = document.getElementById('opt-crop-custom-pages')?.value || '';
+
+    const multiplier = unit === 'pt' ? 1 : unit === 'in' ? 72 : (72 / 25.4);
+    const top = Math.max(0, (parseFloat(document.getElementById('opt-crop-top')?.value) || 0) * multiplier);
+    const bottom = Math.max(0, (parseFloat(document.getElementById('opt-crop-bottom')?.value) || 0) * multiplier);
+    const left = Math.max(0, (parseFloat(document.getElementById('opt-crop-left')?.value) || 0) * multiplier);
+    const right = Math.max(0, (parseFloat(document.getElementById('opt-crop-right')?.value) || 0) * multiplier);
+
+    const standardSizes = {
+      A4: [595.28, 841.89],
+      LETTER: [612, 792],
+      LEGAL: [612, 1008],
+      A3: [841.89, 1190.55],
+      A5: [419.53, 595.28],
+    };
+
+    updateProgress(65, mode === 'resize' ? 'Resizing page dimensions...' : 'Trimming margin bounding boxes...');
+
+    for (let i = 0; i < pages.length; i++) {
+      let apply = false;
+      if (pageSelection === 'all') apply = true;
+      else if (pageSelection === 'odd' && (i % 2 === 0)) apply = true;
+      else if (pageSelection === 'even' && (i % 2 === 1)) apply = true;
+      else if (pageSelection === 'custom') {
+        const ranges = parsePageRanges(customRange, pages.length);
+        if (ranges.includes(i + 1)) apply = true;
+      }
+      if (!apply) continue;
+
+      const page = pages[i];
+      if (mode === 'resize') {
+        const targetSizeKey = document.getElementById('opt-resize-size')?.value || 'A4';
+        const [targetW, targetH] = standardSizes[targetSizeKey] || standardSizes.A4;
+        const scaleMode = document.getElementById('opt-resize-scale')?.value || 'fit';
+        const { width: curW, height: curH } = page.getSize();
+
+        if (scaleMode === 'fit') {
+          const scale = Math.min(targetW / curW, targetH / curH);
+          page.scale(scale, scale);
+          const xOff = (targetW - curW * scale) / 2;
+          const yOff = (targetH - curH * scale) / 2;
+          page.translateContent(xOff, yOff);
+        }
+        page.setSize(targetW, targetH);
+      } else {
+        const mb = page.getMediaBox();
+        const newX = mb.x + left;
+        const newY = mb.y + bottom;
+        const newW = Math.max(20, mb.width - left - right);
+        const newH = Math.max(20, mb.height - top - bottom);
+        page.setCropBox(newX, newY, newW, newH);
+        page.setMediaBox(newX, newY, newW, newH);
+      }
+    }
+
+    updateProgress(90, 'Saving cropped PDF document...');
+    const pdfBytes = await doc.save({ useObjectStreams: true });
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    renderSuccessDownload(URL.createObjectURL(blob), getDerivedOutputFilename(stagedFiles, mode === 'resize' ? 'resized' : 'cropped', 'pdf'));
     return;
   }
 }

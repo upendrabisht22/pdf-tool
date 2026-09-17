@@ -87,6 +87,34 @@ import {
   canHandleLocally,
   executeLocalOperation
 } from './modules/local-engine.js';
+import {
+  initPdfEditorStudio,
+  switchEditorPage,
+  prevEditorPage,
+  nextEditorPage,
+  renderEditorPage,
+  renderPageAnnotations,
+  handleOverlayCanvasMouseDown,
+  selectAnnotation,
+  deleteSelectedAnnotation,
+  setEditorTool,
+  insertStamp,
+  insertDateStamp,
+  insertSignatureStamp,
+  setEditorFontFamily,
+  setEditorFontSize,
+  toggleEditorBold,
+  toggleEditorItalic,
+  setEditorTextColor,
+  setEditorTextBg,
+  setEditorShapeType,
+  setEditorStrokeColor,
+  setEditorStrokeWidth,
+  zoomEditor,
+  undoEditor,
+  redoEditor,
+  exportEditedPdf
+} from './modules/pdf-editor-studio.js';
 
 // ── Client Route Aliases ───────────────────────────────────────────────────
 export const CLIENT_ROUTE_ALIASES = {
@@ -98,9 +126,11 @@ export const CLIENT_ROUTE_ALIASES = {
   'chat-with-pdf': 'ai-ask',
   'summarize-pdf': 'ai-summarize',
   'organize-pages': 'delete-pdf-pages',
-  'crop-pdf': 'split-pdf',
+  'crop-pdf': 'crop-pdf',
+  'resize-pdf': 'crop-pdf',
   'pdf-to-audio': 'ai-summarize',
-  'edit-pdf': 'draw-signature',
+  'edit-pdf': 'edit-pdf',
+  'pdf-editor': 'edit-pdf',
   'sign-pdf': 'draw-signature',
   'add-watermark': 'watermark-pdf',
   'page-numbers': 'page-numbers-pdf',
@@ -284,12 +314,13 @@ export function switchTool(toolKey, updateUrl = true) {
     fileInput.multiple = config.multiple;
   }
 
-  // Toggle Signature Studio vs GST vs POS vs Tax Receipt vs Estimate Studio vs standard PDF dropzone
+  // Toggle Signature Studio vs GST vs POS vs Tax Receipt vs Estimate Studio vs Visual PDF Editor vs standard PDF dropzone
   const sigStudio = document.getElementById('signature-studio');
   const gstStudio = document.getElementById('gst-invoice-studio');
   const posStudio = document.getElementById('pos-billing-studio');
   const trStudio = document.getElementById('tax-receipt-studio');
   const estStudio = document.getElementById('estimate-studio');
+  const editorStudio = document.getElementById('pdf-editor-studio');
   const dropzone = document.getElementById('dropzone');
 
   const hideAllStudios = () => {
@@ -298,6 +329,7 @@ export function switchTool(toolKey, updateUrl = true) {
     if (posStudio) posStudio.style.display = 'none';
     if (trStudio) trStudio.style.display = 'none';
     if (estStudio) estStudio.style.display = 'none';
+    if (editorStudio) editorStudio.style.display = 'none';
     if (dropzone) dropzone.style.display = 'none';
   };
 
@@ -330,6 +362,20 @@ export function switchTool(toolKey, updateUrl = true) {
     initEstimateStudio();
     if (window.innerWidth <= 1024) setEstimateStudioView('form');
     else setEstimateStudioView('split');
+  } else if (toolKey === 'edit-pdf' || toolKey === 'pdf-editor') {
+    if (mainContent) mainContent.classList.add('wide-canvas');
+    hideAllStudios();
+    if (editorStudio) editorStudio.style.display = 'block';
+    const uploadGate = document.getElementById('editor-upload-gate');
+    const workspace = document.getElementById('editor-workspace');
+    if (stagedFiles.length > 0) {
+      if (uploadGate) uploadGate.style.display = 'none';
+      if (workspace) workspace.style.display = 'block';
+      initPdfEditorStudio(stagedFiles[0].bytes);
+    } else {
+      if (uploadGate) uploadGate.style.display = 'block';
+      if (workspace) workspace.style.display = 'none';
+    }
   } else if (toolKey === 'draw-signature') {
     if (mainContent) mainContent.classList.remove('wide-canvas');
     hideAllStudios();
@@ -483,6 +529,7 @@ export function resetWorkspace() {
   const posStudio = document.getElementById('pos-billing-studio');
   const trStudio = document.getElementById('tax-receipt-studio');
   const estStudio = document.getElementById('estimate-studio');
+  const editorStudio = document.getElementById('pdf-editor-studio');
   const dropzone = document.getElementById('dropzone');
 
   if (sigStudio) sigStudio.style.display = 'none';
@@ -490,6 +537,7 @@ export function resetWorkspace() {
   if (posStudio) posStudio.style.display = 'none';
   if (trStudio) trStudio.style.display = 'none';
   if (estStudio) estStudio.style.display = 'none';
+  if (editorStudio) editorStudio.style.display = 'none';
   if (dropzone) dropzone.style.display = 'none';
 
   if (activeTool === 'draw-signature') {
@@ -507,6 +555,12 @@ export function resetWorkspace() {
   } else if (activeTool === 'estimate-maker') {
     if (estStudio) estStudio.style.display = 'block';
     initEstimateStudio();
+  } else if (activeTool === 'edit-pdf' || activeTool === 'pdf-editor') {
+    if (editorStudio) editorStudio.style.display = 'block';
+    const uploadGate = document.getElementById('editor-upload-gate');
+    const workspace = document.getElementById('editor-workspace');
+    if (uploadGate) uploadGate.style.display = 'block';
+    if (workspace) workspace.style.display = 'none';
   } else {
     if (dropzone) dropzone.style.display = 'block';
   }
@@ -561,6 +615,20 @@ async function handleFilesSelected(files, isAppend = false) {
   }
 
   if (stagedFiles.length > 0) {
+    if (activeTool === 'edit-pdf' || activeTool === 'pdf-editor') {
+      const editorStudio = document.getElementById('pdf-editor-studio');
+      const uploadGate = document.getElementById('editor-upload-gate');
+      const workspace = document.getElementById('editor-workspace');
+      if (editorStudio) editorStudio.style.display = 'block';
+      if (uploadGate) uploadGate.style.display = 'none';
+      if (workspace) workspace.style.display = 'block';
+      const mainDropzone = document.getElementById('dropzone');
+      const stagingArea = document.getElementById('staging-area');
+      if (mainDropzone) mainDropzone.style.display = 'none';
+      if (stagingArea) stagingArea.style.display = 'none';
+      await initPdfEditorStudio(stagedFiles[0].bytes);
+      return;
+    }
     document.getElementById('dropzone').style.display = 'none';
     document.getElementById('staging-area').style.display = 'block';
     await renderFileList();
@@ -1001,6 +1069,21 @@ window.resetAllVisualRotations = resetAllVisualRotations;
 window.removeStagedFile = removeStagedFile;
 window.executeDocumentOperation = executeDocumentOperation;
 
+export function toggleCropMode(mode) {
+  const trimBox = document.getElementById('crop-trim-inputs');
+  const resizeBox = document.getElementById('crop-resize-inputs');
+  if (trimBox && resizeBox) {
+    if (mode === 'resize') {
+      trimBox.style.display = 'none';
+      resizeBox.style.display = 'flex';
+    } else {
+      trimBox.style.display = 'flex';
+      resizeBox.style.display = 'none';
+    }
+  }
+}
+window.toggleCropMode = toggleCropMode;
+
 // Signature Studio Bindings
 window.openSignatureDrawModal = openSignatureDrawModal;
 window.closeSignatureDrawModal = closeSignatureDrawModal;
@@ -1050,6 +1133,34 @@ window.setEstimateStudioView = setEstimateStudioView;
 
 // AI Preview Binding
 window.copyAiPreviewText = copyAiPreviewText;
+
+// Visual PDF Editor Studio Bindings
+window.initPdfEditorStudio = initPdfEditorStudio;
+window.switchEditorPage = switchEditorPage;
+window.prevEditorPage = prevEditorPage;
+window.nextEditorPage = nextEditorPage;
+window.renderEditorPage = renderEditorPage;
+window.renderPageAnnotations = renderPageAnnotations;
+window.handleOverlayCanvasMouseDown = handleOverlayCanvasMouseDown;
+window.selectAnnotation = selectAnnotation;
+window.deleteSelectedAnnotation = deleteSelectedAnnotation;
+window.setEditorTool = setEditorTool;
+window.insertStamp = insertStamp;
+window.insertDateStamp = insertDateStamp;
+window.insertSignatureStamp = insertSignatureStamp;
+window.setEditorFontFamily = setEditorFontFamily;
+window.setEditorFontSize = setEditorFontSize;
+window.toggleEditorBold = toggleEditorBold;
+window.toggleEditorItalic = toggleEditorItalic;
+window.setEditorTextColor = setEditorTextColor;
+window.setEditorTextBg = setEditorTextBg;
+window.setEditorShapeType = setEditorShapeType;
+window.setEditorStrokeColor = setEditorStrokeColor;
+window.setEditorStrokeWidth = setEditorStrokeWidth;
+window.zoomEditor = zoomEditor;
+window.undoEditor = undoEditor;
+window.redoEditor = redoEditor;
+window.exportEditedPdf = exportEditedPdf;
 
 function resolveToolKey(path) {
   const raw = (path || '').replace(/^\//, '') || 'merge-pdf';

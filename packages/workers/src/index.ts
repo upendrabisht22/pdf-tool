@@ -51,3 +51,5 @@ export * from './processors/gst-invoice.js';
 export * from './processors/pos-billing.js';
 export * from './processors/tax-receipt.js';
 export * from './processors/estimate-maker.js';
+export * from './processors/crop-pdf.js';
+export * from './processors/edit-pdf.js';

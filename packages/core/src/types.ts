@@ -44,6 +44,8 @@ export type OperationType =
   | 'clean-billing'
   | 'tax-receipt'
   | 'estimate-maker'
+  | 'crop-pdf'
+  | 'edit-pdf'
   | 'pipeline';
 
 // ============================================================================
@@ -605,6 +607,48 @@ export interface PipelineOptions {
   stopOnError?: boolean;
 }
 
+export interface CropPdfOptions {
+  mode?: 'trim' | 'resize';
+  /** Margin trim in points or mm */
+  top?: number;
+  bottom?: number;
+  left?: number;
+  right?: number;
+  unit?: 'pt' | 'mm' | 'in';
+  /** Standard sheet size for resize mode */
+  targetSize?: 'A4' | 'LETTER' | 'LEGAL' | 'A3' | 'A5';
+  scaleMode?: 'fit' | 'stretch' | 'pad';
+  /** Page range e.g. "all", "odd", "even", "1-3, 5" */
+  pages?: 'all' | 'odd' | 'even' | string | number[];
+}
+
+export interface PdfAnnotationItem {
+  id: string;
+  type: 'text' | 'whiteout' | 'draw' | 'highlight' | 'shape' | 'signature' | 'stamp' | 'checkmark' | 'crossmark';
+  pageIndex: number;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  text?: string;
+  fontSize?: number;
+  fontFamily?: 'Helvetica' | 'TimesRoman' | 'Courier' | 'JetBrainsMono';
+  bold?: boolean;
+  italic?: boolean;
+  color?: string;
+  backgroundColor?: string;
+  opacity?: number;
+  strokeWidth?: number;
+  points?: { x: number; y: number }[];
+  shapeType?: 'rectangle' | 'circle' | 'line' | 'arrow';
+  imageDataUrl?: string;
+  stampText?: string;
+}
+
+export interface EditPdfOptions {
+  annotations: PdfAnnotationItem[];
+}
+
 export interface OperationOptionsMap {
   'merge-pdf': MergePdfOptions;
   'split-pdf': SplitPdfOptions;
@@ -642,6 +686,8 @@ export interface OperationOptionsMap {
   'clean-billing': PosBillingOptions;
   'tax-receipt': TaxReceiptOptions;
   'estimate-maker': EstimateOptions;
+  'crop-pdf': CropPdfOptions;
+  'edit-pdf': EditPdfOptions;
   'pipeline': PipelineOptions;
 }
 
