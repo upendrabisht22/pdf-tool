@@ -254,11 +254,12 @@ export class EstimateMakerProcessor implements DocumentProcessor<EstimateOptions
     curY -= 16;
 
     // Totals Box (Right Aligned)
-    const totalsLeft = pageWidth - margin - 200;
+    const totalsCardWidth = 210;
+    const totalsLeft = pageWidth - margin - totalsCardWidth;
     const drawTotalLine = (label: string, valStr: string, bold = false) => {
       const f = bold ? fontSansBold : fontSans;
-      const s = bold ? 9 : 8;
-      page.drawText(label, { x: totalsLeft, y: curY, size: s, font: f, color: bold ? cNavy : cMuted });
+      const s = bold ? 8.5 : 8;
+      page.drawText(label, { x: totalsLeft + 4, y: curY, size: s, font: f, color: bold ? cNavy : cMuted });
       const valW = f.widthOfTextAtSize(valStr, s);
       page.drawText(valStr, { x: pageWidth - margin - valW, y: curY, size: s, font: f, color: bold ? cNavy : cDark });
       curY -= 14;
@@ -272,21 +273,25 @@ export class EstimateMakerProcessor implements DocumentProcessor<EstimateOptions
       drawTotalLine(`Estimated Tax (${taxPct}%):`, `+ ${currency} ${formatAmount(taxAmount)}`);
     }
 
-    curY -= 2;
+    // Total Estimate Box with guaranteed clearance from subtotal text
+    curY -= 6;
+    const totalBoxHeight = 24;
+    const totalBoxY = curY - totalBoxHeight;
     page.drawRectangle({
-      x: totalsLeft - 8,
-      y: curY - 5,
-      width: 208,
-      height: 24,
+      x: totalsLeft,
+      y: totalBoxY,
+      width: totalsCardWidth,
+      height: totalBoxHeight,
       color: rgb(0.96, 0.97, 1.0),
       borderColor: cAccent,
       borderWidth: 1,
     });
-    page.drawText('TOTAL ESTIMATE:', { x: totalsLeft, y: curY + 2, size: 9.5, font: fontSansBold, color: cNavy });
+    const totalTextY = totalBoxY + (totalBoxHeight - 9.5) / 2 + 1;
+    page.drawText('TOTAL ESTIMATE:', { x: totalsLeft + 8, y: totalTextY, size: 9.5, font: fontSansBold, color: cNavy });
     const totStr = `${currency} ${formatAmount(totalEstimate)}`;
     const totW = fontSansBold.widthOfTextAtSize(totStr, 11);
-    page.drawText(totStr, { x: pageWidth - margin - totW, y: curY + 2, size: 11, font: fontSansBold, color: cAccent });
-    curY -= 36;
+    page.drawText(totStr, { x: pageWidth - margin - 8 - totW, y: totalTextY, size: 11, font: fontSansBold, color: cAccent });
+    curY = totalBoxY - 24;
 
     // Commercial Terms & Notes Box
     const terms = options.terms ||

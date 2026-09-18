@@ -265,14 +265,70 @@ export class GstInvoiceProcessor implements DocumentProcessor<GstInvoiceOptions>
     const pageHeight = 841.89; // A4 portrait
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
-    // Professional Color Palette (Clean dark navy / charcoal with formal border styling)
-    const primaryNavy = rgb(0.06, 0.12, 0.24);
-    const headerBg = rgb(0.94, 0.96, 0.98);
-    const subtleBg = rgb(0.97, 0.98, 0.99);
-    const darkBorder = rgb(0.25, 0.3, 0.38);
-    const lightBorder = rgb(0.8, 0.84, 0.88);
-    const textDark = rgb(0.08, 0.1, 0.14);
-    const textMuted = rgb(0.38, 0.43, 0.5);
+    // ─── Theme Palette Lookup (synced with styles.css .gst-doc-ledger-box[data-gst-theme="..."]) ──
+    // modern  : Deep Slate  #0f172a
+    // corporate: Royal Navy  #1e3a8a
+    // emerald : Forest Emerald #065f46
+    // minimal : Graphite Zinc #18181b
+    interface GstPalette {
+      primaryNavy: ReturnType<typeof rgb>;
+      headerBg: ReturnType<typeof rgb>;
+      subtleBg: ReturnType<typeof rgb>;
+      darkBorder: ReturnType<typeof rgb>;
+      lightBorder: ReturnType<typeof rgb>;
+      textDark: ReturnType<typeof rgb>;
+      textMuted: ReturnType<typeof rgb>;
+    }
+
+    const THEME_PALETTES: Record<string, GstPalette> = {
+      modern: {
+        primaryNavy: rgb(0.06, 0.09, 0.17),    // #0f172a
+        headerBg:    rgb(0.945, 0.961, 0.976),  // #f1f5f9
+        subtleBg:    rgb(0.972, 0.98, 0.992),   // #f8fafc
+        darkBorder:  rgb(0.12, 0.16, 0.24),     // #1e293b
+        lightBorder: rgb(0.78, 0.84, 0.89),     // #cbd5e1
+        textDark:    rgb(0.08, 0.1, 0.14),      // #141a24
+        textMuted:   rgb(0.39, 0.45, 0.56),     // #64748b
+      },
+      corporate: {
+        primaryNavy: rgb(0.12, 0.23, 0.54),     // #1e3a8a
+        headerBg:    rgb(0.937, 0.965, 1.0),    // #eff6ff
+        subtleBg:    rgb(0.941, 0.969, 1.0),    // #f0f7ff
+        darkBorder:  rgb(0.15, 0.39, 0.92),     // #2563eb
+        lightBorder: rgb(0.58, 0.77, 0.99),     // #93c5fd
+        textDark:    rgb(0.08, 0.1, 0.14),
+        textMuted:   rgb(0.39, 0.45, 0.56),
+      },
+      emerald: {
+        primaryNavy: rgb(0.024, 0.373, 0.275),  // #065f46
+        headerBg:    rgb(0.925, 0.992, 0.961),  // #ecfdf5
+        subtleBg:    rgb(0.941, 0.992, 0.969),  // #f0fdf8
+        darkBorder:  rgb(0.02, 0.588, 0.416),   // #059669
+        lightBorder: rgb(0.431, 0.906, 0.718),  // #6ee7b7
+        textDark:    rgb(0.08, 0.1, 0.14),
+        textMuted:   rgb(0.39, 0.45, 0.56),
+      },
+      minimal: {
+        primaryNavy: rgb(0.094, 0.094, 0.106),  // #18181b
+        headerBg:    rgb(0.957, 0.957, 0.961),  // #f4f4f5
+        subtleBg:    rgb(0.98, 0.98, 0.98),     // #fafafa
+        darkBorder:  rgb(0.247, 0.247, 0.275),  // #3f3f46
+        lightBorder: rgb(0.631, 0.631, 0.667),  // #a1a1aa
+        textDark:    rgb(0.08, 0.1, 0.14),
+        textMuted:   rgb(0.39, 0.45, 0.56),
+      },
+    };
+
+    const themeKey = (options.theme && THEME_PALETTES[options.theme]) ? options.theme : 'modern';
+    const palette = THEME_PALETTES[themeKey];
+    const primaryNavy = palette.primaryNavy;
+    const headerBg    = palette.headerBg;
+    const subtleBg    = palette.subtleBg;
+    const darkBorder  = palette.darkBorder;
+    const lightBorder = palette.lightBorder;
+    const textDark    = palette.textDark;
+    const textMuted   = palette.textMuted;
+
 
     // ── Outer Ledger Boundary Frame ──────────────────────────────────────────
     const margin = 24;

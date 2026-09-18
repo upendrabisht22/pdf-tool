@@ -5,6 +5,8 @@
  * Built with the DocPlatform Architectural Minimalist Blueprint Design System.
  */
 
+import { getToolContract } from '@doc-platform/core';
+
 const TOOL_ICONS_MAP = {
   'merge-pdf': '📑', 'split-pdf': '✂️', 'compress-pdf': '⚡', 'rotate-pdf': '🔄',
   'delete-pdf-pages': '🗑️', 'extract-pages': '📑', 'jpg-to-pdf': '🖼️', 'pdf-to-jpg': '📷',
@@ -52,37 +54,35 @@ export function getRelatedToolsList(key) {
   return map[key] || ['merge-pdf', 'pdf-to-word', 'compress-pdf', 'ai-ask'];
 }
 
-export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, renderNavbar, renderFooter, TOOL_REGISTRY, renderGsapScripts, currentToolKey }) {
+export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, renderNavbar, renderFooter, TOOL_REGISTRY, renderGsapScripts, currentToolKey, toolContract }) {
   const toolKey = currentToolKey || (toolConfig.canonicalUrl ? toolConfig.canonicalUrl.split('/').pop() : 'merge-pdf');
-  const isImageTool = ['jpg-to-pdf', 'image-to-pdf'].includes(toolKey);
-  const isMarkdownTool = toolKey === 'markdown-to-pdf';
-  const isOfficeTool = ['word-to-pdf', 'excel-to-pdf', 'powerpoint-to-pdf', 'ppt-to-pdf'].includes(toolKey);
-  const isSignatureDraw = toolKey === 'draw-signature';
+  const contract = toolContract || (toolConfig.mode ? toolConfig : getToolContract(toolKey));
+  const mode = contract.mode || 'processor';
+  const requiresInputFile = contract.requiresInputFile ?? (mode === 'processor' || mode === 'editor');
+  const inputType = contract.inputType || (requiresInputFile ? 'pdf' : 'none');
+  const studioId = contract.studioId || null;
+  const isWideCanvas = Boolean(contract.wideCanvas || mode === 'generator' || mode === 'editor');
+  const isMultiple = Boolean(contract.multiple);
+  const initialAccept = contract.accept !== undefined ? (contract.accept || '') : (requiresInputFile ? '.pdf,application/pdf' : '');
 
-  const initialDropTitle = isSignatureDraw ? 'Upload Signature Photo to Compress' :
-                           isImageTool ? 'Select Image files (JPG, PNG, WebP)' :
-                           isMarkdownTool ? 'Select Markdown file (.md, .txt)' :
-                           isOfficeTool ? 'Select Office Document (.docx, .xlsx, .pptx)' :
+  const initialDropTitle = inputType === 'image' ? 'Select Image files (JPG, PNG, WebP)' :
+                           inputType === 'markdown' ? 'Select Markdown file (.md, .txt)' :
+                           inputType === 'office' ? 'Select Office Document (.docx, .xlsx, .pptx)' :
+                           inputType === 'pdf-or-image' ? 'Select PDF or Image file' :
                            'Select PDF files';
 
-  const initialDropDesc = isSignatureDraw ? 'or drop your handwritten signature photo here to auto-compress under 30 KB.' :
-                          isImageTool ? 'or drop JPG, PNG, or WebP images here. Instant client-side PDF creation.' :
-                          isMarkdownTool ? 'or drop Markdown files here. Instant compilation to vector PDF.' :
-                          isOfficeTool ? 'or drop Word, Excel, or PowerPoint files here for instant conversion.' :
+  const initialDropDesc = inputType === 'image' ? 'or drop JPG, PNG, or WebP images here. Instant client-side PDF creation.' :
+                          inputType === 'markdown' ? 'or drop Markdown files here. Instant compilation to vector PDF.' :
+                          inputType === 'office' ? 'or drop Word, Excel, or PowerPoint files here for instant conversion.' :
+                          inputType === 'pdf-or-image' ? 'or drop PDF or image scan here for OCR processing.' :
                           'or drop PDFs here. Instant client-side verification with zero data upload.';
 
-  const initialDropBtn = isSignatureDraw ? 'Choose Signature Photo' :
-                         isImageTool ? 'Select Images' :
-                         isMarkdownTool ? 'Select Markdown File' :
-                         isOfficeTool ? 'Select Document' :
+  const initialDropBtn = inputType === 'image' ? 'Select Images' :
+                         inputType === 'markdown' ? 'Select Markdown File' :
+                         inputType === 'office' ? 'Select Document' :
+                         inputType === 'pdf-or-image' ? 'Select PDF or Image' :
                          'Select PDF files';
 
-  const initialAccept = isImageTool ? '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp' :
-                        isMarkdownTool ? '.md,.txt,text/markdown,text/plain' :
-                        isOfficeTool ? '.docx,.xlsx,.pptx,application/vnd.openxmlformats-officedocument.*' :
-                        '.pdf,application/pdf';
-
-  const isMultiple = toolKey === 'merge-pdf' || toolKey === 'jpg-to-pdf' || toolKey === 'image-to-pdf' || toolKey === 'compare-pdf';
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -161,28 +161,8 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
   <!-- GSAP ScrollSmoother Wrapper & Blueprint Canvas -->
   <div id="smooth-wrapper">
     <div id="smooth-content" style="padding-top: 51px;">
-      <main class="w-full flex-1">
-        <div class="mx-auto max-w-5xl border-x border-dashed border-border flex flex-col">
-      
-      <!-- Architectural Breadcrumbs & Backlink Navigation Bar -->
-      <nav aria-label="Breadcrumb" class="border-b border-dashed border-border py-3 px-6 sm:px-10 bg-bg-elevated flex items-center justify-between flex-wrap gap-2 text-xs">
-        <div class="flex items-center gap-2 mono-copy text-text-secondary flex-wrap">
-          <a href="/" class="hover:text-accent transition-colors flex items-center gap-1">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <span>Home</span>
-          </a>
-          <span class="text-text-muted">/</span>
-          <a href="/#all-tools" class="hover:text-accent transition-colors">All Tools</a>
-          <span class="text-text-muted">/</span>
-          <a href="${category.link}" id="breadcrumb-cat" class="hover:text-accent transition-colors">${category.name}</a>
-          <span class="text-text-muted">/</span>
-          <span id="breadcrumb-current" class="text-text-primary font-semibold">${toolConfig.title}</span>
-        </div>
-        <a href="/#all-tools" class="mono-copy text-[11px] text-accent hover:text-accent-hover transition-colors flex items-center gap-1.5 font-medium border border-dashed border-border hover:border-accent px-2.5 py-1 bg-bg">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
-          <span>← Back to All 33 Tools Directory</span>
-        </a>
-      </nav>
+      <main class="main-content w-full flex-1 ${isWideCanvas ? 'wide-canvas' : ''}">
+        <div class="mx-auto ${isWideCanvas ? 'max-w-7xl' : 'max-w-5xl'} border-x border-dashed border-border flex flex-col">
 
       <!-- Architectural Hero Section -->
       <section class="relative overflow-hidden border-b border-dashed border-border py-10 px-6 sm:px-10">
@@ -208,12 +188,12 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
 
       <!-- Interactive Dropzone & Studio Workspace Area -->
       <section class="p-6 sm:p-10 border-b border-dashed border-border bg-bg relative">
-        <div class="workspace-card max-w-4xl mx-auto" style="border: none; padding: 0; background: transparent; box-shadow: none;">
+        <div class="workspace-card ${isWideCanvas ? 'w-full' : 'max-w-4xl mx-auto'}" style="border: none; padding: 0; background: transparent; box-shadow: none;">
           <input type="file" id="file-input" accept="${initialAccept}" ${isMultiple ? 'multiple' : ''} style="display:none;" />
           <input type="file" id="add-more-input" accept="${initialAccept}" multiple style="display:none;" />
 
           <!-- Dedicated Signature Creator Studio -->
-          <div id="signature-studio" style="display: none; padding: 0.5rem 0;">
+          <div id="signature-studio" style="display: ${studioId === 'signature-studio' ? 'block' : 'none'}; padding: 0.5rem 0;">
             <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px dashed var(--border); padding-bottom: 0.75rem;">
               <button type="button" id="sig-tab-draw" class="mono-copy active" onclick="switchSignatureTab('draw')" style="padding: 0.4rem 0.85rem; border: 1px solid #7b61ff; background: rgba(123, 97, 255, 0.1); color: #7b61ff; font-size: 0.75rem; cursor: pointer;">✍️ Draw Signature on Screen</button>
               <button type="button" id="sig-tab-upload" class="mono-copy" onclick="switchSignatureTab('upload')" style="padding: 0.4rem 0.85rem; border: 1px dashed var(--border); background: var(--bg-elevated); color: var(--text-secondary); font-size: 0.75rem; cursor: pointer;">📁 Upload & Compress Photo</button>
@@ -298,7 +278,7 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
           </div>
 
           <!-- Dedicated Professional GST Invoice Studio -->
-          <div id="gst-invoice-studio" style="display: none; padding: 0.5rem 0;">
+          <div id="gst-invoice-studio" style="display: ${studioId === 'gst-invoice-studio' ? 'block' : 'none'}; padding: 0.5rem 0;">
             <!-- Mobile/Tablet View Mode Switcher -->
             <div class="gst-mobile-view-switcher" id="gst-mobile-view-switcher">
               <button type="button" class="gst-view-tab-btn active" id="gst-tab-form" onclick="window.setGstStudioView('form')">
@@ -494,7 +474,7 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
           </div>
 
           <!-- Dedicated Minimal POS Billing Studio -->
-          <div id="pos-billing-studio" style="display: none; padding: 0.5rem 0;">
+          <div id="pos-billing-studio" style="display: ${studioId === 'pos-billing-studio' ? 'block' : 'none'}; padding: 0.5rem 0;">
             <div class="gst-mobile-view-switcher" id="pos-mobile-view-switcher">
               <button type="button" class="gst-view-tab-btn active" id="pos-tab-form" onclick="window.setPosStudioView('form')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -643,7 +623,7 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
           </div>
 
           <!-- Dedicated Section 80G Tax Receipt Studio -->
-          <div id="tax-receipt-studio" style="display: none; padding: 0.5rem 0;">
+          <div id="tax-receipt-studio" style="display: ${studioId === 'tax-receipt-studio' ? 'block' : 'none'}; padding: 0.5rem 0;">
             <div class="gst-mobile-view-switcher" id="tr-mobile-view-switcher">
               <button type="button" class="gst-view-tab-btn active" id="tr-tab-form" onclick="window.setTaxReceiptStudioView('form')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -769,7 +749,7 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
           </div>
 
           <!-- Dedicated Project Estimate & Quotation Studio -->
-          <div id="estimate-studio" style="display: none; padding: 0.5rem 0;">
+          <div id="estimate-studio" style="display: ${studioId === 'estimate-studio' ? 'block' : 'none'}; padding: 0.5rem 0;">
             <div class="gst-mobile-view-switcher" id="est-mobile-view-switcher">
               <button type="button" class="gst-view-tab-btn active" id="est-tab-form" onclick="window.setEstimateStudioView('form')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -918,7 +898,7 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
           </div>
 
           <!-- Dedicated Visual PDF Editor Studio -->
-          <div id="pdf-editor-studio" style="display: none; padding: 0.5rem 0;">
+          <div id="pdf-editor-studio" style="display: ${studioId === 'pdf-editor-studio' ? 'block' : 'none'}; padding: 0.5rem 0;">
             <!-- Upload Gate if document not yet loaded -->
             <div id="editor-upload-gate" class="dropzone p-10 sm:p-14 border border-dashed border-border hover:border-accent bg-bg-elevated cursor-pointer flex flex-col items-center justify-center text-center transition-all group" onclick="document.getElementById('file-input').click()">
               <div class="w-12 h-12 border border-dashed border-border flex items-center justify-center mb-4 text-accent bg-bg group-hover:border-accent transition-colors">
@@ -1112,21 +1092,21 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
           </div>
 
           <!-- Main Architectural Drag and Drop Zone -->
-          <div class="dropzone p-10 sm:p-14 border border-dashed border-border hover:border-accent bg-bg-elevated cursor-pointer flex flex-col items-center justify-center text-center transition-all group" id="dropzone" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%;">
+          <div class="dropzone ${requiresInputFile && mode !== 'editor' ? '' : 'hidden'} p-10 sm:p-14 border border-dashed border-border hover:border-accent bg-bg-elevated cursor-pointer flex flex-col items-center justify-center text-center transition-all group" id="dropzone" style="display: ${requiresInputFile && mode !== 'editor' ? 'flex' : 'none'} !important; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%;" ${requiresInputFile && mode !== 'editor' ? '' : 'hidden'}>
             <div id="dropzone-icon-container" class="dropzone-icon-box w-12 h-12 border border-dashed border-border flex items-center justify-center mb-4 text-accent bg-bg group-hover:border-accent transition-colors mx-auto" style="width: 48px; height: 48px; margin-left: auto; margin-right: auto; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
-              ${isImageTool ? `
+              ${inputType === 'image' ? `
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
                   <circle cx="9" cy="9" r="2"></circle>
                   <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
                 </svg>
-              ` : isMarkdownTool ? `
+              ` : inputType === 'markdown' ? `
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                   <path d="M10 12.5 8 15l2 2.5"></path>
                   <path d="m14 12.5 2 2.5-2 2.5"></path>
                 </svg>
-              ` : isOfficeTool ? `
+              ` : inputType === 'office' ? `
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                   <polyline points="14 2 14 8 20 8"></polyline>
@@ -1342,12 +1322,12 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
         <div class="mt-6 pt-5 border-t border-dashed border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div class="mono-copy text-xs text-text-secondary flex items-center gap-2">
             <span class="w-1.5 h-1.5 rounded-full bg-accent inline-block"></span>
-            <span>Looking for a different document utility? Explore our full catalog of 33 local tools.</span>
+            <span>Looking for a different document utility? Explore our full catalog of 34 local tools.</span>
           </div>
           <a href="/#all-tools" class="paper-cta-btn group" style="text-decoration: none;">
             <span class="cta-fill"></span>
             <span class="relative z-10 flex items-center gap-2 mono-copy text-xs uppercase font-medium">
-              <span>View All 33 Tools Directory</span>
+              <span>View All 34 Tools Directory</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </span>
           </a>

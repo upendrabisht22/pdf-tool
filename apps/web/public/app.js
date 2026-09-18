@@ -11,7 +11,7 @@
  * - modules/progress-tracker.js : Multi-phase animated progress, job polling & result cards
  */
 
-import { TOOL_DEFINITIONS, TOOL_ICONS, TOOL_DETAILS_DATA } from './modules/tool-registry.js';
+import { TOOL_DEFINITIONS, TOOL_ICONS, TOOL_DETAILS_DATA, getClientToolContract } from './modules/tool-registry.js';
 import {
   escapeHtml,
   renderSimpleMarkdown,
@@ -51,7 +51,7 @@ import {
   printGstInvoicePreview,
   setGstStudioView,
   formatInrClient
-} from './modules/gst-studio.js?v=3.1';
+} from './modules/gst-studio.js?v=3.2';
 import {
   initPosStudio,
   updatePosReceiptPreview,
@@ -254,6 +254,69 @@ export function filterCategory(catKey) {
   });
 }
 
+const ALL_STUDIO_IDS = [
+  'signature-studio',
+  'gst-invoice-studio',
+  'pos-billing-studio',
+  'tax-receipt-studio',
+  'estimate-studio',
+  'pdf-editor-studio'
+];
+
+export const STUDIO_INITIALIZERS = {
+  'gst-invoice-studio': () => {
+    initGstInvoiceStudio();
+    if (window.innerWidth <= 1024) setGstStudioView('form');
+    else setGstStudioView('split');
+  },
+  'pos-billing-studio': () => {
+    initPosStudio();
+    if (window.innerWidth <= 1024) setPosStudioView('form');
+    else setPosStudioView('split');
+  },
+  'tax-receipt-studio': () => {
+    initTaxReceiptStudio();
+    if (window.innerWidth <= 1024) setTaxReceiptStudioView('form');
+    else setTaxReceiptStudioView('split');
+  },
+  'estimate-studio': () => {
+    initEstimateStudio();
+    if (window.innerWidth <= 1024) setEstimateStudioView('form');
+    else setEstimateStudioView('split');
+  },
+  'signature-studio': () => {
+    switchSignatureTab('draw');
+  },
+  'pdf-editor-studio': () => {
+    const uploadGate = document.getElementById('editor-upload-gate');
+    const workspace = document.getElementById('editor-workspace');
+    if (stagedFiles.length > 0 && stagedFiles[0].bytes) {
+      if (uploadGate) uploadGate.style.display = 'none';
+      if (workspace) workspace.style.display = 'block';
+      initPdfEditorStudio(stagedFiles[0].bytes);
+    } else {
+      if (uploadGate) uploadGate.style.display = 'block';
+      if (workspace) workspace.style.display = 'none';
+    }
+  }
+};
+
+export function hideAllStudiosAndDropzone() {
+  ALL_STUDIO_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = 'none';
+      el.classList.add('hidden');
+    }
+  });
+  const dropzone = document.getElementById('dropzone');
+  if (dropzone) {
+    dropzone.style.setProperty('display', 'none', 'important');
+    dropzone.classList.add('hidden');
+    dropzone.setAttribute('hidden', '');
+  }
+}
+
 export function switchTool(toolKey, updateUrl = true) {
   const originalKey = toolKey;
   const resolved = CLIENT_ROUTE_ALIASES[toolKey] || toolKey;
@@ -267,6 +330,23 @@ export function switchTool(toolKey, updateUrl = true) {
   stagedFiles = [];
   perPageRotations = {};
 
+  const contract = getClientToolContract(toolKey);
+  const config = TOOL_DEFINITIONS[toolKey];
+  const details = TOOL_DETAILS_DATA[toolKey] || {
+    category: config.category === 'convert' ? 'Conversions' : config.category === 'security' ? 'Security & Sign' : config.category === 'ai' ? 'AI & OCR' : 'Core PDF',
+    categoryLink: '/' + toolKey,
+    features: [config.badge, 'High-resolution vector fidelity', '100% in-browser privacy'],
+    howToSteps: [
+      { name: 'Configure Options', text: 'Enter your details or select required options.' },
+      { name: 'Process Document', text: 'Instantly generate or process your document in your browser.' },
+      { name: 'Download', text: 'Download your processed document instantly.' }
+    ],
+    faqs: [
+      { question: 'Is my document secure?', answer: 'Yes! All operations run locally in your browser with zero data retention.' }
+    ],
+    related: ['merge-pdf', 'compress-pdf', 'pdf-to-word', 'protect-pdf']
+  };
+
   // 1. Sync Browser URL and History
   const targetUrl = '/' + originalKey;
   if (updateUrl && window.location.pathname !== targetUrl) {
@@ -279,22 +359,6 @@ export function switchTool(toolKey, updateUrl = true) {
   document.querySelectorAll('.tool-tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tool === toolKey || btn.dataset.tool === originalKey);
   });
-
-  const config = TOOL_DEFINITIONS[toolKey];
-  const details = TOOL_DETAILS_DATA[toolKey] || {
-    category: config.category === 'convert' ? 'Conversions' : config.category === 'security' ? 'Security & Sign' : config.category === 'ai' ? 'AI & OCR' : 'Core PDF',
-    categoryLink: '/' + toolKey,
-    features: [config.badge, 'High-resolution vector fidelity', '100% in-browser privacy'],
-    howToSteps: [
-      { name: 'Upload File', text: 'Select or drag your document into the drop zone.' },
-      { name: 'Configure Options', text: 'Choose your desired conversion or editing parameters.' },
-      { name: 'Download', text: 'Download your processed document instantly.' }
-    ],
-    faqs: [
-      { question: 'Is my document secure?', answer: 'Yes! All operations run locally in your browser with zero data retention.' }
-    ],
-    related: ['merge-pdf', 'compress-pdf', 'pdf-to-word', 'protect-pdf']
-  };
 
   // 3. Update Document Title & Breadcrumbs
   document.title = `${config.title} — DocPlatform`;
@@ -320,159 +384,124 @@ export function switchTool(toolKey, updateUrl = true) {
 
   const fileInput = document.getElementById('file-input');
   if (fileInput) {
-    fileInput.accept = config.accept || '.pdf,application/pdf';
+    fileInput.accept = contract.accept || '';
     fileInput.multiple = Boolean(config.multiple);
   }
 
-  // Toggle Signature Studio vs GST vs POS vs Tax Receipt vs Estimate Studio vs Visual PDF Editor vs standard PDF dropzone
-  const sigStudio = document.getElementById('signature-studio');
-  const gstStudio = document.getElementById('gst-invoice-studio');
-  const posStudio = document.getElementById('pos-billing-studio');
-  const trStudio = document.getElementById('tax-receipt-studio');
-  const estStudio = document.getElementById('estimate-studio');
-  const editorStudio = document.getElementById('pdf-editor-studio');
-  const dropzone = document.getElementById('dropzone');
-
-  const hideAllStudios = () => {
-    if (sigStudio) sigStudio.style.display = 'none';
-    if (gstStudio) gstStudio.style.display = 'none';
-    if (posStudio) posStudio.style.display = 'none';
-    if (trStudio) trStudio.style.display = 'none';
-    if (estStudio) estStudio.style.display = 'none';
-    if (editorStudio) editorStudio.style.display = 'none';
-    if (dropzone) dropzone.style.display = 'none';
-  };
-
+  // 5. Layout Setup via ToolContract
   const mainContent = document.querySelector('.main-content');
-  if (toolKey === 'gst-invoice-pdf' || toolKey === 'gst-invoice') {
-    if (mainContent) mainContent.classList.add('wide-canvas');
-    hideAllStudios();
-    if (gstStudio) gstStudio.style.display = 'block';
-    initGstInvoiceStudio();
-    if (window.innerWidth <= 1024) setGstStudioView('form');
-    else setGstStudioView('split');
-  } else if (toolKey === 'pos-billing' || toolKey === 'clean-billing') {
-    if (mainContent) mainContent.classList.add('wide-canvas');
-    hideAllStudios();
-    if (posStudio) posStudio.style.display = 'block';
-    initPosStudio();
-    if (window.innerWidth <= 1024) setPosStudioView('form');
-    else setPosStudioView('split');
-  } else if (toolKey === 'tax-receipt') {
-    if (mainContent) mainContent.classList.add('wide-canvas');
-    hideAllStudios();
-    if (trStudio) trStudio.style.display = 'block';
-    initTaxReceiptStudio();
-    if (window.innerWidth <= 1024) setTaxReceiptStudioView('form');
-    else setTaxReceiptStudioView('split');
-  } else if (toolKey === 'estimate-maker') {
-    if (mainContent) mainContent.classList.add('wide-canvas');
-    hideAllStudios();
-    if (estStudio) estStudio.style.display = 'block';
-    initEstimateStudio();
-    if (window.innerWidth <= 1024) setEstimateStudioView('form');
-    else setEstimateStudioView('split');
-  } else if (toolKey === 'edit-pdf' || toolKey === 'pdf-editor') {
-    if (mainContent) mainContent.classList.add('wide-canvas');
-    hideAllStudios();
-    if (editorStudio) editorStudio.style.display = 'block';
-    const uploadGate = document.getElementById('editor-upload-gate');
-    const workspace = document.getElementById('editor-workspace');
-    if (stagedFiles.length > 0) {
-      if (uploadGate) uploadGate.style.display = 'none';
-      if (workspace) workspace.style.display = 'block';
-      initPdfEditorStudio(stagedFiles[0].bytes);
-    } else {
-      if (uploadGate) uploadGate.style.display = 'block';
-      if (workspace) workspace.style.display = 'none';
+  if (mainContent) {
+    mainContent.classList.toggle('wide-canvas', Boolean(contract.wideCanvas));
+  }
+
+  hideAllStudiosAndDropzone();
+
+  if (contract.studioId) {
+    const studioEl = document.getElementById(contract.studioId);
+    if (studioEl) {
+      studioEl.style.display = 'block';
+      studioEl.classList.remove('hidden');
     }
-  } else if (toolKey === 'draw-signature') {
-    if (mainContent) mainContent.classList.remove('wide-canvas');
-    hideAllStudios();
-    if (sigStudio) sigStudio.style.display = 'block';
-    switchSignatureTab('draw');
-  } else {
-    if (mainContent) mainContent.classList.remove('wide-canvas');
-    hideAllStudios();
-    if (dropzone) dropzone.style.display = 'flex';
+    STUDIO_INITIALIZERS[contract.studioId]?.();
   }
 
-  // Dynamic Dropzone Labels & Icons
-  const dropTitle = document.getElementById('dropzone-title');
-  const dropDesc = document.getElementById('dropzone-desc');
-  const dropBtn = document.getElementById('dropzone-btn-text');
-  const iconContainer = document.getElementById('dropzone-icon-container');
-
-  const isImageTool = ['jpg-to-pdf', 'image-to-pdf'].includes(activeTool);
-  const isMarkdownTool = activeTool === 'markdown-to-pdf';
-  const isOfficeTool = ['word-to-pdf', 'excel-to-pdf', 'powerpoint-to-pdf', 'ppt-to-pdf'].includes(activeTool);
-  const isSignatureDraw = activeTool === 'draw-signature';
-
-  if (isSignatureDraw) {
-    if (dropTitle) dropTitle.textContent = 'Upload Signature Photo to Compress';
-    if (dropDesc) dropDesc.textContent = 'or drop your handwritten signature photo here to auto-compress under 30 KB.';
-    if (dropBtn) dropBtn.textContent = 'Choose Signature Photo';
-  } else if (isImageTool) {
-    if (dropTitle) dropTitle.textContent = 'Select Image files (JPG, PNG, WebP)';
-    if (dropDesc) dropDesc.textContent = 'or drop JPG, PNG, or WebP images here. Instant client-side PDF creation.';
-    if (dropBtn) dropBtn.textContent = 'Select Images';
-  } else if (isMarkdownTool) {
-    if (dropTitle) dropTitle.textContent = 'Select Markdown file (.md, .txt)';
-    if (dropDesc) dropDesc.textContent = 'or drop Markdown files here. Instant compilation to vector PDF.';
-    if (dropBtn) dropBtn.textContent = 'Select Markdown File';
-  } else if (isOfficeTool) {
-    if (dropTitle) dropTitle.textContent = 'Select Office document (.docx, .xlsx, .pptx)';
-    if (dropDesc) dropDesc.textContent = 'or drop Word, Excel, or PowerPoint files here for instant conversion.';
-    if (dropBtn) dropBtn.textContent = 'Select Document';
-  } else {
-    if (dropTitle) dropTitle.textContent = 'Select PDF files';
-    if (dropDesc) dropDesc.textContent = 'or drop PDFs here. Instant client-side verification with zero data upload.';
-    if (dropBtn) dropBtn.textContent = 'Select PDF files';
-  }
-
-  if (iconContainer) {
-    if (isImageTool) {
-      iconContainer.innerHTML = `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-          <circle cx="9" cy="9" r="2"></circle>
-          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
-        </svg>
-      `;
-    } else if (isMarkdownTool) {
-      iconContainer.innerHTML = `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <path d="M10 12.5 8 15l2 2.5"></path>
-          <path d="m14 12.5 2 2.5-2 2.5"></path>
-        </svg>
-      `;
-    } else if (isOfficeTool) {
-      iconContainer.innerHTML = `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-          <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>
-      `;
+  const dropzone = document.getElementById('dropzone');
+  if (dropzone) {
+    if (contract.requiresInputFile && contract.mode !== 'editor') {
+      dropzone.style.removeProperty('display');
+      dropzone.style.display = 'flex';
+      dropzone.classList.remove('hidden');
+      dropzone.removeAttribute('hidden');
     } else {
-      iconContainer.innerHTML = `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="12" y1="18" x2="12" y2="12"></line>
-          <line x1="9" y1="15" x2="15" y2="15"></line>
-        </svg>
-      `;
+      dropzone.style.setProperty('display', 'none', 'important');
+      dropzone.classList.add('hidden');
+      dropzone.setAttribute('hidden', '');
+    }
+  }
+
+  // 6. Dynamic Dropzone Labels & Icons (Strictly driven by contract.inputType)
+  if (contract.requiresInputFile && contract.mode !== 'editor') {
+    const dropTitle = document.getElementById('dropzone-title');
+    const dropDesc = document.getElementById('dropzone-desc');
+    const dropBtn = document.getElementById('dropzone-btn-text');
+    const iconContainer = document.getElementById('dropzone-icon-container');
+
+    if (contract.inputType === 'image') {
+      if (dropTitle) dropTitle.textContent = 'Select Image files (JPG, PNG, WebP)';
+      if (dropDesc) dropDesc.textContent = 'or drop JPG, PNG, or WebP images here. Instant client-side PDF creation.';
+      if (dropBtn) dropBtn.textContent = 'Select Images';
+      if (iconContainer) {
+        iconContainer.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+            <circle cx="9" cy="9" r="2"></circle>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+          </svg>
+        `;
+      }
+    } else if (contract.inputType === 'markdown') {
+      if (dropTitle) dropTitle.textContent = 'Select Markdown file (.md, .txt)';
+      if (dropDesc) dropDesc.textContent = 'or drop Markdown files here. Instant compilation to vector PDF.';
+      if (dropBtn) dropBtn.textContent = 'Select Markdown File';
+      if (iconContainer) {
+        iconContainer.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <path d="M10 12.5 8 15l2 2.5"></path>
+            <path d="m14 12.5 2 2.5-2 2.5"></path>
+          </svg>
+        `;
+      }
+    } else if (contract.inputType === 'office') {
+      if (dropTitle) dropTitle.textContent = 'Select Office document (.docx, .xlsx, .pptx)';
+      if (dropDesc) dropDesc.textContent = 'or drop Word, Excel, or PowerPoint files here for instant conversion.';
+      if (dropBtn) dropBtn.textContent = 'Select Document';
+      if (iconContainer) {
+        iconContainer.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        `;
+      }
+    } else if (contract.inputType === 'pdf-or-image') {
+      if (dropTitle) dropTitle.textContent = 'Select PDF or Image files';
+      if (dropDesc) dropDesc.textContent = 'or drop PDF or image files for OCR processing.';
+      if (dropBtn) dropBtn.textContent = 'Select File';
+      if (iconContainer) {
+        iconContainer.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+        `;
+      }
+    } else {
+      if (dropTitle) dropTitle.textContent = 'Select PDF files';
+      if (dropDesc) dropDesc.textContent = 'or drop PDFs here. Instant client-side verification with zero data upload.';
+      if (dropBtn) dropBtn.textContent = 'Select PDF files';
+      if (iconContainer) {
+        iconContainer.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+        `;
+      }
     }
   }
 
   const optionsContainer = document.getElementById('tool-options-container');
-  if (optionsContainer) optionsContainer.innerHTML = config.optionsHtml;
+  if (optionsContainer) optionsContainer.innerHTML = config ? (config.optionsHtml || '') : '';
 
-  // 5. Dynamic Content Updates (Steps, Features, Related Tools, FAQs)
+  // 7. Dynamic Content Updates (Steps, Features, Related Tools, FAQs)
   const stepsContainer = document.getElementById('tool-steps-container');
   if (stepsContainer && details.howToSteps) {
     stepsContainer.innerHTML = details.howToSteps.map((step, idx) => `
@@ -579,45 +608,24 @@ export function resetWorkspace() {
   const stagingArea = document.getElementById('staging-area');
   if (stagingArea) stagingArea.style.display = 'none';
 
-  const sigStudio = document.getElementById('signature-studio');
-  const gstStudio = document.getElementById('gst-invoice-studio');
-  const posStudio = document.getElementById('pos-billing-studio');
-  const trStudio = document.getElementById('tax-receipt-studio');
-  const estStudio = document.getElementById('estimate-studio');
-  const editorStudio = document.getElementById('pdf-editor-studio');
-  const dropzone = document.getElementById('dropzone');
+  hideAllStudiosAndDropzone();
 
-  if (sigStudio) sigStudio.style.display = 'none';
-  if (gstStudio) gstStudio.style.display = 'none';
-  if (posStudio) posStudio.style.display = 'none';
-  if (trStudio) trStudio.style.display = 'none';
-  if (estStudio) estStudio.style.display = 'none';
-  if (editorStudio) editorStudio.style.display = 'none';
-  if (dropzone) dropzone.style.display = 'none';
-
-  if (activeTool === 'draw-signature') {
-    if (sigStudio) sigStudio.style.display = 'block';
-    switchSignatureTab('draw');
-  } else if (activeTool === 'gst-invoice-pdf' || activeTool === 'gst-invoice') {
-    if (gstStudio) gstStudio.style.display = 'block';
-    initGstInvoiceStudio();
-  } else if (activeTool === 'pos-billing' || activeTool === 'clean-billing') {
-    if (posStudio) posStudio.style.display = 'block';
-    initPosStudio();
-  } else if (activeTool === 'tax-receipt') {
-    if (trStudio) trStudio.style.display = 'block';
-    initTaxReceiptStudio();
-  } else if (activeTool === 'estimate-maker') {
-    if (estStudio) estStudio.style.display = 'block';
-    initEstimateStudio();
-  } else if (activeTool === 'edit-pdf' || activeTool === 'pdf-editor') {
-    if (editorStudio) editorStudio.style.display = 'block';
-    const uploadGate = document.getElementById('editor-upload-gate');
-    const workspace = document.getElementById('editor-workspace');
-    if (uploadGate) uploadGate.style.display = 'block';
-    if (workspace) workspace.style.display = 'none';
-  } else {
-    if (dropzone) dropzone.style.display = 'flex';
+  const contract = getClientToolContract(activeTool);
+  if (contract.studioId) {
+    const studio = document.getElementById(contract.studioId);
+    if (studio) {
+      studio.style.display = 'block';
+      studio.classList.remove('hidden');
+    }
+    STUDIO_INITIALIZERS[contract.studioId]?.();
+  } else if (contract.requiresInputFile && contract.mode !== 'editor') {
+    const dropzone = document.getElementById('dropzone');
+    if (dropzone) {
+      dropzone.style.removeProperty('display');
+      dropzone.style.display = 'flex';
+      dropzone.classList.remove('hidden');
+      dropzone.removeAttribute('hidden');
+    }
   }
 
   const fileInput = document.getElementById('file-input');
@@ -629,6 +637,12 @@ export function resetWorkspace() {
 // ── File Ingestion & Staging Area ───────────────────────────────────────────
 
 async function handleFilesSelected(files, isAppend = false) {
+  const contract = getClientToolContract(activeTool);
+  if (!contract.requiresInputFile) {
+    console.warn(`Tool "${activeTool}" is a document generator and does not accept file uploads.`);
+    return;
+  }
+
   const validFiles = [];
 
   for (const file of files) {
@@ -637,12 +651,14 @@ async function handleFilesSelected(files, isAppend = false) {
     const detected = detectFileType(file, bytes);
 
     let isValid = false;
-    if (activeTool === 'jpg-to-pdf' || activeTool === 'draw-signature') {
+    if (contract.inputType === 'image') {
       isValid = ['png', 'jpeg', 'webp'].includes(detected);
-    } else if (activeTool === 'markdown-to-pdf') {
+    } else if (contract.inputType === 'markdown') {
       isValid = ['markdown', 'unknown'].includes(detected) || file.name.endsWith('.md') || file.name.endsWith('.txt');
-    } else if (activeTool.includes('word') || activeTool.includes('excel') || activeTool.includes('powerpoint') || activeTool.includes('ppt')) {
+    } else if (contract.inputType === 'office') {
       isValid = ['docx', 'office-legacy', 'pdf'].includes(detected);
+    } else if (contract.inputType === 'pdf-or-image') {
+      isValid = (detected === 'pdf') || ['png', 'jpeg', 'webp'].includes(detected);
     } else {
       isValid = (detected === 'pdf');
     }
@@ -657,8 +673,10 @@ async function handleFilesSelected(files, isAppend = false) {
         detectedFormat: detected === 'markdown' ? 'markdown' : detected
       });
     } else {
-      const expectedType = activeTool === 'jpg-to-pdf' ? 'Image (JPG, PNG, WebP)' :
-                           activeTool === 'markdown-to-pdf' ? 'Markdown file (.md, .txt)' : 'PDF document';
+      const expectedType = contract.inputType === 'image' ? 'Image (JPG, PNG, WebP)' :
+                           contract.inputType === 'markdown' ? 'Markdown file (.md, .txt)' :
+                           contract.inputType === 'office' ? 'Office document (Word, Excel, PPT)' :
+                           contract.inputType === 'pdf-or-image' ? 'PDF or Image' : 'PDF document';
       alert(`File "${file.name}" was rejected. Please select a valid ${expectedType}.`);
     }
   }
@@ -670,7 +688,7 @@ async function handleFilesSelected(files, isAppend = false) {
   }
 
   if (stagedFiles.length > 0) {
-    if (activeTool === 'edit-pdf' || activeTool === 'pdf-editor') {
+    if (contract.mode === 'editor') {
       const editorStudio = document.getElementById('pdf-editor-studio');
       const uploadGate = document.getElementById('editor-upload-gate');
       const workspace = document.getElementById('editor-workspace');
@@ -684,8 +702,10 @@ async function handleFilesSelected(files, isAppend = false) {
       await initPdfEditorStudio(stagedFiles[0].bytes);
       return;
     }
-    document.getElementById('dropzone').style.display = 'none';
-    document.getElementById('staging-area').style.display = 'block';
+    const dz = document.getElementById('dropzone');
+    if (dz) dz.style.display = 'none';
+    const sa = document.getElementById('staging-area');
+    if (sa) sa.style.display = 'block';
     await renderFileList();
   }
 }
@@ -871,12 +891,20 @@ function collectActiveToolOptions() {
 }
 
 export async function executeDocumentOperation() {
+  const contract = getClientToolContract(activeTool);
+  if (!contract.requiresInputFile) {
+    return;
+  }
   if (stagedFiles.length === 0) return;
 
-  document.getElementById('dropzone').style.display = 'none';
-  document.getElementById('staging-area').style.display = 'none';
-  document.getElementById('result-card').style.display = 'none';
-  document.getElementById('progress-container').style.display = 'block';
+  const dz = document.getElementById('dropzone');
+  if (dz) dz.style.display = 'none';
+  const sa = document.getElementById('staging-area');
+  if (sa) sa.style.display = 'none';
+  const rc = document.getElementById('result-card');
+  if (rc) rc.style.display = 'none';
+  const pc = document.getElementById('progress-container');
+  if (pc) pc.style.display = 'block';
 
   startLiveProgressTracking(activeTool);
 
@@ -1078,35 +1106,40 @@ function setupEventListeners() {
   const addMoreInput = document.getElementById('add-more-input');
   const processBtn = document.getElementById('process-btn');
 
-  if (!dropzone || !fileInput || !processBtn) return;
-
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropzone.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      dropzone.classList.add('dragover');
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
     });
-  });
 
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('dragover');
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+      });
     });
-  });
 
-  dropzone.addEventListener('drop', (e) => {
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFilesSelected(Array.from(e.dataTransfer.files));
-    }
-  });
+    dropzone.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFilesSelected(Array.from(e.dataTransfer.files));
+      }
+    });
 
-  dropzone.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFilesSelected(Array.from(e.target.files));
-      fileInput.value = '';
+    if (fileInput) {
+      dropzone.addEventListener('click', () => fileInput.click());
     }
-  });
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleFilesSelected(Array.from(e.target.files));
+        fileInput.value = '';
+      }
+    });
+  }
 
   if (addMoreInput) {
     addMoreInput.addEventListener('change', (e) => {
@@ -1117,9 +1150,11 @@ function setupEventListeners() {
     });
   }
 
-  processBtn.addEventListener('click', () => {
-    executeDocumentOperation();
-  });
+  if (processBtn) {
+    processBtn.addEventListener('click', () => {
+      executeDocumentOperation();
+    });
+  }
 }
 
 // ── Global Window Bindings for Inline HTML Compatibility ────────────────────
@@ -1460,7 +1495,8 @@ window.insertImageAnnotation = insertImageAnnotation;
 window.setupEditorKeyboardAndPaste = setupEditorKeyboardAndPaste;
 
 function resolveToolKey(path) {
-  const raw = (path || '').replace(/^\//, '') || 'merge-pdf';
+  // Normalize underscores to hyphens (e.g. /draw_signature → draw-signature)
+  const raw = (path || '').replace(/^\//, '').replace(/_/g, '-') || 'merge-pdf';
   return CLIENT_ROUTE_ALIASES[raw] || raw;
 }
 

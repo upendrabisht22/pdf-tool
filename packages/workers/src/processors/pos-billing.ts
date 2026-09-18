@@ -241,32 +241,22 @@ export class PosBillingProcessor implements DocumentProcessor<PosBillingOptions>
       drawRowRight(`Tax / GST (${taxPct}%):`, `+ Rs. ${formatCurrency(taxAmount)}`);
     }
 
-    curY -= 2;
+    curY -= 6;
+    const grandBoxH = 20;
+    const grandBoxY = curY - grandBoxH;
     // Grand Total Bar
     page.drawRectangle({
       x: margin,
-      y: curY - 4,
+      y: grandBoxY,
       width: contentWidth,
-      height: 18,
-      color: rgb(0.12, 0.12, 0.15),
+      height: grandBoxH,
+      color: cBlack,
     });
-    page.drawText('GRAND TOTAL:', {
-      x: margin + 6,
-      y: curY + 1,
-      size: 9,
-      font: fontMonoBold,
-      color: rgb(1, 1, 1),
-    });
-    const gtStr = `Rs. ${formatCurrency(grandTotal)}`;
-    const gtW = fontMonoBold.widthOfTextAtSize(gtStr, 9.5);
-    page.drawText(gtStr, {
-      x: pageWidth - margin - gtW - 6,
-      y: curY + 1,
-      size: 9.5,
-      font: fontMonoBold,
-      color: rgb(1, 1, 1),
-    });
-    curY -= 22;
+    page.drawText('GRAND TOTAL:', { x: margin + 8, y: grandBoxY + 5.5, size: 9, font: fontMonoBold, color: rgb(1, 1, 1) });
+    const gStr = `Rs. ${formatCurrency(grandTotal)}`;
+    const gW = fontMonoBold.widthOfTextAtSize(gStr, 9);
+    page.drawText(gStr, { x: pageWidth - margin - 8 - gW, y: grandBoxY + 5.5, size: 9, font: fontMonoBold, color: rgb(1, 1, 1) });
+    curY = grandBoxY - 14;
 
     // Payment Mode
     const paymentMode = options.paymentMethod || 'Cash';

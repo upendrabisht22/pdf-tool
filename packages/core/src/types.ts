@@ -48,6 +48,19 @@ export type OperationType =
   | 'edit-pdf'
   | 'pipeline';
 
+export type ToolMode = 'processor' | 'generator' | 'creator' | 'editor';
+export type ToolInputType = 'pdf' | 'image' | 'office' | 'markdown' | 'pdf-or-image' | 'none';
+
+export interface ToolContract {
+  mode: ToolMode;
+  requiresInputFile: boolean;
+  inputType: ToolInputType;
+  accept?: string | null;
+  multiple?: boolean;
+  studioId?: string | null;
+  wideCanvas?: boolean;
+}
+
 // ============================================================================
 // 2. JOB STATE MACHINE
 // ============================================================================

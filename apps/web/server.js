@@ -50,7 +50,7 @@ import {
   EditPdfProcessor,
   SandboxedWorkerHarness,
 } from '@doc-platform/workers';
-import { TOOL_REGISTRY, generateToolJsonLd } from '@doc-platform/core';
+import { TOOL_REGISTRY, generateToolJsonLd, getToolContract } from '@doc-platform/core';
 import { applyRateLimit } from './security/rate-limiter.js';
 import { scanForPdfBomb } from './security/pdf-bomb-defense.js';
 import { validateFileSize, validateTotalJobSize, TIER_SIZE_LIMITS } from './security/file-size-guard.js';
@@ -628,7 +628,8 @@ const server = http.createServer(async (req, res) => {
   };
 
   // Serve Dedicated Tool Studio with Rich SEO & Structured Data
-  const rawToolKey = pathname.replace(/^\//, '');
+  // Normalize underscores to hyphens (e.g. /draw_signature → /draw-signature)
+  const rawToolKey = pathname.replace(/^\//, '').replace(/_/g, '-');
   const currentToolKey = ROUTE_ALIASES[rawToolKey] || rawToolKey;
   const toolConfig = TOOL_REGISTRY[currentToolKey];
 
@@ -653,6 +654,7 @@ const server = http.createServer(async (req, res) => {
     TOOL_REGISTRY,
     renderGsapScripts,
     currentToolKey,
+    toolContract: getToolContract(currentToolKey),
   });
 
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -662,5 +664,5 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`DocPlatform production server running on http://localhost:${PORT}`);
 });
-// Reload trigger: 2026-09-15-saas-dark-landing-page
+// Reload trigger: 2026-09-18-business-suite-update
 

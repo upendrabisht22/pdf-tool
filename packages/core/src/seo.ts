@@ -3,7 +3,9 @@
  * @description Programmatic SEO schemas, OpenGraph helpers, and JSON-LD structured data generators.
  */
 
-export interface ToolSeoConfig {
+import type { ToolContract, ToolMode, ToolInputType } from './types.js';
+
+export interface ToolSeoConfig extends Partial<ToolContract> {
   slug: string;
   title: string;
   metaTitle: string;
@@ -420,6 +422,12 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
   },
   'draw-signature': {
     slug: 'draw-signature',
+    mode: 'creator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: 'image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp',
+    studioId: 'signature-studio',
+    wideCanvas: false,
     title: 'Draw & Compress Signature (<30 KB)',
     metaTitle: 'Draw & Compress Signature Online — Free Govt Exam & Portal Ready | DocPlatform',
     metaDescription: 'Draw your official digital signature or compress signature photos under 20KB, 30KB, or 50KB for UPSC, SSC, Defense, and Govt exam portal uploads.',
@@ -487,6 +495,12 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
   },
   'gst-invoice-pdf': {
     slug: 'gst-invoice-pdf',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'gst-invoice-studio',
+    wideCanvas: true,
     title: 'GST & Tax Invoice Generator',
     metaTitle: 'Free GST Invoice Generator Online — Tax Compliant Invoice with UPI QR | DocPlatform',
     metaDescription: 'Create, customize, and download professional GST-compliant tax invoices with automatic CGST/SGST/IGST tax calculation, amount in words, and dynamic UPI QR codes.',
@@ -510,6 +524,12 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
   },
   'pos-billing': {
     slug: 'pos-billing',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'pos-billing-studio',
+    wideCanvas: true,
     title: 'Minimal POS Billing & Thermal Slip Maker',
     metaTitle: 'Free Minimal POS Billing & Thermal Receipt Maker | DocPlatform',
     metaDescription: 'Generate clean retail counter bills and standard 80mm thermal receipt slips with itemized pricing, discounts, tax, and scannable UPI QR payment.',
@@ -533,6 +553,12 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
   },
   'clean-billing': {
     slug: 'clean-billing',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'pos-billing-studio',
+    wideCanvas: true,
     title: 'Minimal POS Billing & Thermal Slip Maker',
     metaTitle: 'Free Minimal POS Billing & Thermal Receipt Maker | DocPlatform',
     metaDescription: 'Generate clean retail counter bills and standard 80mm thermal receipt slips with itemized pricing, discounts, tax, and scannable UPI QR payment.',
@@ -555,6 +581,12 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
   },
   'tax-receipt': {
     slug: 'tax-receipt',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'tax-receipt-studio',
+    wideCanvas: true,
     title: 'Tax Receipt & 80G Donation Receipt Maker',
     metaTitle: 'Free Tax Receipt & 80G Donation Receipt Generator | DocPlatform',
     metaDescription: 'Create official Section 80G donation receipts, charitable trust tax deduction slips, and income tax deduction certificates with Rupee words and digital seal.',
@@ -577,6 +609,12 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
   },
   'estimate-maker': {
     slug: 'estimate-maker',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'estimate-studio',
+    wideCanvas: true,
     title: 'Estimates & Quotation Maker',
     metaTitle: 'Free Business Estimate & Quotation Maker Online | DocPlatform',
     metaDescription: 'Generate professional project estimates, client sales quotations, and proforma proposals with scope of work, validity timelines, and acceptance sign-offs.',
@@ -748,6 +786,12 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
   },
   'edit-pdf': {
     slug: 'edit-pdf',
+    mode: 'editor',
+    requiresInputFile: true,
+    inputType: 'pdf',
+    accept: '.pdf,application/pdf',
+    studioId: 'pdf-editor-studio',
+    wideCanvas: true,
     title: 'Visual PDF Editor & Form Filler',
     metaTitle: 'Free Visual PDF Editor Online — Edit Text, Fill Forms & Whiteout | DocPlatform',
     metaDescription: 'Edit PDF documents directly in your browser. Add text, erase typos with whiteout, draw annotations, place checkmarks, insert signatures, and export high-resolution vector PDFs.',
@@ -844,5 +888,57 @@ export function generateToolJsonLd(config: ToolSeoConfig) {
     webAppSchema,
     howToSchema,
     faqSchema,
+  };
+}
+
+/**
+ * Helper to get the canonical ToolContract for any tool or alias
+ */
+export function getToolContract(toolKey: string): ToolContract {
+  const tool = TOOL_REGISTRY[toolKey];
+  const mode: ToolMode = tool?.mode || (
+    ['gst-invoice-pdf', 'gst-invoice', 'pos-billing', 'clean-billing', 'tax-receipt', 'estimate-maker'].includes(toolKey) ? 'generator' :
+    toolKey === 'draw-signature' ? 'creator' :
+    ['edit-pdf', 'pdf-editor'].includes(toolKey) ? 'editor' : 'processor'
+  );
+
+  const requiresInputFile = tool?.requiresInputFile ?? (mode === 'processor' || mode === 'editor');
+  const inputType: ToolInputType = tool?.inputType || (
+    !requiresInputFile ? 'none' :
+    ['jpg-to-pdf', 'image-to-pdf'].includes(toolKey) ? 'image' :
+    toolKey === 'markdown-to-pdf' ? 'markdown' :
+    ['word-to-pdf', 'excel-to-pdf', 'powerpoint-to-pdf', 'ppt-to-pdf'].includes(toolKey) ? 'office' :
+    toolKey === 'ocr-pdf' ? 'pdf-or-image' : 'pdf'
+  );
+
+  const accept = tool?.accept !== undefined ? tool.accept : (
+    !requiresInputFile ? null :
+    inputType === 'image' ? 'image/png,image/jpeg,image/webp,image/*,.png,.jpg,.jpeg,.webp' :
+    inputType === 'markdown' ? '.md,.markdown,text/markdown,text/plain' :
+    inputType === 'office' ? '.docx,.doc,.rtf,.odt,.xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.*' :
+    inputType === 'pdf-or-image' ? '.pdf,image/png,image/jpeg,.png,.jpg' :
+    '.pdf,application/pdf'
+  );
+
+  const studioId = tool?.studioId || (
+    ['gst-invoice-pdf', 'gst-invoice'].includes(toolKey) ? 'gst-invoice-studio' :
+    ['pos-billing', 'clean-billing'].includes(toolKey) ? 'pos-billing-studio' :
+    toolKey === 'tax-receipt' ? 'tax-receipt-studio' :
+    toolKey === 'estimate-maker' ? 'estimate-studio' :
+    toolKey === 'draw-signature' ? 'signature-studio' :
+    ['edit-pdf', 'pdf-editor'].includes(toolKey) ? 'pdf-editor-studio' : null
+  );
+
+  const wideCanvas = tool?.wideCanvas ?? (mode === 'generator' || mode === 'editor');
+  const multiple = tool?.multiple ?? (['merge-pdf', 'jpg-to-pdf', 'image-to-pdf', 'compare-pdf'].includes(toolKey));
+
+  return {
+    mode,
+    requiresInputFile,
+    inputType,
+    accept,
+    multiple,
+    studioId,
+    wideCanvas,
   };
 }

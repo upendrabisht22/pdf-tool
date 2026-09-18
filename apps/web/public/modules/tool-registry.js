@@ -321,22 +321,47 @@ export const TOOL_DEFINITIONS = {
   },
   'draw-signature': {
     category: 'security',
+    mode: 'creator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: 'image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp',
+    studioId: 'signature-studio',
+    wideCanvas: false,
     title: 'Draw & Compress Signature (<30 KB)',
     badge: 'Govt Exam & Defense Portal Ready',
     subtitle: 'Draw your signature on screen or upload a photo to compress strictly under 20KB, 30KB, or 50KB for online forms.',
     actionName: 'Compress & Download Signature',
     multiple: false,
-    accept: 'image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp',
     optionsHtml: ``
   },
   'edit-pdf': {
     category: 'security',
+    mode: 'editor',
+    requiresInputFile: true,
+    inputType: 'pdf',
+    accept: '.pdf,application/pdf',
+    studioId: 'pdf-editor-studio',
+    wideCanvas: true,
     title: 'Visual PDF Editor & Form Filler',
     badge: '100% In-Browser Interactive Vector Editor',
     subtitle: 'Add text, erase with whiteout, draw annotations, place checkmarks, and sign documents with zero server upload.',
     actionName: 'Open Visual PDF Editor',
     multiple: false,
+    optionsHtml: ``
+  },
+  'pdf-editor': {
+    category: 'security',
+    mode: 'editor',
+    requiresInputFile: true,
+    inputType: 'pdf',
     accept: '.pdf,application/pdf',
+    studioId: 'pdf-editor-studio',
+    wideCanvas: true,
+    title: 'Visual PDF Editor & Form Filler',
+    badge: '100% In-Browser Interactive Vector Editor',
+    subtitle: 'Add text, erase with whiteout, draw annotations, place checkmarks, and sign documents with zero server upload.',
+    actionName: 'Open Visual PDF Editor',
+    multiple: false,
     optionsHtml: ``
   },
   'flatten-pdf': {
@@ -534,189 +559,77 @@ export const TOOL_DEFINITIONS = {
   },
   'gst-invoice-pdf': {
     category: 'business',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'gst-invoice-studio',
+    wideCanvas: true,
     title: 'Professional GST & Tax Invoice Generator',
     badge: 'Split-Screen Live Studio & Dynamic UPI QR',
     subtitle: 'Create 100% compliant Indian GST tax invoices with instant vector PDF generation and scannable UPI QR code.',
     actionName: 'Generate GST Invoice PDF',
     multiple: false,
-    accept: '.pdf,application/pdf',
     optionsHtml: ``
   },
   'pos-billing': {
     category: 'business',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'pos-billing-studio',
+    wideCanvas: true,
     title: 'Minimal POS Billing & Thermal Slip Maker',
     badge: 'Split-Screen Live Thermal Preview & UPI QR',
     subtitle: 'Generate clean retail counter receipts and standard 80mm thermal paper slips with instant print and vector PDF export.',
     actionName: 'Generate POS Receipt PDF',
     multiple: false,
-    accept: '.pdf,application/pdf',
     optionsHtml: ``
   },
   'clean-billing': {
     category: 'business',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'pos-billing-studio',
+    wideCanvas: true,
     title: 'Minimal POS Billing & Thermal Slip Maker',
     badge: 'Split-Screen Live Thermal Preview & UPI QR',
     subtitle: 'Generate clean retail counter receipts and standard 80mm thermal paper slips with instant print and vector PDF export.',
     actionName: 'Generate POS Receipt PDF',
     multiple: false,
-    accept: '.pdf,application/pdf',
     optionsHtml: ``
   },
   'tax-receipt': {
     category: 'business',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'tax-receipt-studio',
+    wideCanvas: true,
     title: 'Tax Receipt & 80G Donation Receipt Maker',
     badge: 'Certificate-Grade 80G Exemption Receipt Studio',
     subtitle: 'Create official Section 80G charitable donation receipts, Trust exemption certificates, and deduction slips in seconds.',
     actionName: 'Generate 80G Receipt PDF',
     multiple: false,
-    accept: '.pdf,application/pdf',
     optionsHtml: ``
   },
   'estimate-maker': {
     category: 'business',
+    mode: 'generator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'estimate-studio',
+    wideCanvas: true,
     title: 'Estimates & Quotation Maker',
     badge: 'Live Scope Proposal & Acceptance Sign-off',
     subtitle: 'Create professional project estimates, client sales proposals, and proforma quotations with deliverables grids and terms.',
     actionName: 'Generate Estimate PDF',
     multiple: false,
-    accept: '.pdf,application/pdf',
-    optionsHtml: ``
-  },
-  'flatten-pdf': {
-    category: 'core',
-    title: 'Flatten PDF Online',
-    badge: 'Lock Interactive Forms & Markup',
-    subtitle: 'Convert fillable form fields and annotations into permanent, read-only static pages.',
-    actionName: 'Flatten PDF Document',
-    multiple: false,
-    accept: '.pdf,application/pdf',
-    optionsHtml: ``
-  },
-  'repair-pdf': {
-    category: 'core',
-    title: 'Repair PDF Online',
-    badge: 'Fix Corrupted & Damaged Files',
-    subtitle: 'Recover unreadable PDF files with automatic cross-reference reconstruction and stream repair.',
-    actionName: 'Repair & Recover PDF',
-    multiple: false,
-    accept: '.pdf,application/pdf',
-    optionsHtml: ``
-  },
-  'page-numbers-pdf': {
-    category: 'security',
-    title: 'Add Page Numbers to PDF',
-    badge: 'Custom Alignment & Numbering Styles',
-    subtitle: 'Insert clean automated page numbers and headers/footers with custom positioning and numbering formats.',
-    actionName: 'Apply Page Numbers',
-    multiple: false,
-    accept: '.pdf,application/pdf',
-    optionsHtml: `
-      <select id="opt-page-pos" class="select-control">
-        <option value="bottom-right" selected>Bottom Right</option>
-        <option value="bottom-center">Bottom Center</option>
-        <option value="bottom-left">Bottom Left</option>
-        <option value="top-right">Top Right</option>
-        <option value="top-center">Top Center</option>
-        <option value="top-left">Top Left</option>
-      </select>
-      <select id="opt-page-format" class="select-control">
-        <option value="n" selected>1, 2, 3</option>
-        <option value="page-n">Page 1, Page 2</option>
-        <option value="page-n-of-total">Page 1 of 5</option>
-      </select>
-    `
-  },
-  'strip-metadata-pdf': {
-    category: 'security',
-    title: 'Privacy Scanner & Strip Metadata',
-    badge: 'Purge Hidden PII & Tracking Tags',
-    subtitle: 'Sanitize confidential PDFs by removing author names, creation software history, and hidden metadata.',
-    actionName: 'Sanitize & Strip Metadata',
-    multiple: false,
-    accept: '.pdf,application/pdf',
-    optionsHtml: ``
-  },
-  'ai-extract-table': {
-    category: 'ai',
-    title: 'Extract Tables from PDF',
-    badge: 'AI & Layout Reconstruction to Excel / JSON',
-    subtitle: 'Extract complex tabular data from PDF invoices, bank statements, and reports into Excel (.xlsx) and CSV.',
-    actionName: 'Extract Tables Now',
-    multiple: false,
-    accept: '.pdf,application/pdf',
-    optionsHtml: `
-      <select id="opt-table-format" class="select-control">
-        <option value="excel" selected>Microsoft Excel (.xlsx)</option>
-        <option value="csv">Comma-Separated Values (.csv)</option>
-        <option value="json">Structured JSON (.json)</option>
-      </select>
-    `
-  },
-  'crop-pdf': {
-    category: 'core',
-    title: 'Crop & Resize PDF',
-    badge: 'Trim Margins & Standard Paper Sizing',
-    subtitle: 'Trim unwanted white space or margins from PDF pages, or resize pages to standard A4, Letter, or Legal dimensions.',
-    actionName: 'Crop & Resize PDF',
-    multiple: false,
-    accept: '.pdf,application/pdf',
-    optionsHtml: `
-      <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <span style="font-weight: 600; color: var(--text-primary);">Mode:</span>
-          <select id="opt-crop-mode" class="select-control" onchange="window.toggleCropMode(this.value)">
-            <option value="trim" selected>Trim Margins</option>
-            <option value="resize">Resize to Standard Paper</option>
-          </select>
-        </div>
-        <div id="crop-trim-inputs" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-          <span>Top: <input type="number" id="opt-crop-top" value="20" min="0" style="width: 50px; padding: 2px 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary);"></span>
-          <span>Bottom: <input type="number" id="opt-crop-bottom" value="20" min="0" style="width: 50px; padding: 2px 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary);"></span>
-          <span>Left: <input type="number" id="opt-crop-left" value="20" min="0" style="width: 50px; padding: 2px 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary);"></span>
-          <span>Right: <input type="number" id="opt-crop-right" value="20" min="0" style="width: 50px; padding: 2px 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary);"></span>
-          <select id="opt-crop-unit" class="select-control">
-            <option value="pt" selected>Points (pt)</option>
-            <option value="mm">Millimeters (mm)</option>
-            <option value="in">Inches (in)</option>
-          </select>
-        </div>
-        <div id="crop-resize-inputs" style="display: none; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-          <span>Paper Size:</span>
-          <select id="opt-crop-target-size" class="select-control">
-            <option value="A4" selected>A4 (210 × 297 mm)</option>
-            <option value="LETTER">US Letter (8.5 × 11 in)</option>
-            <option value="LEGAL">US Legal (8.5 × 14 in)</option>
-            <option value="A3">A3 (297 × 420 mm)</option>
-            <option value="A5">A5 (148 × 210 mm)</option>
-          </select>
-          <span>Fit Mode:</span>
-          <select id="opt-crop-scale-mode" class="select-control">
-            <option value="fit" selected>Scale & Center</option>
-            <option value="stretch">Stretch to Fill</option>
-            <option value="pad">Pad Canvas</option>
-          </select>
-        </div>
-      </div>
-    `
-  },
-  'edit-pdf': {
-    category: 'core',
-    title: 'Visual PDF Editor',
-    badge: '100% In-Browser Interactive Studio',
-    subtitle: 'Add text, whiteout typos, draw freehand lines, highlight, add stamps, and insert signatures directly on your PDF pages.',
-    actionName: 'Open Visual PDF Editor',
-    multiple: false,
-    accept: '.pdf,application/pdf',
-    optionsHtml: ``
-  },
-  'pdf-editor': {
-    category: 'core',
-    title: 'Visual PDF Editor',
-    badge: '100% In-Browser Interactive Studio',
-    subtitle: 'Add text, whiteout typos, draw freehand lines, highlight, add stamps, and insert signatures directly on your PDF pages.',
-    actionName: 'Open Visual PDF Editor',
-    multiple: false,
-    accept: '.pdf,application/pdf',
     optionsHtml: ``
   }
 };
@@ -1042,4 +955,59 @@ for (const [alias, target] of Object.entries(TOOL_ALIASES)) {
   if (TOOL_DETAILS_DATA[target] && !TOOL_DETAILS_DATA[alias]) {
     TOOL_DETAILS_DATA[alias] = TOOL_DETAILS_DATA[target];
   }
+}
+
+// ── Contract Normalization for All Tools ────────────────────────────────────
+for (const [key, tool] of Object.entries(TOOL_DEFINITIONS)) {
+  if (!tool.mode) {
+    if (['gst-invoice-pdf', 'pos-billing', 'clean-billing', 'tax-receipt', 'estimate-maker'].includes(key)) {
+      tool.mode = 'generator';
+    } else if (key === 'draw-signature') {
+      tool.mode = 'creator';
+    } else if (['edit-pdf', 'pdf-editor'].includes(key)) {
+      tool.mode = 'editor';
+    } else {
+      tool.mode = 'processor';
+    }
+  }
+  if (tool.requiresInputFile === undefined) {
+    tool.requiresInputFile = tool.mode === 'processor' || tool.mode === 'editor';
+  }
+  if (!tool.inputType) {
+    tool.inputType = !tool.requiresInputFile ? 'none' :
+      ['jpg-to-pdf', 'image-to-pdf'].includes(key) ? 'image' :
+      key === 'markdown-to-pdf' ? 'markdown' :
+      ['word-to-pdf', 'excel-to-pdf', 'powerpoint-to-pdf', 'ppt-to-pdf'].includes(key) ? 'office' :
+      key === 'ocr-pdf' ? 'pdf-or-image' : 'pdf';
+  }
+  if (!tool.requiresInputFile && tool.mode === 'generator') {
+    tool.accept = null;
+  }
+  if (tool.wideCanvas === undefined) {
+    tool.wideCanvas = tool.mode === 'generator' || tool.mode === 'editor';
+  }
+}
+
+export function getClientToolContract(toolKey) {
+  const tool = TOOL_DEFINITIONS[toolKey];
+  if (!tool) {
+    return {
+      mode: 'processor',
+      requiresInputFile: true,
+      inputType: 'pdf',
+      accept: '.pdf,application/pdf',
+      multiple: false,
+      studioId: null,
+      wideCanvas: false
+    };
+  }
+  return {
+    mode: tool.mode || 'processor',
+    requiresInputFile: tool.requiresInputFile ?? (tool.mode === 'processor' || tool.mode === 'editor'),
+    inputType: tool.inputType || 'pdf',
+    accept: tool.accept !== undefined ? tool.accept : (tool.requiresInputFile ? '.pdf,application/pdf' : null),
+    multiple: Boolean(tool.multiple),
+    studioId: tool.studioId || null,
+    wideCanvas: Boolean(tool.wideCanvas)
+  };
 }

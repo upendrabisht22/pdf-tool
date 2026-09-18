@@ -8,6 +8,7 @@ import {
   TIER_LIMITS,
   TOOL_REGISTRY,
   generateToolJsonLd,
+  getToolContract,
 } from '../dist/index.js';
 
 test('Core - Magic Byte Validator rejects empty or tiny buffers', () => {
@@ -68,3 +69,53 @@ test('Core - SEO JSON-LD structured data generation', () => {
   assert.equal(jsonLd.faqSchema['@type'], 'FAQPage');
   assert.equal(jsonLd.faqSchema.mainEntity.length, 3);
 });
+
+test('Core - Tool Contract Architectural Integrity for all registry tools', () => {
+  const tools = Object.keys(TOOL_REGISTRY);
+  assert.ok(tools.length > 20, 'TOOL_REGISTRY must contain all tools');
+
+  for (const toolKey of tools) {
+    const contract = getToolContract(toolKey);
+    assert.ok(contract, `Tool contract for ${toolKey} should exist`);
+    assert.ok(['processor', 'generator', 'creator', 'editor'].includes(contract.mode), `Invalid mode for ${toolKey}`);
+    assert.equal(typeof contract.requiresInputFile, 'boolean', `requiresInputFile should be boolean for ${toolKey}`);
+    assert.ok(['pdf', 'image', 'office', 'markdown', 'pdf-or-image', 'none'].includes(contract.inputType), `Invalid inputType for ${toolKey}`);
+
+    if (contract.mode === 'generator') {
+      assert.equal(contract.requiresInputFile, false, `Generator ${toolKey} must NOT require input files`);
+      assert.equal(contract.inputType, 'none', `Generator ${toolKey} inputType must be none`);
+      assert.equal(contract.accept, null, `Generator ${toolKey} accept must be null`);
+      assert.ok(contract.studioId, `Generator ${toolKey} must have studioId`);
+    }
+
+    if (contract.mode === 'creator') {
+      assert.equal(contract.requiresInputFile, false, `Creator ${toolKey} must NOT require input files`);
+      assert.ok(contract.studioId, `Creator ${toolKey} must have studioId`);
+    }
+
+    if (contract.mode === 'editor') {
+      assert.equal(contract.requiresInputFile, true, `Editor ${toolKey} must require input files`);
+      assert.equal(contract.inputType, 'pdf', `Editor ${toolKey} must accept PDF`);
+      assert.ok(contract.studioId, `Editor ${toolKey} must have studioId`);
+    }
+
+    if (contract.mode === 'processor') {
+      assert.equal(contract.requiresInputFile, true, `Processor ${toolKey} must require input files`);
+      assert.notEqual(contract.inputType, 'none', `Processor ${toolKey} must have valid inputType`);
+      assert.ok(contract.accept, `Processor ${toolKey} must specify accept filter`);
+    }
+  }
+});
+
+test('Core - Document Generators strictly enforce zero-input contract', () => {
+  const generators = ['gst-invoice-pdf', 'pos-billing', 'tax-receipt', 'estimate-maker'];
+  for (const key of generators) {
+    const contract = getToolContract(key);
+    assert.equal(contract.mode, 'generator');
+    assert.equal(contract.requiresInputFile, false);
+    assert.equal(contract.inputType, 'none');
+    assert.equal(contract.accept, null);
+    assert.equal(contract.wideCanvas, true);
+  }
+});
+

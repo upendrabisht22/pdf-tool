@@ -674,16 +674,22 @@ body {
   border: 1px dashed var(--border);
   border-radius: 0px;
   padding: 3.25rem 1.5rem;
-  text-align: center !important;
+  text-align: center;
   cursor: pointer;
   background: var(--bg-elevated);
   transition: all 0.2s ease;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   box-sizing: border-box;
+}
+
+.dropzone.hidden,
+.dropzone[hidden],
+.dropzone[style*="display: none"] {
+  display: none !important;
 }
 
 .dropzone:hover, .dropzone.dragover {
@@ -3237,6 +3243,161 @@ body {
   border-top: 1px solid #cbd5e1;
   background: #ffffff;
 }
+
+/* ─── GST Invoice Theme Overrides ─────────────────────────────────────────── */
+/* Default (modern/slate) is the base — no override needed.                    */
+/* Each theme uses data-gst-theme attribute on .gst-doc-ledger-box             */
+
+/* Corporate Blue — Royal Navy #1e3a8a */
+.gst-doc-ledger-box[data-gst-theme="corporate"] {
+  border-color: #1e3a8a;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-stat-header {
+  background: #eff6ff;
+  border-bottom-color: #1e3a8a;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-stat-header > div > div:first-child {
+  color: #1e3a8a;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-seller-block {
+  border-bottom-color: #2563eb;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-meta-table {
+  border-bottom-color: #2563eb;
+  background: #f0f7ff;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-meta-col:last-child {
+  border-left-color: #2563eb;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-party-table {
+  border-bottom-color: #2563eb;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-party-box:last-child {
+  border-left-color: #2563eb;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-table th {
+  background: #dbeafe;
+  color: #1e3a8a;
+  border-color: #93c5fd;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-table-scroll {
+  border-bottom-color: #2563eb;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-hsn-table th {
+  background: #dbeafe;
+  color: #1e3a8a;
+  border-color: #93c5fd;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-bottom-grid {
+  border-top-color: #2563eb;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-bottom-left {
+  border-right-color: #2563eb;
+}
+.gst-doc-ledger-box[data-gst-theme="corporate"] .gst-doc-grand-row {
+  background: #1e3a8a;
+}
+
+/* Emerald Green — Forest Emerald #065f46 */
+.gst-doc-ledger-box[data-gst-theme="emerald"] {
+  border-color: #065f46;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-stat-header {
+  background: #ecfdf5;
+  border-bottom-color: #065f46;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-stat-header > div > div:first-child {
+  color: #065f46;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-seller-block {
+  border-bottom-color: #059669;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-meta-table {
+  border-bottom-color: #059669;
+  background: #f0fdf8;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-meta-col:last-child {
+  border-left-color: #059669;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-party-table {
+  border-bottom-color: #059669;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-party-box:last-child {
+  border-left-color: #059669;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-table th {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-table-scroll {
+  border-bottom-color: #059669;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-hsn-table th {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-bottom-grid {
+  border-top-color: #059669;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-bottom-left {
+  border-right-color: #059669;
+}
+.gst-doc-ledger-box[data-gst-theme="emerald"] .gst-doc-grand-row {
+  background: #065f46;
+}
+
+/* Clean Minimal — Graphite Zinc #18181b */
+.gst-doc-ledger-box[data-gst-theme="minimal"] {
+  border-color: #27272a;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-stat-header {
+  background: #f4f4f5;
+  border-bottom-color: #27272a;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-stat-header > div > div:first-child {
+  color: #18181b;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-seller-block {
+  border-bottom-color: #3f3f46;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-meta-table {
+  border-bottom-color: #3f3f46;
+  background: #fafafa;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-meta-col:last-child {
+  border-left-color: #3f3f46;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-party-table {
+  border-bottom-color: #3f3f46;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-party-box:last-child {
+  border-left-color: #3f3f46;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-table th {
+  background: #e4e4e7;
+  color: #18181b;
+  border-color: #a1a1aa;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-table-scroll {
+  border-bottom-color: #3f3f46;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-hsn-table th {
+  background: #e4e4e7;
+  color: #18181b;
+  border-color: #a1a1aa;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-bottom-grid {
+  border-top-color: #3f3f46;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-bottom-left {
+  border-right-color: #3f3f46;
+}
+.gst-doc-ledger-box[data-gst-theme="minimal"] .gst-doc-grand-row {
+  background: #18181b;
+}
+
 
 @media print {
   body * {

@@ -218,6 +218,7 @@ export function updateGstInvoicePreview() {
   const invNumber = document.getElementById('gst-inv-number')?.value || 'INV-2026-001';
   const invDate = document.getElementById('gst-inv-date')?.value || new Date().toISOString().split('T')[0];
   const taxTypeMode = document.getElementById('gst-tax-type')?.value || 'auto';
+  const theme = document.getElementById('gst-theme-select')?.value || 'modern';
 
   const upiId = document.getElementById('gst-upi-id')?.value || 'acmetech@hdfcbar';
   const bankName = document.getElementById('gst-bank-name')?.value || 'HDFC Bank';
@@ -354,7 +355,7 @@ export function updateGstInvoicePreview() {
 
   // Authentic Indian GST Tax Invoice Markup (Box-in-Box Ruled Structure)
   paper.innerHTML = `
-    <div class="gst-doc-ledger-box">
+    <div class="gst-doc-ledger-box" data-gst-theme="${theme}">
       <!-- 1. Statutory Header Bar (Rule 46 CGST Rules, 2017) -->
       <div class="gst-doc-stat-header">
         <div style="flex: 1; text-align: center;">
@@ -766,6 +767,22 @@ export function setGstStudioView(mode) {
  */
 export function printGstInvoicePreview() {
   window.print();
+}
+
+// Direct browser window attachment
+if (typeof window !== 'undefined') {
+  window.gstItems = gstItems;
+  window.initGstInvoiceStudio = initGstInvoiceStudio;
+  window.renderGstItemsTable = renderGstItemsTable;
+  window.onGstItemChange = onGstItemChange;
+  window.addGstItemRow = addGstItemRow;
+  window.deleteGstItemRow = deleteGstItemRow;
+  window.numberToWordsClient = numberToWordsClient;
+  window.formatInrClient = formatInrClient;
+  window.updateGstInvoicePreview = updateGstInvoicePreview;
+  window.generateAndDownloadGstInvoicePdf = generateAndDownloadGstInvoicePdf;
+  window.printGstInvoicePreview = printGstInvoicePreview;
+  window.setGstStudioView = setGstStudioView;
 }
 
 // CommonJS fallback
