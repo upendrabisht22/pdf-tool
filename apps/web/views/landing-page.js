@@ -221,6 +221,15 @@ const TOOLS_CATALOG = [
     keywords: 'draw signature, compress signature under 30kb, signature under 20kb, online signature pad, upsc ssc exam signature, digital signature, sign pdf, govt portal signature',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7b61ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4-12 12H6v-4L18 2z"/><path d="m22 6-4-4"/></svg>`
   },
+  {
+    slug: '/p2p-share',
+    title: 'P2P File & Code Share',
+    desc: 'Encrypted browser-to-browser WebRTC air-drop with zero cloud storage and instant QR pairing',
+    category: 'security',
+    featured: true,
+    keywords: 'p2p file share, webrtc air drop, zero login file transfer, college lab sharing, code snippet share, instant local drop',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7b61ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`
+  },
 
   // ── AI & Document Intelligence ──────────────────────────────────────────────
   {
@@ -279,6 +288,7 @@ const TOOLS_CATALOG = [
     desc: 'Thermal receipts and fast counter billing with UPI QR',
     category: 'business',
     featured: false,
+    keywords: 'clean-billing, pos billing, thermal receipts, counter slips, upi qr bill',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7b61ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>`
   },
   {
@@ -578,7 +588,7 @@ export function renderLandingPage({ renderNavbar, renderFooter, TOOL_REGISTRY } 
               </p>
             </div>
             <div class="mt-5">
-              <a href="/merge-pdf" class="mono-copy inline-flex items-center gap-1 text-xs font-medium text-[#7b61ff] hover:underline">
+              <a href="/p2p-share" class="mono-copy inline-flex items-center gap-1 text-xs font-medium text-[#7b61ff] hover:underline">
                 <span>Start Direct Transfer</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </a>

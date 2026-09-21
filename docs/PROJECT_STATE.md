@@ -1,8 +1,8 @@
 # MASTER PROJECT STATE
 **Document Utility & Infrastructure Platform**
 
-*Last Updated: 2026-09-17*  
-*Current Phase Status: `PHASE 12: COMPLETE — VISUAL PDF EDITOR, CROP PREVIEW & DUAL-LAYER UX INTEGRITY`*  
+*Last Updated: 2026-09-22*  
+*Current Phase Status: `PHASE 14: COMPLETE — P2P AIR-DROP ENGINE & 39-ROUTE BACKLINK INTEGRITY`*  
 *Overall Platform Status: `ACTIVE DEVELOPMENT — PRODUCTION READY ARCHITECTURE`*  
 
 ---
@@ -24,13 +24,15 @@
 | **Phase 10** | **Business Suite & Smart Billing Engines** | **COMPLETED** | Dedicated studios for GST Invoices (A4 intra/inter tax with UPI QR), POS Billing (80mm thermal slip), Section 80G Tax Exemption Receipts, and Commercial Estimates/Proposals |
 | **Phase 11** | **Visual PDF Editor & Interactive Crop Studio** | **COMPLETED** | Full in-browser Visual PDF Editor with seamless borderless whiteout (paper-tone presets: White, Cream, Blackout), Redact & Type Over workflow, Image insertion/pasting (`Ctrl+V`), and interactive real-time visual Crop & Resize canvas preview |
 | **Phase 12** | **Dual-Layer SSR/Hydration UX & Tool Registry Integrity** | **COMPLETED** | Universal server-side & client-side dropzone label synchronization across all 37 tools (Images, Office documents, Markdown, PDFs), fixed flexbox icon centering, resolved syntax scope redeclaration |
+| **Phase 13** | **Zero-Login WebRTC P2P Direct Share (`/p2p-share`)** | **COMPLETED** | In-memory ephemeral signaling relay (`p2p-signaling.js`), 6-character room codes (`LAB-402`, `DOC-711`), WebRTC DataChannel 64KB chunking, QR pairing, live Code Snippet Pad, 0-byte server disk storage |
+| **Phase 14** | **Blueprint Grid Alignment & 39-Route Backlink Integrity** | **COMPLETED** | Synchronized navbar dashed border width (`isWideCanvas` dynamic 64rem/80rem sizing) eliminating 128px gap, enriched 5-column mega-menu, verified 39/39 canonical tools & aliases with 100% HTTP 200 pass rate |
 
 ---
 
 ## 2. REPOSITORY & PACKAGE ARCHITECTURE
 
 - **Modular Monorepo Architecture**:
-  - `packages/core`: Canonical domain models, Job State Machine, error taxonomy (`PlatformError`), magic-byte inspection (`%PDF-`, `PNG`, `JPEG`, `WEBP`), structured JSON-LD SEO generators (`WebApplication`, `HowTo`, `FAQPage`), API types (`ApiKeyRecord`, `WebhookRecord`, `UsageEvent`, `AuditLogEntry`), and comprehensive `TOOL_REGISTRY` for 37 tools.
+  - `packages/core`: Canonical domain models, Job State Machine, error taxonomy (`PlatformError`), magic-byte inspection (`%PDF-`, `PNG`, `JPEG`, `WEBP`), structured JSON-LD SEO generators (`WebApplication`, `HowTo`, `FAQPage`), API types (`ApiKeyRecord`, `WebhookRecord`, `UsageEvent`, `AuditLogEntry`), and comprehensive `TOOL_REGISTRY` for 39 tools and aliases (including `p2p-share` and `p2p`).
   - `packages/providers`: Abstract provider interfaces & implementations:
     - `StorageProvider`: `LocalStorageProvider` (dev/test) & `R2StorageProvider` (Cloudflare R2 / S3).
     - `QueueProvider`: `InMemoryQueueProvider` with lease management, exponential backoff, retry counts, and idempotency.
@@ -50,15 +52,18 @@
     - `validateOutputDocument`: Strict integrity check on generated artifacts.
   - `apps/web`:
     - Production HTTP Server & Control Plane API (`/api/v1/health`, `/api/v1/files/upload-request`, `/api/v1/jobs`, `/api/v1/jobs/:id`).
+    - **P2P Signaling Engine** (`apps/web/api/p2p-signaling.js`): In-memory ephemeral SSE room coordinator with 6-char codes, brute-force join rate limiting, 2-peer cap, and auto-cleanup daemon.
     - **Views & UI Layer**:
-      - `apps/web/views/landing-page.js`: Flagship SaaS landing page with dark theme, vector preview tiles, tool search directory, and interactive demo triggers.
-      - `apps/web/views/app-page.js`: Unified workspace supporting both standard dropzone tools and specialized standalone studios (GST, POS, Tax Receipt, Estimate, Signature Draw/Upload, Visual PDF Editor, Crop/Resize).
+      - `apps/web/views/landing-page.js`: Flagship SaaS landing page with dark theme, vector preview tiles, 35+ tool search directory, and interactive demo triggers.
+      - `apps/web/views/app-page.js`: Unified workspace supporting dropzone tools, specialized standalone studios (GST, POS, Tax Receipt, Estimate, Signature Draw/Upload, Visual PDF Editor, Crop/Resize), and the new P2P Share studio.
+      - `apps/web/views/layout.js`: Shared blueprint navbar with dynamic `isWideCanvas` border alignment and 5-column mega-menu covering all 39 canonical tools and aliases.
+      - `apps/web/public/modules/p2p-client.js`: WebRTC DataChannel engine with 64KB chunking, flow control, QR pairing, and live Code Snippet Pad.
       - `apps/web/public/modules/pdf-editor-studio.js`: Standalone client-side vector overlay editor with undo/redo, text insertion, seamless whiteout, image placement, and freehand drawing.
-      - `apps/web/public/app.js`: Dual-layer hydration controller managing client-side file staging, drag-and-drop events, live crop preview canvas, and tool routing.
+      - `apps/web/public/app.js`: Dual-layer hydration controller managing client-side file staging, drag-and-drop events, live crop preview canvas, P2P studio lifecycle, and tool routing.
 
 ---
 
-## 3. VERIFIED TEST SUITE RESULTS (112 / 112 PASSING)
+## 3. VERIFIED TEST SUITE RESULTS (117 / 117 PASSING + 8 / 8 P2P TESTS)
 
 - `packages/core`: Magic byte validation (PDF, PNG, JPEG, WEBP, OpenXML, OLE2 Legacy), error taxonomy, state transitions, SEO schemas.
 - `packages/providers`: Local storage lifecycle, queue lease/ack/nack state machine, auth resolution.
@@ -68,7 +73,8 @@
   - Conversion operations (PDF $\leftrightarrow$ Word, PDF $\leftrightarrow$ Excel, Word $\rightarrow$ PDF, Excel $\rightarrow$ PDF, Markdown $\leftrightarrow$ PDF).
   - Visual Suite operations (CropPdf margin trimming and standard resizing, EditPdf vector annotations, whiteout, and stamps).
   - Security operations (AES-256 encryption/decryption roundtrip, flattening, stream repair, permanent redaction, metadata stripping).
-- `apps/web`: Full route and dropzone audit verifying all 37 tools render correct tool-specific titles, descriptions, button labels, and input MIME types.
+- `apps/web/test/p2p-signaling.test.js`: 8/8 tests passing (room code generation, ephemeral creation, 2-peer cap, 404 handling, join rate limiting, SSE connection, SDP/ICE relay, clean teardown).
+- `apps/web/test/backlink-audit.js`: 39/39 tools & aliases verified with 100% HTTP 200 pass rate, 0 broken backlinks across Landing Page and Mega-Menu.
 
 ---
 

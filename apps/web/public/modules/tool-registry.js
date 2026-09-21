@@ -631,6 +631,21 @@ export const TOOL_DEFINITIONS = {
     actionName: 'Generate Estimate PDF',
     multiple: false,
     optionsHtml: ``
+  },
+  'p2p-share': {
+    category: 'security',
+    mode: 'creator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'p2p-share-studio',
+    wideCanvas: false,
+    title: 'Zero-Login P2P File & Code Share',
+    badge: 'Direct WebRTC Encrypted Air-Drop',
+    subtitle: 'Stream unlimited files and code snippets directly between browsers with zero cloud storage.',
+    actionName: 'Launch P2P Sharing Studio',
+    multiple: true,
+    optionsHtml: ``
   }
 };
 
@@ -652,6 +667,7 @@ export const TOOL_ICONS = {
   'strip-metadata-pdf': '🧹',
   'sign-pdf': '📜',
   'draw-signature': '✍️',
+  'p2p-share': '📡',
   'flatten-pdf': '📄',
   'repair-pdf': '🛠️',
   'protect-pdf': '🔒',
@@ -910,6 +926,26 @@ export const TOOL_DETAILS_DATA = {
       { question: 'Can I fill out non-editable scanned forms?', answer: 'Yes! Use the Text tool and Checkmark tool to easily type into form fields and check off boxes on any scanned document.' }
     ],
     related: ['draw-signature', 'sign-pdf', 'flatten-pdf', 'protect-pdf']
+  },
+  'p2p-share': {
+    category: 'Security & Air-Drop', categoryLink: '/p2p-share',
+    features: [
+      'Direct browser-to-browser encrypted transfer via WebRTC RTCDataChannel',
+      'Zero cloud storage: no files or code are ever written to server disk or cloud buckets',
+      'Instant pairing via high-contrast QR code or 6-digit room code (e.g. LAB-402)',
+      'Built-in monospace Code Snippet Pad with syntax highlighting for C++, Python, Java & SQL'
+    ],
+    howToSteps: [
+      { name: 'Create or Join Room', text: 'Click "Create Room" to generate a 6-character room code & QR code, or enter an existing code to join.' },
+      { name: 'Pair Workstations', text: 'Scan the QR code with a smartphone camera or open the room URL on a neighboring PC to bridge WebRTC.' },
+      { name: 'Stream Files & Code', text: 'Drag files into the dropzone or paste code snippets to transfer directly over encrypted P2P data channels.' }
+    ],
+    faqs: [
+      { question: 'Do my files go through DocPlatform servers?', answer: 'No! The signaling server only helps exchange initial connection metadata (SDP/ICE). All file bytes and code snippets travel directly between browsers encrypted via DTLS.' },
+      { question: 'What file types and sizes are supported?', answer: 'Any file type is supported: PDFs, ZIP archives, images, videos, and source code. There are no arbitrary cloud file size limits.' },
+      { question: 'Can I use this between a PC and an iPhone or Android phone?', answer: 'Yes! Simply scan the pairing QR code with your phone camera. It opens in standard mobile Safari or Chrome without installing any apps.' }
+    ],
+    related: ['protect-pdf', 'strip-metadata-pdf', 'merge-pdf', 'draw-signature']
   }
 };
 
@@ -943,6 +979,10 @@ export const TOOL_ALIASES = {
   'privacy-scanner': 'strip-metadata-pdf',
   'fingerprint-pdf': 'watermark-pdf',
   'compare-pdfs': 'compare-pdf',
+  'p2p': 'p2p-share',
+  'p2p-transfer': 'p2p-share',
+  'airdrop': 'p2p-share',
+  'air-drop': 'p2p-share',
 };
 
 for (const [alias, target] of Object.entries(TOOL_ALIASES)) {
@@ -962,7 +1002,7 @@ for (const [key, tool] of Object.entries(TOOL_DEFINITIONS)) {
   if (!tool.mode) {
     if (['gst-invoice-pdf', 'pos-billing', 'clean-billing', 'tax-receipt', 'estimate-maker'].includes(key)) {
       tool.mode = 'generator';
-    } else if (key === 'draw-signature') {
+    } else if (['draw-signature', 'p2p-share', 'p2p'].includes(key)) {
       tool.mode = 'creator';
     } else if (['edit-pdf', 'pdf-editor'].includes(key)) {
       tool.mode = 'editor';

@@ -815,6 +815,38 @@ export const TOOL_REGISTRY: Record<string, ToolSeoConfig> = {
       { question: 'Can I fill out non-editable scanned forms?', answer: 'Yes! Use the Text tool and Checkmark tool to easily type into form fields and check off boxes on any scanned document.' },
     ],
   },
+  'p2p-share': {
+    slug: 'p2p-share',
+    mode: 'creator',
+    requiresInputFile: false,
+    inputType: 'none',
+    accept: null,
+    studioId: 'p2p-share-studio',
+    wideCanvas: false,
+    title: 'Zero-Login P2P File & Code Share',
+    metaTitle: 'P2P File & Code Share — Zero-Login WebRTC Direct Air-Drop | DocPlatform',
+    metaDescription: 'Instant, encrypted peer-to-peer file and code transfer directly between browsers. No login, no cloud storage, zero file limits. Ideal for college labs, coding exams, and restricted networks.',
+    canonicalUrl: 'https://docplatform.app/p2p-share',
+    keywords: ['p2p file share', 'webrtc file transfer', 'code snippet share', 'zero login file share', 'airdrop alternative browser', 'college lab file sharing'],
+    features: [
+      'Direct browser-to-browser encrypted transfer via WebRTC RTCDataChannel',
+      'Zero cloud storage: no files or code are ever written to server disk or cloud buckets',
+      'Instant pairing via high-contrast QR code or 6-digit room code (e.g. LAB-402)',
+      'Built-in monospace Code Snippet Pad with syntax highlighting for C++, Python, Java & SQL',
+      'Multi-file drag-and-drop queue with real-time transfer speed gauges (MB/s)',
+      'Complete privacy: closing browser tab instantly destroys all ephemeral session state',
+    ],
+    howToSteps: [
+      { name: 'Create or Join Room', text: 'Click "Create Room" to generate a 6-character room code & QR code, or enter an existing code to join.' },
+      { name: 'Pair Workstations', text: 'Scan the QR code with a smartphone camera or open the room URL on a neighboring PC to bridge WebRTC.' },
+      { name: 'Stream Files & Code', text: 'Drag files into the dropzone or paste code snippets to transfer directly over encrypted P2P data channels.' },
+    ],
+    faqs: [
+      { question: 'Do my files go through DocPlatform servers?', answer: 'No! The signaling server only helps exchange initial connection metadata (SDP/ICE). All file bytes and code snippets travel directly between browsers encrypted via DTLS.' },
+      { question: 'What file types and sizes are supported?', answer: 'Any file type is supported: PDFs, ZIP archives, images, videos, and source code. There are no arbitrary cloud file size limits.' },
+      { question: 'Can I use this between a PC and an iPhone or Android phone?', answer: 'Yes! Simply scan the pairing QR code with your phone camera. It opens in standard mobile Safari or Chrome without installing any apps.' },
+    ],
+  },
 };
 
 // Aliases for friendly routing slugs
@@ -837,6 +869,13 @@ if (TOOL_REGISTRY['gst-invoice-pdf']) {
     ...TOOL_REGISTRY['gst-invoice-pdf'],
     slug: 'gst-invoice',
     canonicalUrl: 'https://docplatform.app/gst-invoice',
+  };
+}
+if (TOOL_REGISTRY['p2p-share']) {
+  TOOL_REGISTRY['p2p'] = {
+    ...TOOL_REGISTRY['p2p-share'],
+    slug: 'p2p',
+    canonicalUrl: 'https://docplatform.app/p2p',
   };
 }
 
@@ -898,7 +937,7 @@ export function getToolContract(toolKey: string): ToolContract {
   const tool = TOOL_REGISTRY[toolKey];
   const mode: ToolMode = tool?.mode || (
     ['gst-invoice-pdf', 'gst-invoice', 'pos-billing', 'clean-billing', 'tax-receipt', 'estimate-maker'].includes(toolKey) ? 'generator' :
-    toolKey === 'draw-signature' ? 'creator' :
+    ['draw-signature', 'p2p-share', 'p2p'].includes(toolKey) ? 'creator' :
     ['edit-pdf', 'pdf-editor'].includes(toolKey) ? 'editor' : 'processor'
   );
 
@@ -926,6 +965,7 @@ export function getToolContract(toolKey: string): ToolContract {
     toolKey === 'tax-receipt' ? 'tax-receipt-studio' :
     toolKey === 'estimate-maker' ? 'estimate-studio' :
     toolKey === 'draw-signature' ? 'signature-studio' :
+    ['p2p-share', 'p2p'].includes(toolKey) ? 'p2p-share-studio' :
     ['edit-pdf', 'pdf-editor'].includes(toolKey) ? 'pdf-editor-studio' : null
   );
 

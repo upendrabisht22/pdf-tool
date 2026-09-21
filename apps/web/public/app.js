@@ -71,6 +71,18 @@ import {
   setEstimateStudioView
 } from './modules/estimate-studio.js?v=3.5';
 import {
+  initP2pStudio,
+  createP2pRoom,
+  joinP2pRoom,
+  disconnectP2p,
+  sendP2pFiles,
+  sendP2pCodeSnippet,
+  setP2pStudioTab,
+  copyP2pRoomCode,
+  copyP2pJoinUrl,
+  copyP2pSnippetText
+} from './modules/p2p-client.js?v=4.0';
+import {
   getStoredGeminiKey,
   hasValidGeminiKey,
   copyAiPreviewText,
@@ -260,10 +272,14 @@ const ALL_STUDIO_IDS = [
   'pos-billing-studio',
   'tax-receipt-studio',
   'estimate-studio',
-  'pdf-editor-studio'
+  'pdf-editor-studio',
+  'p2p-share-studio'
 ];
 
 export const STUDIO_INITIALIZERS = {
+  'p2p-share-studio': () => {
+    initP2pStudio();
+  },
   'gst-invoice-studio': () => {
     initGstInvoiceStudio();
     if (window.innerWidth <= 1024) setGstStudioView('form');
@@ -392,6 +408,20 @@ export function switchTool(toolKey, updateUrl = true) {
   const mainContent = document.querySelector('.main-content');
   if (mainContent) {
     mainContent.classList.toggle('wide-canvas', Boolean(contract.wideCanvas));
+  }
+  const headerInner = document.getElementById('site-header-inner');
+  if (headerInner) {
+    headerInner.style.maxWidth = contract.wideCanvas ? '80rem' : '64rem';
+  }
+  const blueprintContainer = document.getElementById('main-blueprint-container');
+  if (blueprintContainer) {
+    blueprintContainer.classList.toggle('max-w-7xl', Boolean(contract.wideCanvas));
+    blueprintContainer.classList.toggle('max-w-5xl', !contract.wideCanvas);
+  }
+  const workspaceCard = document.querySelector('.workspace-card');
+  if (workspaceCard) {
+    workspaceCard.classList.toggle('w-full', Boolean(contract.wideCanvas));
+    workspaceCard.classList.toggle('max-w-4xl', !contract.wideCanvas);
   }
 
   hideAllStudiosAndDropzone();
@@ -1460,6 +1490,18 @@ window.setEstimateStudioView = setEstimateStudioView;
 
 // AI Preview Binding
 window.copyAiPreviewText = copyAiPreviewText;
+
+// P2P Studio Bindings
+window.initP2pStudio = initP2pStudio;
+window.createP2pRoom = createP2pRoom;
+window.joinP2pRoom = joinP2pRoom;
+window.disconnectP2p = disconnectP2p;
+window.sendP2pFiles = sendP2pFiles;
+window.sendP2pCodeSnippet = sendP2pCodeSnippet;
+window.setP2pStudioTab = setP2pStudioTab;
+window.copyP2pRoomCode = copyP2pRoomCode;
+window.copyP2pJoinUrl = copyP2pJoinUrl;
+window.copyP2pSnippetText = copyP2pSnippetText;
 
 // Visual PDF Editor Studio Bindings
 window.initPdfEditorStudio = initPdfEditorStudio;

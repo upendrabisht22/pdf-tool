@@ -63,6 +63,8 @@ import { insertUsageEvent, appendAuditEntry } from './api/usage-store.js';
 import { dispatchWebhookEvent } from './api/webhook-store.js';
 // ── Phase 8: Growth Platform & i18n SEO ──────────────────────────────────────
 import { handleGrowthRoutes } from './api/growth-routes.js';
+// ── WebRTC P2P Zero-Login Signaling Hub ─────────────────────────────────────
+import { handleP2pSignalingRoutes } from './api/p2p-signaling.js';
 // ── Modular View Templates (Layout, Static Pages, Main App Page) ────────────
 import { renderNavbar, renderFooter, renderGsapScripts } from './views/layout.js';
 import { renderPricingPage, renderPrivacyPage, renderTermsPage, renderSecurityPage, render404Page } from './views/static-pages.js';
@@ -480,6 +482,12 @@ const server = http.createServer(async (req, res) => {
     if (handled) return;
   }
 
+  // ── WebRTC P2P Ephemeral Signaling Routes ──────────────────────────────────
+  if (pathname.startsWith('/api/v1/p2p')) {
+    const handled = await handleP2pSignalingRoutes(req, res, pathname, sendJson);
+    if (handled) return;
+  }
+
   // ── Phase 8: Growth Platform, Sitemap & Widget Routes ──────────────────────
   const growthHandled = await handleGrowthRoutes(req, res, pathname, url, sendJson);
   if (growthHandled) return;
@@ -625,6 +633,10 @@ const server = http.createServer(async (req, res) => {
     'privacy-scanner': 'strip-metadata-pdf',
     'fingerprint-pdf': 'watermark-pdf',
     'compare-pdfs': 'compare-pdf',
+    'p2p': 'p2p-share',
+    'p2p-transfer': 'p2p-share',
+    'airdrop': 'p2p-share',
+    'air-drop': 'p2p-share',
   };
 
   // Serve Dedicated Tool Studio with Rich SEO & Structured Data

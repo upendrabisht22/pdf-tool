@@ -3,9 +3,9 @@
  * Multi-page layout wrappers: Navigation Bar, BYOK AI Modal, Support Modal, and SaaS Footer.
  */
 
-export const renderNavbar = (activeItem = '') => `
+export const renderNavbar = (activeItem = '', isWideCanvas = false) => `
   <header class="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: var(--bg-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); width: 100%;">
-    <div style="max-width: 64rem; margin: 0 auto; height: 51px; display: flex; align-items: center; justify-content: space-between; border-left: 1px dashed var(--border); border-right: 1px dashed var(--border); border-bottom: 1px dashed var(--border); padding: 0 1.25rem; position: relative;">
+    <div id="site-header-inner" style="max-width: ${isWideCanvas ? '80rem' : '64rem'}; margin: 0 auto; height: 51px; display: flex; align-items: center; justify-content: space-between; border-left: 1px dashed var(--border); border-right: 1px dashed var(--border); border-bottom: 1px dashed var(--border); padding: 0 1.25rem; position: relative; transition: max-width 0.2s ease;">
       
       <!-- Brand Logo -->
       <a href="/" style="display: flex; align-items: center; gap: 0.55rem; text-decoration: none; color: var(--text-primary);">
@@ -57,6 +57,26 @@ export const renderNavbar = (activeItem = '') => `
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                     <span>Rotate Pages</span>
                   </a>
+                  <a href="/crop-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'crop-pdf')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+                    <span>Crop & Resize</span>
+                  </a>
+                  <a href="/extract-pages" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'extract-pages')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                    <span>Extract Pages</span>
+                  </a>
+                  <a href="/flatten-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'flatten-pdf')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 13.74a2 2 0 0 1-2 0L2.5 8.87a1 1 0 0 1 0-1.74L11 2.26a2 2 0 0 1 2 0l8.5 4.87a1 1 0 0 1 0 1.74z"/><path d="m20 14.285 1.5.845a1 1 0 0 1 0 1.74L13 21.74a2 2 0 0 1-2 0l-8.5-4.87a1 1 0 0 1 0-1.74l1.5-.845"/></svg>
+                    <span>Flatten Forms</span>
+                  </a>
+                  <a href="/repair-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'repair-pdf')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></svg>
+                    <span>Repair Corrupted</span>
+                  </a>
+                  <a href="/edit-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'edit-pdf')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16"/><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/></svg>
+                    <span>Visual PDF Editor</span>
+                  </a>
                 </div>
               </div>
 
@@ -78,6 +98,18 @@ export const renderNavbar = (activeItem = '') => `
                   <a href="/pdf-to-excel" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'pdf-to-excel')">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
                     <span>PDF to Excel</span>
+                  </a>
+                  <a href="/excel-to-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'excel-to-pdf')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/></svg>
+                    <span>Excel to PDF</span>
+                  </a>
+                  <a href="/jpg-to-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'jpg-to-pdf')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22h6a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M7 14v8"/></svg>
+                    <span>Images to PDF</span>
+                  </a>
+                  <a href="/pdf-to-jpg" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'pdf-to-jpg')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                    <span>PDF to Images</span>
                   </a>
                   <a href="/markdown-to-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'markdown-to-pdf')">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><path d="M20 21H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"/></svg>
@@ -113,9 +145,21 @@ export const renderNavbar = (activeItem = '') => `
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
                     <span>Watermark PDF</span>
                   </a>
+                  <a href="/page-numbers-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'page-numbers-pdf')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>
+                    <span>Page Numbers</span>
+                  </a>
+                  <a href="/strip-metadata-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'strip-metadata-pdf')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+                    <span>Privacy Scanner</span>
+                  </a>
                   <a href="/redact-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'redact-pdf')">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     <span>Redact Sensitive</span>
+                  </a>
+                  <a href="/p2p-share" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'p2p-share')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    <span>P2P File & Code Share <span class="mega-badge">NEW</span></span>
                   </a>
                 </div>
               </div>
@@ -142,6 +186,10 @@ export const renderNavbar = (activeItem = '') => `
                   <a href="/ocr-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'ocr-pdf')">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                     <span>OCR Scanner</span>
+                  </a>
+                  <a href="/compare-pdf" class="mega-menu-link" onclick="handleMegaMenuNav(event, 'compare-pdf')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+                    <span>Compare PDFs</span>
                   </a>
                 </div>
               </div>
@@ -178,10 +226,10 @@ export const renderNavbar = (activeItem = '') => `
             <div class="mega-menu-footer">
               <div class="mega-menu-footer-privacy">
                 <span class="privacy-dot"></span>
-                <span>29 LOCAL WASM TOOLS • 100% PRIVATE • ZERO DATA UPLOAD</span>
+                <span>35 IN-BROWSER TOOLS • 100% PRIVATE • ZERO DATA UPLOAD</span>
               </div>
               <a href="/#all-tools" class="mega-menu-footer-all">
-                <span>VIEW COMPLETE DIRECTORY</span>
+                <span>VIEW COMPLETE DIRECTORY (35)</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </a>
             </div>

@@ -126,6 +126,7 @@ Following [`design-rules.md`](file:///c:/Users/Bhanu%20Bisht/pdf-tool/.agents/ru
 ## 6. Multi-Phase Implementation Roadmap
 
 - [x] **Phase 1: Design System & Architecture Specification** (Persisted in `P2P-SHARING-SPEC.md`, Landing Page feature spotlight).
-- [ ] **Phase 2: In-Memory Signaling Hub** (`/api/v1/p2p/signal` ephemeral SSE room coordinator in `server.js`).
-- [ ] **Phase 3: Client WebRTC DataChannel Engine** (`public/modules/p2p-client.js` with chunking, flow-control, and auto-reconnect).
-- [ ] **Phase 4: Dedicated Tool Studio (`/p2p-share`)** (Full visual interface with QR generation, code pad, and drag-and-drop file transfer).
+- [x] **Phase 2: In-Memory Signaling Hub** (`apps/web/api/p2p-signaling.js` ephemeral SSE room coordinator in `server.js` with 6-char codes, rate limiting, and 2-peer cap).
+- [x] **Phase 3: Client WebRTC DataChannel Engine** (`apps/web/public/modules/p2p-client.js` with 64KB chunking, flow-control, and auto-reconnect).
+- [x] **Phase 4: Dedicated Tool Studio (`/p2p-share`)** (Full visual interface with QR generation via `qrcodejs`, code pad with syntax selector, and drag-and-drop file transfer).
+- [x] **Phase 5: Route Aliasing, Backlink Audit & Grid Alignment** (Registered in `packages/core` `TOOL_REGISTRY`, 39/39 tools backlinked with 100% test coverage).
