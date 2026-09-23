@@ -1131,7 +1131,7 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
                   <div class="p2p-action-box" id="p2p-create-view">
                     <div class="mono-copy text-[10px] text-accent uppercase tracking-wider mb-1">[ SHARE FROM THIS DEVICE ]</div>
                     <h3 class="text-sm font-semibold text-text-primary mb-1">Create Ephemeral Room</h3>
-                    <p class="mono-copy text-xs text-text-secondary mb-3">Generate a 6-character room code & QR code for neighboring PCs or phone cameras to bridge.</p>
+                    <p class="mono-copy text-xs text-text-secondary mb-3">Generate an ephemeral room code (e.g. LAB-402) & QR code for neighboring PCs or phone cameras to bridge.</p>
                     <button type="button" class="paper-cta-btn group w-full justify-center" onclick="window.createP2pRoom()">
                       <span class="cta-fill"></span>
                       <span class="relative z-10 flex items-center justify-center gap-2 mono-copy text-xs uppercase font-medium">
@@ -1145,7 +1145,7 @@ export function renderAppPage({ toolConfig, jsonLd, category, relatedSlugs, rend
                   <div class="p2p-action-box" id="p2p-join-view">
                     <div class="mono-copy text-[10px] text-[#10b981] uppercase tracking-wider mb-1">[ RECEIVE / CONNECT ]</div>
                     <h3 class="text-sm font-semibold text-text-primary mb-1">Connect to Workstation</h3>
-                    <p class="mono-copy text-xs text-text-secondary mb-3">Enter the 6-character code shown on your other computer or whiteboard.</p>
+                    <p class="mono-copy text-xs text-text-secondary mb-3">Enter the room code (e.g. LAB-402) shown on your other computer or whiteboard.</p>
                     <div class="flex gap-2">
                       <input type="text" id="p2p-join-input" placeholder="e.g. LAB-402" maxlength="10" class="mono-copy gst-input uppercase text-center font-bold tracking-widest text-sm" style="flex: 1;" onkeydown="if(event.key==='Enter') window.joinP2pRoom()" />
                       <button type="button" class="paper-cta-btn group" style="padding: 0 1rem;" onclick="window.joinP2pRoom()">

@@ -86,6 +86,30 @@ export function initP2pStudio() {
   }
 }
 
+function renderP2pQrCode(roomId) {
+  const qrWrapper = document.getElementById('p2p-qr-wrapper');
+  const qrContainer = document.getElementById('p2p-qr-container');
+  if (qrWrapper) qrWrapper.style.display = 'block';
+  if (qrContainer) {
+    qrContainer.innerHTML = '';
+    const joinUrl = `${window.location.origin}/p2p-share?join=${encodeURIComponent(roomId)}`;
+    if (typeof QRCode !== 'undefined') {
+      try {
+        new QRCode(qrContainer, {
+          text: joinUrl,
+          width: 140,
+          height: 140,
+          colorDark: '#0B0F17',
+          colorLight: '#FFFFFF',
+          correctLevel: QRCode.CorrectLevel?.M || 0
+        });
+      } catch (e) {
+        console.warn('[P2P] QR render error:', e);
+      }
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // 2. Room Lifecycle: Create Room (Host) & Join Room (Joiner)
 // ---------------------------------------------------------------------------
@@ -122,21 +146,7 @@ export async function createP2pRoom() {
     if (displayCode) displayCode.textContent = p2pState.roomId;
 
     // Render Pairing QR Code
-    const qrContainer = document.getElementById('p2p-qr-container');
-    if (qrContainer) {
-      qrContainer.innerHTML = '';
-      const joinUrl = `${window.location.origin}/p2p-share?join=${p2pState.roomId}`;
-      if (typeof QRCode !== 'undefined') {
-        new QRCode(qrContainer, {
-          text: joinUrl,
-          width: 140,
-          height: 140,
-          colorDark: '#0B0F17',
-          colorLight: '#FFFFFF',
-          correctLevel: QRCode.CorrectLevel?.M || 0
-        });
-      }
-    }
+    renderP2pQrCode(p2pState.roomId);
 
     updateConnectionStatusBadge('WAITING FOR PEER TO SCAN / JOIN...', 'status-waiting');
 
@@ -152,7 +162,7 @@ export async function createP2pRoom() {
 export async function joinP2pRoom(roomCode) {
   const code = (roomCode || document.getElementById('p2p-join-input')?.value || '').toUpperCase().trim();
   if (!code) {
-    alert('Please enter a 6-character room code (e.g. LAB-402).');
+    alert('Please enter a room code (e.g. LAB-402).');
     return;
   }
 
@@ -185,6 +195,9 @@ export async function joinP2pRoom(roomCode) {
     if (joinView) joinView.style.display = 'none';
     if (activeView) activeView.style.display = 'flex';
     if (displayCode) displayCode.textContent = p2pState.roomId;
+
+    // Render Pairing QR Code for Joiner as well
+    renderP2pQrCode(p2pState.roomId);
 
     updateConnectionStatusBadge('NEGOTIATING WEBRTC BRIDGE...', 'status-connecting');
 
@@ -356,6 +369,10 @@ function bindDataChannelEvents(dc) {
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
     `);
 
+    // Once both peers are connected, hide the pairing QR box since the room is paired
+    const qrWrapper = document.getElementById('p2p-qr-wrapper');
+    if (qrWrapper) qrWrapper.style.display = 'none';
+
     // Enable transmission controls
     const dropzone = document.getElementById('p2p-dropzone');
     const sendSnippetBtn = document.getElementById('p2p-send-snippet-btn');
@@ -366,6 +383,8 @@ function bindDataChannelEvents(dc) {
   dc.onclose = () => {
     updateConnectionStatusBadge('P2P CHANNEL CLOSED', 'status-disconnected');
     p2pState.status = 'DISCONNECTED';
+    const qrWrapper = document.getElementById('p2p-qr-wrapper');
+    if (qrWrapper) qrWrapper.style.display = 'block';
   };
 
   dc.onerror = (err) => {
@@ -611,6 +630,11 @@ export function disconnectP2p() {
   if (createView) createView.style.display = 'block';
   if (joinView) joinView.style.display = 'block';
   if (activeView) activeView.style.display = 'none';
+
+  const qrWrapper = document.getElementById('p2p-qr-wrapper');
+  if (qrWrapper) qrWrapper.style.display = 'block';
+  const qrContainer = document.getElementById('p2p-qr-container');
+  if (qrContainer) qrContainer.innerHTML = '';
 
   updateConnectionStatusBadge('DISCONNECTED', 'status-disconnected');
 }
