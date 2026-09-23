@@ -4,88 +4,61 @@
  * Modular Architecture:
  * - modules/tool-registry.js    : Tool definitions, icons, metadata, and FAQ registries
  * - modules/utils.js            : Binary encodings, type detection, formatting & sanitizers
+ * - modules/file-staging.js     : File ingestion, validation, drag-reorder & per-page rotation
+ * - modules/options-collector.js: DOM options gathering for document execution
+ * - modules/crop-preview.js     : Live interactive crop & margins preview canvas
+ * - modules/window-bindings.js  : Global window bindings for inline HTML templates
  * - modules/signature-studio.js : Pen drawing canvas, modal, optimizer & photo upload (<30KB)
  * - modules/gst-studio.js       : Split-screen GST invoice generator, tax engine, UPI QR & live preview
- * - modules/direct-ai.js        : Browser-to-Gemini 2.0 Flash zero-server-trust execution
+ * - modules/pos-studio.js       : Thermal slip POS receipt studio
+ * - modules/tax-receipt-studio.js: Section 80G compliant donation tax receipt studio
+ * - modules/estimate-studio.js  : Quotation & work estimate studio
+ * - modules/p2p-client.js       : Zero-login WebRTC direct P2P file & code sharing engine
+ * - modules/direct-ai.js        : Browser-to-Gemini zero-server-trust execution
  * - modules/local-engine.js     : Pure client-side PDFLib / PDF.js vector manipulations
  * - modules/progress-tracker.js : Multi-phase animated progress, job polling & result cards
+ * - modules/pdf-editor-studio.js: Interactive in-browser PDF annotation & editing studio
  */
 
-import { TOOL_DEFINITIONS, TOOL_ICONS, TOOL_DETAILS_DATA, getClientToolContract } from './modules/tool-registry.js';
+import { TOOL_DEFINITIONS, TOOL_DETAILS_DATA, getClientToolContract } from './modules/tool-registry.js';
+import { arrayBufferToBase64 } from './modules/utils.js';
 import {
-  escapeHtml,
-  renderSimpleMarkdown,
-  arrayBufferToBase64,
-  parsePageRanges,
-  detectFileType,
-  getBaseName,
-  getDerivedOutputFilename
-} from './modules/utils.js';
+  getStagedFiles,
+  getActiveTool,
+  setActiveTool,
+  getPerPageRotations,
+  clearStagingState,
+  handleFilesSelected,
+  renderFileList
+} from './modules/file-staging.js';
+import { collectActiveToolOptions } from './modules/options-collector.js';
+import { initWindowBindings } from './modules/window-bindings.js';
+import { initP2pStudio } from './modules/p2p-client.js?v=4.0';
 import {
-  getSignatureData,
-  setSignatureData,
-  setSignatureInk,
-  setSignatureStroke,
-  switchSignatureTab,
-  openSignatureDrawModal,
-  closeSignatureDrawModal,
-  initSignatureCanvas,
-  clearSignaturePad,
-  saveDrawnSignature,
-  downloadDrawnSignature,
-  initStudioSignatureCanvas,
-  clearStudioSignaturePad,
-  downloadStudioSignature,
-  handleSignatureUpload
-} from './modules/signature-studio.js';
-import {
-  gstItems,
   initGstInvoiceStudio,
-  renderGstItemsTable,
-  onGstItemChange,
-  addGstItemRow,
-  deleteGstItemRow,
-  numberToWordsClient,
-  updateGstInvoicePreview,
-  generateAndDownloadGstInvoicePdf,
-  printGstInvoicePreview,
   setGstStudioView,
-  formatInrClient
+  generateAndDownloadGstInvoicePdf
 } from './modules/gst-studio.js?v=3.2';
 import {
   initPosStudio,
-  updatePosReceiptPreview,
-  generatePosReceiptPdf,
-  setPosStudioView
+  setPosStudioView,
+  generatePosReceiptPdf
 } from './modules/pos-studio.js?v=3.5';
 import {
   initTaxReceiptStudio,
-  updateTaxReceiptPreview,
-  generateTaxReceiptPdf,
-  setTaxReceiptStudioView
+  setTaxReceiptStudioView,
+  generateTaxReceiptPdf
 } from './modules/tax-receipt-studio.js?v=3.5';
 import {
   initEstimateStudio,
-  updateEstimatePreview,
-  generateEstimatePdf,
-  setEstimateStudioView
+  setEstimateStudioView,
+  generateEstimatePdf
 } from './modules/estimate-studio.js?v=3.5';
-import {
-  initP2pStudio,
-  createP2pRoom,
-  joinP2pRoom,
-  disconnectP2p,
-  sendP2pFiles,
-  sendP2pCodeSnippet,
-  setP2pStudioTab,
-  copyP2pRoomCode,
-  copyP2pJoinUrl,
-  copyP2pSnippetText
-} from './modules/p2p-client.js?v=4.0';
+import { switchSignatureTab } from './modules/signature-studio.js';
+import { initPdfEditorStudio } from './modules/pdf-editor-studio.js';
 import {
   getStoredGeminiKey,
   hasValidGeminiKey,
-  copyAiPreviewText,
   executeDirectGeminiAi
 } from './modules/direct-ai.js';
 import {
@@ -99,39 +72,6 @@ import {
   canHandleLocally,
   executeLocalOperation
 } from './modules/local-engine.js';
-import {
-  initPdfEditorStudio,
-  switchEditorPage,
-  prevEditorPage,
-  nextEditorPage,
-  renderEditorPage,
-  renderPageAnnotations,
-  handleOverlayCanvasMouseDown,
-  selectAnnotation,
-  deleteSelectedAnnotation,
-  setEditorTool,
-  setEditorWhiteoutColor,
-  redactAndTypeOverSelected,
-  handleEditorImageUpload,
-  insertImageAnnotation,
-  setupEditorKeyboardAndPaste,
-  insertStamp,
-  insertDateStamp,
-  insertSignatureStamp,
-  setEditorFontFamily,
-  setEditorFontSize,
-  toggleEditorBold,
-  toggleEditorItalic,
-  setEditorTextColor,
-  setEditorTextBg,
-  setEditorShapeType,
-  setEditorStrokeColor,
-  setEditorStrokeWidth,
-  zoomEditor,
-  undoEditor,
-  redoEditor,
-  exportEditedPdf
-} from './modules/pdf-editor-studio.js';
 
 // ── Client Route Aliases ───────────────────────────────────────────────────
 export const CLIENT_ROUTE_ALIASES = {
@@ -166,10 +106,7 @@ export const CLIENT_ROUTE_ALIASES = {
 };
 
 // ── Application Workspace State ─────────────────────────────────────────────
-let stagedFiles = [];
-let activeTool = 'merge-pdf';
 let currentJobId = null;
-let perPageRotations = {};
 
 // ── UI Navigation & Tab Controls ────────────────────────────────────────────
 
@@ -306,10 +243,11 @@ export const STUDIO_INITIALIZERS = {
   'pdf-editor-studio': () => {
     const uploadGate = document.getElementById('editor-upload-gate');
     const workspace = document.getElementById('editor-workspace');
-    if (stagedFiles.length > 0 && stagedFiles[0].bytes) {
+    const files = getStagedFiles();
+    if (files.length > 0 && files[0].bytes) {
       if (uploadGate) uploadGate.style.display = 'none';
       if (workspace) workspace.style.display = 'block';
-      initPdfEditorStudio(stagedFiles[0].bytes);
+      initPdfEditorStudio(files[0].bytes);
     } else {
       if (uploadGate) uploadGate.style.display = 'block';
       if (workspace) workspace.style.display = 'none';
@@ -337,14 +275,12 @@ export function switchTool(toolKey, updateUrl = true) {
   const originalKey = toolKey;
   const resolved = CLIENT_ROUTE_ALIASES[toolKey] || toolKey;
   if (!TOOL_DEFINITIONS[resolved]) {
-    // If not found in client definitions, let browser navigate normally!
     window.location.href = '/' + originalKey;
     return;
   }
   toolKey = resolved;
-  activeTool = toolKey;
-  stagedFiles = [];
-  perPageRotations = {};
+  setActiveTool(toolKey);
+  clearStagingState();
 
   const contract = getClientToolContract(toolKey);
   const config = TOOL_DEFINITIONS[toolKey];
@@ -626,8 +562,7 @@ export function switchTool(toolKey, updateUrl = true) {
 
 export function resetWorkspace() {
   stopLiveProgressTracking(false);
-  stagedFiles = [];
-  perPageRotations = {};
+  clearStagingState();
   if (typeof window.dismissSupportToast === 'function') window.dismissSupportToast();
 
   const resultCard = document.getElementById('result-card');
@@ -641,6 +576,7 @@ export function resetWorkspace() {
 
   hideAllStudiosAndDropzone();
 
+  const activeTool = getActiveTool();
   const contract = getClientToolContract(activeTool);
   if (contract.studioId) {
     const studio = document.getElementById(contract.studioId);
@@ -665,267 +601,13 @@ export function resetWorkspace() {
   if (addMoreInput) addMoreInput.value = '';
 }
 
-// ── File Ingestion & Staging Area ───────────────────────────────────────────
-
-async function handleFilesSelected(files, isAppend = false) {
-  const contract = getClientToolContract(activeTool);
-  if (!contract.requiresInputFile) {
-    console.warn(`Tool "${activeTool}" is a document generator and does not accept file uploads.`);
-    return;
-  }
-
-  const validFiles = [];
-
-  for (const file of files) {
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    const detected = detectFileType(file, bytes);
-
-    let isValid = false;
-    if (contract.inputType === 'image') {
-      isValid = ['png', 'jpeg', 'webp'].includes(detected);
-    } else if (contract.inputType === 'markdown') {
-      isValid = ['markdown', 'unknown'].includes(detected) || file.name.endsWith('.md') || file.name.endsWith('.txt');
-    } else if (contract.inputType === 'office') {
-      isValid = ['docx', 'office-legacy', 'pdf'].includes(detected);
-    } else if (contract.inputType === 'pdf-or-image') {
-      isValid = (detected === 'pdf') || ['png', 'jpeg', 'webp'].includes(detected);
-    } else {
-      isValid = (detected === 'pdf');
-    }
-
-    if (isValid) {
-      validFiles.push({
-        id: `f_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-        name: file.name,
-        size: file.size,
-        fileObject: file,
-        bytes: bytes,
-        detectedFormat: detected === 'markdown' ? 'markdown' : detected
-      });
-    } else {
-      const expectedType = contract.inputType === 'image' ? 'Image (JPG, PNG, WebP)' :
-                           contract.inputType === 'markdown' ? 'Markdown file (.md, .txt)' :
-                           contract.inputType === 'office' ? 'Office document (Word, Excel, PPT)' :
-                           contract.inputType === 'pdf-or-image' ? 'PDF or Image' : 'PDF document';
-      alert(`File "${file.name}" was rejected. Please select a valid ${expectedType}.`);
-    }
-  }
-
-  if (isAppend) {
-    stagedFiles.push(...validFiles);
-  } else {
-    stagedFiles = TOOL_DEFINITIONS[activeTool].multiple ? validFiles : validFiles.slice(0, activeTool === 'compare-pdf' ? 2 : 1);
-  }
-
-  if (stagedFiles.length > 0) {
-    if (contract.mode === 'editor') {
-      const editorStudio = document.getElementById('pdf-editor-studio');
-      const uploadGate = document.getElementById('editor-upload-gate');
-      const workspace = document.getElementById('editor-workspace');
-      if (editorStudio) editorStudio.style.display = 'block';
-      if (uploadGate) uploadGate.style.display = 'none';
-      if (workspace) workspace.style.display = 'block';
-      const mainDropzone = document.getElementById('dropzone');
-      const stagingArea = document.getElementById('staging-area');
-      if (mainDropzone) mainDropzone.style.display = 'none';
-      if (stagingArea) stagingArea.style.display = 'none';
-      await initPdfEditorStudio(stagedFiles[0].bytes);
-      return;
-    }
-    const dz = document.getElementById('dropzone');
-    if (dz) dz.style.display = 'none';
-    const sa = document.getElementById('staging-area');
-    if (sa) sa.style.display = 'block';
-    await renderFileList();
-  }
-}
-
-async function renderFileList() {
-  const container = document.getElementById('files-grid');
-  if (!container) return;
-  container.innerHTML = '';
-
-  stagedFiles.forEach((file, index) => {
-    const card = document.createElement('div');
-    card.className = 'file-card';
-    card.draggable = TOOL_DEFINITIONS[activeTool].multiple;
-
-    card.innerHTML = `
-      <div class="file-card-icon">📄</div>
-      <div class="file-card-info">
-        <div class="file-card-name" title="${file.name}">${file.name}</div>
-        <div class="file-card-meta">${(file.size / 1024 / 1024).toFixed(2)} MB ${activeTool === 'compare-pdf' ? (index === 0 ? '• Original (A)' : '• Modified (B)') : ''}</div>
-      </div>
-      <button class="file-card-remove" onclick="window.removeStagedFile(${index})">✕</button>
-    `;
-    container.appendChild(card);
-  });
-
-  // Visual page rotation grid for rotate-pdf
-  if (activeTool === 'rotate-pdf' && stagedFiles.length === 1 && typeof window.PDFLib !== 'undefined') {
-    try {
-      const doc = await window.PDFLib.PDFDocument.load(stagedFiles[0].bytes.slice(0));
-      const totalPages = doc.getPageCount();
-
-      const rotateContainer = document.createElement('div');
-      rotateContainer.style.gridColumn = '1 / -1';
-      rotateContainer.style.marginTop = '0.75rem';
-
-      let pagesHtml = `
-        <div style="padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-hero); display: flex; align-items: center; gap: 0.4rem;">
-              <span>📑</span> Rotate Single Pages (${totalPages} page${totalPages > 1 ? 's' : ''})
-            </div>
-            <div style="display: flex; gap: 0.4rem;">
-              <button type="button" class="select-control" style="padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer;" onclick="window.rotateAllVisualPages(90)">🔄 Rotate All +90°</button>
-              <button type="button" class="select-control" style="padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer;" onclick="window.resetAllVisualRotations()">↺ Reset</button>
-            </div>
-          </div>
-          <div class="rotate-pages-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.85rem;">
-      `;
-
-      for (let i = 0; i < totalPages; i++) {
-        const pageNum = i + 1;
-        const rot = perPageRotations[i] || 0;
-        pagesHtml += `
-          <div class="page-rotate-card" id="page-card-${i}" style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.75rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s ease;">
-            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); display: flex; justify-content: space-between; width: 100%;">
-              <span>Page ${pageNum}</span>
-              <span id="page-angle-${i}" style="font-family: 'JetBrains Mono', monospace; color: var(--brand-primary); font-size: 0.75rem; font-weight: 800;">${rot}°</span>
-            </div>
-            <div style="width: 60px; height: 78px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin: 0.3rem 0; overflow: hidden;">
-              <div id="page-preview-box-${i}" style="transform: rotate(${rot}deg); transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: #64748b;">
-                <span style="font-size: 1.3rem;">📄</span>
-                <span style="font-size: 0.65rem; font-weight: 700;">P${pageNum}</span>
-              </div>
-            </div>
-            <button type="button" class="select-control" style="width: 100%; padding: 0.35rem 0.4rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.25rem;" onclick="window.rotateSingleVisualPage(${i}, 90)">
-              🔄 Rotate 90°
-            </button>
-          </div>
-        `;
-      }
-      pagesHtml += `</div></div>`;
-      rotateContainer.innerHTML = pagesHtml;
-      container.appendChild(rotateContainer);
-    } catch {
-      // Best-effort visual preview
-    }
-  }
-
-  // Live visual preview for crop-pdf
-  if (activeTool === 'crop-pdf' && stagedFiles.length === 1) {
-    try {
-      await renderLiveCropPreview(container);
-    } catch (cropPreviewErr) {
-      console.warn('Could not render live crop preview:', cropPreviewErr);
-    }
-  }
-
-  const addMoreBtn = document.getElementById('add-more-btn');
-  if (addMoreBtn) {
-    addMoreBtn.style.display = TOOL_DEFINITIONS[activeTool].multiple ? 'inline-flex' : 'none';
-  }
-}
-
-export function rotateSingleVisualPage(pageIndex, deg = 90) {
-  perPageRotations[pageIndex] = ((perPageRotations[pageIndex] || 0) + deg) % 360;
-  const newRot = perPageRotations[pageIndex];
-  const box = document.getElementById(`page-preview-box-${pageIndex}`);
-  const angleBadge = document.getElementById(`page-angle-${pageIndex}`);
-  if (box) box.style.transform = `rotate(${newRot}deg)`;
-  if (angleBadge) angleBadge.textContent = `${newRot}°`;
-}
-
-export function rotateAllVisualPages(deg = 90) {
-  const cards = document.querySelectorAll('[id^="page-preview-box-"]');
-  cards.forEach((_, i) => {
-    rotateSingleVisualPage(i, deg);
-  });
-}
-
-export function resetAllVisualRotations() {
-  perPageRotations = {};
-  renderFileList();
-}
-
-export function removeStagedFile(index) {
-  stagedFiles.splice(index, 1);
-  perPageRotations = {};
-  if (stagedFiles.length === 0) {
-    resetWorkspace();
-  } else {
-    renderFileList();
-  }
-}
-
-// ── Options Collector & Execution Router ────────────────────────────────────
-
-function collectActiveToolOptions() {
-  const opts = {};
-
-  if (activeTool === 'split-pdf') {
-    const mode = document.getElementById('opt-split-mode')?.value || 'all-pages';
-    opts.mode = mode;
-    if (mode === 'ranges') opts.ranges = [document.getElementById('opt-split-ranges')?.value || '1'];
-  } else if (activeTool === 'compress-pdf') {
-    opts.level = document.getElementById('opt-compress-level')?.value || 'recommended';
-  } else if (activeTool === 'rotate-pdf') {
-    opts.rotation = parseInt(document.getElementById('opt-rotate-angle')?.value || '90', 10);
-    const targetPages = document.getElementById('opt-rotate-pages')?.value || 'all';
-    if (targetPages === 'custom') {
-      const customInput = document.getElementById('opt-rotate-custom-pages')?.value || '1';
-      opts.targetPages = parsePageRanges(customInput, 1000);
-    } else {
-      opts.targetPages = targetPages;
-    }
-  } else if (activeTool === 'delete-pdf-pages') {
-    opts.deleteInput = document.getElementById('opt-delete-pages')?.value || '';
-  } else if (activeTool === 'extract-pages') {
-    opts.pages = parsePageRanges(document.getElementById('opt-extract-pages')?.value || '1', 1000);
-  } else if (activeTool === 'jpg-to-pdf') {
-    opts.pageSize = document.getElementById('opt-image-pagesize')?.value || 'A4';
-    opts.orientation = document.getElementById('opt-image-orientation')?.value || 'auto';
-  } else if (activeTool === 'watermark-pdf') {
-    opts.text = document.getElementById('opt-watermark-text')?.value || 'CONFIDENTIAL';
-    opts.opacity = parseFloat(document.getElementById('opt-watermark-opacity')?.value || '0.3');
-  } else if (activeTool === 'protect-pdf') {
-    opts.userPassword = document.getElementById('opt-protect-pass')?.value || '123456';
-  } else if (activeTool === 'unlock-pdf') {
-    opts.password = document.getElementById('opt-unlock-pass')?.value || '';
-  } else if (activeTool === 'redact-pdf') {
-    opts.boxes = [{ page: 1, x: 50, y: 400, width: 200, height: 30, replacementLabel: document.getElementById('opt-redact-label')?.value || '[REDACTED]' }];
-    opts.sanitizeMetadata = document.getElementById('opt-redact-meta')?.checked ?? true;
-  } else if (activeTool === 'ocr-pdf') {
-    opts.language = document.getElementById('opt-ocr-lang')?.value || 'eng';
-    opts.outputType = document.getElementById('opt-ocr-out')?.value || 'searchable-pdf';
-  } else if (activeTool === 'compare-pdf') {
-    opts.mode = document.getElementById('opt-compare-mode')?.value || 'visual-diff';
-  } else if (activeTool === 'ai-summarize') {
-    opts.mode = document.getElementById('opt-sum-mode')?.value || 'executive';
-    opts.focusArea = document.getElementById('opt-sum-focus')?.value || 'all';
-  } else if (activeTool === 'ai-ask') {
-    opts.question = document.getElementById('opt-ask-query')?.value || 'What are the main key points of this document?';
-  } else if (activeTool === 'ai-extract-table') {
-    opts.format = document.getElementById('opt-table-format')?.value || 'json';
-  } else if (activeTool === 'pdf-to-markdown') {
-    opts.preserveTables = document.getElementById('opt-md-tables')?.checked ?? true;
-    opts.includePageBreaks = document.getElementById('opt-md-page-break')?.checked ?? true;
-  } else if (activeTool === 'markdown-to-pdf') {
-    opts.pageSize = document.getElementById('opt-md-pagesize')?.value || 'A4';
-    opts.theme = document.getElementById('opt-md-theme')?.value || 'modern';
-  }
-
-  return opts;
-}
-
 export async function executeDocumentOperation() {
+  const activeTool = getActiveTool();
   const contract = getClientToolContract(activeTool);
   if (!contract.requiresInputFile) {
     return;
   }
+  const stagedFiles = getStagedFiles();
   if (stagedFiles.length === 0) return;
 
   const dz = document.getElementById('dropzone');
@@ -957,7 +639,7 @@ export async function executeDocumentOperation() {
     // 2. Route 1: Local In-Browser Processing (Zero-Latency, Zero-Cloud)
     if (canHandleLocally(activeTool, stagedFiles)) {
       await executeLocalOperation(activeTool, stagedFiles, {
-        perPageRotations,
+        perPageRotations: getPerPageRotations(),
         updateProgress,
         renderSuccessDownload: (url, filename) => renderSuccessDownload(url, filename, { activeTool, stagedFiles })
       });
@@ -984,7 +666,7 @@ export async function executeDocumentOperation() {
     // 4. Route 2: Asynchronous Distributed Worker Pipeline Fallback
     updateProgress(25, 'Submitting job to isolated worker pool...');
 
-    const options = collectActiveToolOptions();
+    const options = collectActiveToolOptions(activeTool);
     if (activeTool.startsWith('ai-')) {
       options.apiKey = getStoredGeminiKey();
     }
@@ -1028,6 +710,7 @@ export async function executeDocumentOperation() {
 }
 
 async function handleGenerateGstInvoice() {
+  const stagedFiles = getStagedFiles();
   await generateAndDownloadGstInvoicePdf({
     startProgress: (tool) => startLiveProgressTracking(tool),
     onJobSubmitted: (jobId) => {
@@ -1054,6 +737,7 @@ async function handleGenerateGstInvoice() {
 }
 
 async function handleGeneratePosReceipt() {
+  const stagedFiles = getStagedFiles();
   await generatePosReceiptPdf({
     startProgress: (tool) => startLiveProgressTracking(tool),
     onJobSubmitted: (jobId) => {
@@ -1080,6 +764,7 @@ async function handleGeneratePosReceipt() {
 }
 
 async function handleGenerateTaxReceipt() {
+  const stagedFiles = getStagedFiles();
   await generateTaxReceiptPdf({
     startProgress: (tool) => startLiveProgressTracking(tool),
     onJobSubmitted: (jobId) => {
@@ -1106,6 +791,7 @@ async function handleGenerateTaxReceipt() {
 }
 
 async function handleGenerateEstimate() {
+  const stagedFiles = getStagedFiles();
   await generateEstimatePdf({
     startProgress: (tool) => startLiveProgressTracking(tool),
     onJobSubmitted: (jobId) => {
@@ -1188,360 +874,23 @@ function setupEventListeners() {
   }
 }
 
-// ── Global Window Bindings for Inline HTML Compatibility ────────────────────
-window.switchTool = switchTool;
-window.resetWorkspace = resetWorkspace;
-window.filterCategory = filterCategory;
-window.setBillingCycle = setBillingCycle;
-window.rotateSingleVisualPage = rotateSingleVisualPage;
-window.rotateAllVisualPages = rotateAllVisualPages;
-window.resetAllVisualRotations = resetAllVisualRotations;
-window.removeStagedFile = removeStagedFile;
-window.executeDocumentOperation = executeDocumentOperation;
-
-let cropPdfDoc = null;
-let cropPageViewport = null;
-let cropPageOrigWidth = 595.28;
-let cropPageOrigHeight = 841.89;
-
-async function renderLiveCropPreview(container) {
-  const pdfjs = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
-  if (!pdfjs || !stagedFiles[0] || !stagedFiles[0].bytes) return;
-
-  const cropSection = document.createElement('div');
-  cropSection.id = 'crop-live-preview-section';
-  cropSection.style.gridColumn = '1 / -1';
-  cropSection.style.marginTop = '1rem';
-  cropSection.style.borderTop = '1px dashed var(--border)';
-  cropSection.style.paddingTop = '1rem';
-
-  cropSection.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-      <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-hero); display: flex; align-items: center; gap: 0.4rem;">
-        <span>✂️</span> Live Crop & Margins Preview (Page 1)
-      </div>
-      <div style="display: flex; gap: 0.4rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
-        <span id="crop-dim-original" style="padding: 0.2rem 0.5rem; background: var(--bg-subtle); border: 1px dashed var(--border); color: var(--text-secondary);">Original: Loading...</span>
-        <span id="crop-dim-result" style="padding: 0.2rem 0.5rem; background: rgba(123, 97, 255, 0.12); border: 1px dashed var(--accent); color: var(--accent); font-weight: bold;">Cropped: ...</span>
-      </div>
-    </div>
-
-    <div style="display: flex; justify-content: center; align-items: center; background: var(--bg-subtle); border: 1px dashed var(--border); padding: 1.25rem; border-radius: 6px; overflow: hidden; position: relative;">
-      <div id="crop-stage-container" style="position: relative; box-shadow: 0 4px 18px rgba(0,0,0,0.15); line-height: 0;">
-        <canvas id="crop-preview-canvas" style="display: block; background: #ffffff; max-height: 380px; width: auto; height: auto;"></canvas>
-        <div id="crop-overlay-shade-top" style="position: absolute; top: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.6); pointer-events: none; transition: height 0.08s ease;"></div>
-        <div id="crop-overlay-shade-bottom" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.6); pointer-events: none; transition: height 0.08s ease;"></div>
-        <div id="crop-overlay-shade-left" style="position: absolute; top: 0; bottom: 0; left: 0; background: rgba(15, 23, 42, 0.6); pointer-events: none; transition: width 0.08s ease;"></div>
-        <div id="crop-overlay-shade-right" style="position: absolute; top: 0; bottom: 0; right: 0; background: rgba(15, 23, 42, 0.6); pointer-events: none; transition: width 0.08s ease;"></div>
-        <div id="crop-overlay-viewport" style="position: absolute; border: 2px dashed #7b61ff; pointer-events: none; box-sizing: border-box; transition: all 0.08s ease;">
-          <span style="position: absolute; bottom: 4px; right: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; background: rgba(123, 97, 255, 0.9); color: #fff; padding: 1px 5px; border-radius: 2px;">KEEP VIEWPORT</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quick margin presets -->
-    <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; align-items: center; flex-wrap: wrap;">
-      <span class="mono-copy text-xs text-text-muted">Quick Trim Presets:</span>
-      <button type="button" class="select-control" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; cursor: pointer;" onclick="window.applyCropPreset(0, 0, 0, 0)">Zero Margins</button>
-      <button type="button" class="select-control" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; cursor: pointer;" onclick="window.applyCropPreset(10, 10, 10, 10)">10mm Trim</button>
-      <button type="button" class="select-control" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; cursor: pointer;" onclick="window.applyCropPreset(20, 20, 15, 15)">20mm Margins</button>
-      <button type="button" class="select-control" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; cursor: pointer;" onclick="window.applyCropPreset(25, 0, 0, 0)">Trim Header (25mm)</button>
-    </div>
-  `;
-  container.appendChild(cropSection);
-
-  try {
-    const loadingTask = pdfjs.getDocument({ data: stagedFiles[0].bytes.slice(0) });
-    cropPdfDoc = await loadingTask.promise;
-    const page = await cropPdfDoc.getPage(1);
-    const viewport = page.getViewport({ scale: 1.0 });
-    cropPageViewport = viewport;
-    cropPageOrigWidth = viewport.width;
-    cropPageOrigHeight = viewport.height;
-
-    const canvas = document.getElementById('crop-preview-canvas');
-    if (!canvas) return;
-
-    const maxH = 380;
-    const renderScale = Math.min(2.0, maxH / viewport.height);
-    const renderViewport = page.getViewport({ scale: renderScale });
-
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = renderViewport.width * dpr;
-    canvas.height = renderViewport.height * dpr;
-    canvas.style.width = `${renderViewport.width}px`;
-    canvas.style.height = `${renderViewport.height}px`;
-
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-
-    await page.render({
-      canvasContext: ctx,
-      viewport: renderViewport
-    }).promise;
-
-    const origBadge = document.getElementById('crop-dim-original');
-    const origW_mm = Math.round(cropPageOrigWidth / 2.83465);
-    const origH_mm = Math.round(cropPageOrigHeight / 2.83465);
-    if (origBadge) {
-      origBadge.textContent = `Original: ${Math.round(cropPageOrigWidth)} × ${Math.round(cropPageOrigHeight)} pt (${origW_mm} × ${origH_mm} mm)`;
-    }
-
-    attachCropInputsListeners();
-    updateCropLivePreviewOverlay();
-  } catch (err) {
-    console.error('Error rendering page for crop preview:', err);
-  }
-}
-
-function attachCropInputsListeners() {
-  const ids = ['opt-crop-top', 'opt-crop-bottom', 'opt-crop-left', 'opt-crop-right', 'opt-crop-unit', 'opt-crop-mode', 'opt-resize-size'];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.removeEventListener('input', updateCropLivePreviewOverlay);
-      el.addEventListener('input', updateCropLivePreviewOverlay);
-      el.removeEventListener('change', updateCropLivePreviewOverlay);
-      el.addEventListener('change', updateCropLivePreviewOverlay);
-    }
-  });
-}
-
-export function updateCropLivePreviewOverlay() {
-  const canvas = document.getElementById('crop-preview-canvas');
-  if (!canvas || !cropPageViewport) return;
-
-  const displayW = parseFloat(canvas.style.width) || canvas.width;
-  const displayH = parseFloat(canvas.style.height) || canvas.height;
-  const scale = displayW / cropPageOrigWidth;
-
-  const modeEl = document.getElementById('opt-crop-mode');
-  const mode = modeEl ? modeEl.value : 'trim';
-
-  const shadeTop = document.getElementById('crop-overlay-shade-top');
-  const shadeBottom = document.getElementById('crop-overlay-shade-bottom');
-  const shadeLeft = document.getElementById('crop-overlay-shade-left');
-  const shadeRight = document.getElementById('crop-overlay-shade-right');
-  const viewportBox = document.getElementById('crop-overlay-viewport');
-  const resultBadge = document.getElementById('crop-dim-result');
-
-  if (mode === 'resize') {
-    const resizeSizeEl = document.getElementById('opt-resize-size');
-    const targetSizeKey = resizeSizeEl ? resizeSizeEl.value : 'A4';
-    const SIZES = {
-      'A4': [595.28, 841.89, 'A4 (210 × 297 mm)'],
-      'LETTER': [612, 792, 'US Letter (8.5 × 11 in)'],
-      'LEGAL': [612, 1008, 'US Legal (8.5 × 14 in)'],
-      'A3': [841.89, 1190.55, 'A3 (297 × 420 mm)'],
-      'A5': [419.53, 595.28, 'A5 (148 × 210 mm)'],
-    };
-    const [targetW, targetH, label] = SIZES[targetSizeKey] || SIZES['A4'];
-
-    if (shadeTop) shadeTop.style.height = '0px';
-    if (shadeBottom) shadeBottom.style.height = '0px';
-    if (shadeLeft) shadeLeft.style.width = '0px';
-    if (shadeRight) shadeRight.style.width = '0px';
-    if (viewportBox) {
-      viewportBox.style.top = '0px';
-      viewportBox.style.left = '0px';
-      viewportBox.style.width = '100%';
-      viewportBox.style.height = '100%';
-      const tag = viewportBox.querySelector('span');
-      if (tag) tag.textContent = `TARGET: ${targetSizeKey}`;
-    }
-    if (resultBadge) {
-      resultBadge.textContent = `Target: ${label}`;
-    }
-    return;
-  }
-
-  // Trim Margins Mode
-  const unitEl = document.getElementById('opt-crop-unit');
-  const unit = unitEl ? unitEl.value : 'mm';
-  const unitRatio = unit === 'in' ? 72 : unit === 'pt' ? 1 : (72 / 25.4);
-
-  const topVal = (parseFloat(document.getElementById('opt-crop-top')?.value) || 0) * unitRatio;
-  const bottomVal = (parseFloat(document.getElementById('opt-crop-bottom')?.value) || 0) * unitRatio;
-  const leftVal = (parseFloat(document.getElementById('opt-crop-left')?.value) || 0) * unitRatio;
-  const rightVal = (parseFloat(document.getElementById('opt-crop-right')?.value) || 0) * unitRatio;
-
-  const topPx = Math.min(displayH / 2, Math.max(0, topVal * scale));
-  const bottomPx = Math.min(displayH / 2, Math.max(0, bottomVal * scale));
-  const leftPx = Math.min(displayW / 2, Math.max(0, leftVal * scale));
-  const rightPx = Math.min(displayW / 2, Math.max(0, rightVal * scale));
-
-  if (shadeTop) shadeTop.style.height = `${topPx}px`;
-  if (shadeBottom) shadeBottom.style.height = `${bottomPx}px`;
-  if (shadeLeft) {
-    shadeLeft.style.top = `${topPx}px`;
-    shadeLeft.style.bottom = `${bottomPx}px`;
-    shadeLeft.style.width = `${leftPx}px`;
-  }
-  if (shadeRight) {
-    shadeRight.style.top = `${topPx}px`;
-    shadeRight.style.bottom = `${bottomPx}px`;
-    shadeRight.style.width = `${rightPx}px`;
-  }
-
-  if (viewportBox) {
-    viewportBox.style.top = `${topPx}px`;
-    viewportBox.style.left = `${leftPx}px`;
-    viewportBox.style.width = `${Math.max(10, displayW - leftPx - rightPx)}px`;
-    viewportBox.style.height = `${Math.max(10, displayH - topPx - bottomPx)}px`;
-    const tag = viewportBox.querySelector('span');
-    if (tag) tag.textContent = 'KEEP VIEWPORT';
-  }
-
-  const croppedW_pt = Math.max(10, Math.round(cropPageOrigWidth - leftVal - rightVal));
-  const croppedH_pt = Math.max(10, Math.round(cropPageOrigHeight - topVal - bottomVal));
-  const croppedW_mm = Math.round(croppedW_pt / 2.83465);
-  const croppedH_mm = Math.round(croppedH_pt / 2.83465);
-
-  if (resultBadge) {
-    resultBadge.textContent = `Cropped: ${croppedW_pt} × ${croppedH_pt} pt (${croppedW_mm} × ${croppedH_mm} mm)`;
-  }
-}
-
-export function applyCropPreset(top, bottom, left, right) {
-  const topInput = document.getElementById('opt-crop-top');
-  const bottomInput = document.getElementById('opt-crop-bottom');
-  const leftInput = document.getElementById('opt-crop-left');
-  const rightInput = document.getElementById('opt-crop-right');
-  const unitSelect = document.getElementById('opt-crop-unit');
-  const modeSelect = document.getElementById('opt-crop-mode');
-
-  if (unitSelect) unitSelect.value = 'mm';
-  if (modeSelect) {
-    modeSelect.value = 'trim';
-    toggleCropMode('trim');
-  }
-
-  if (topInput) topInput.value = top;
-  if (bottomInput) bottomInput.value = bottom;
-  if (leftInput) leftInput.value = left;
-  if (rightInput) rightInput.value = right;
-
-  updateCropLivePreviewOverlay();
-}
-window.applyCropPreset = applyCropPreset;
-window.updateCropLivePreviewOverlay = updateCropLivePreviewOverlay;
-
-export function toggleCropMode(mode) {
-  const trimBox = document.getElementById('crop-trim-inputs');
-  const resizeBox = document.getElementById('crop-resize-inputs');
-  if (trimBox && resizeBox) {
-    if (mode === 'resize') {
-      trimBox.style.display = 'none';
-      resizeBox.style.display = 'flex';
-    } else {
-      trimBox.style.display = 'flex';
-      resizeBox.style.display = 'none';
-    }
-  }
-  updateCropLivePreviewOverlay();
-}
-window.toggleCropMode = toggleCropMode;
-
-// Signature Studio Bindings
-window.openSignatureDrawModal = openSignatureDrawModal;
-window.closeSignatureDrawModal = closeSignatureDrawModal;
-window.initSignatureCanvas = initSignatureCanvas;
-window.clearSignaturePad = clearSignaturePad;
-window.saveDrawnSignature = saveDrawnSignature;
-window.downloadDrawnSignature = downloadDrawnSignature;
-window.setSignatureInk = setSignatureInk;
-window.setSignatureStroke = setSignatureStroke;
-window.switchSignatureTab = switchSignatureTab;
-window.initStudioSignatureCanvas = initStudioSignatureCanvas;
-window.clearStudioSignaturePad = clearStudioSignaturePad;
-window.downloadStudioSignature = downloadStudioSignature;
-window.handleSignatureUpload = handleSignatureUpload;
-
-// GST Studio Bindings
-window.gstItems = gstItems;
-window.initGstInvoiceStudio = initGstInvoiceStudio;
-window.renderGstItemsTable = renderGstItemsTable;
-window.onGstItemChange = onGstItemChange;
-window.addGstItemRow = addGstItemRow;
-window.deleteGstItemRow = deleteGstItemRow;
-window.numberToWordsClient = numberToWordsClient;
-window.updateGstInvoicePreview = updateGstInvoicePreview;
-window.generateAndDownloadGstInvoicePdf = handleGenerateGstInvoice;
-window.printGstInvoicePreview = printGstInvoicePreview;
-window.setGstStudioView = setGstStudioView;
-window.formatInrClient = formatInrClient;
-
-// POS Studio Bindings
-window.initPosStudio = initPosStudio;
-window.updatePosReceiptPreview = updatePosReceiptPreview;
-window.generatePosReceiptPdf = handleGeneratePosReceipt;
-window.setPosStudioView = setPosStudioView;
-
-// Tax Receipt Studio Bindings
-window.initTaxReceiptStudio = initTaxReceiptStudio;
-window.updateTaxReceiptPreview = updateTaxReceiptPreview;
-window.generateTaxReceiptPdf = handleGenerateTaxReceipt;
-window.setTaxReceiptStudioView = setTaxReceiptStudioView;
-
-// Estimate Studio Bindings
-window.initEstimateStudio = initEstimateStudio;
-window.updateEstimatePreview = updateEstimatePreview;
-window.generateEstimatePdf = handleGenerateEstimate;
-window.setEstimateStudioView = setEstimateStudioView;
-
-// AI Preview Binding
-window.copyAiPreviewText = copyAiPreviewText;
-
-// P2P Studio Bindings
-window.initP2pStudio = initP2pStudio;
-window.createP2pRoom = createP2pRoom;
-window.joinP2pRoom = joinP2pRoom;
-window.disconnectP2p = disconnectP2p;
-window.sendP2pFiles = sendP2pFiles;
-window.sendP2pCodeSnippet = sendP2pCodeSnippet;
-window.setP2pStudioTab = setP2pStudioTab;
-window.copyP2pRoomCode = copyP2pRoomCode;
-window.copyP2pJoinUrl = copyP2pJoinUrl;
-window.copyP2pSnippetText = copyP2pSnippetText;
-
-// Visual PDF Editor Studio Bindings
-window.initPdfEditorStudio = initPdfEditorStudio;
-window.switchEditorPage = switchEditorPage;
-window.prevEditorPage = prevEditorPage;
-window.nextEditorPage = nextEditorPage;
-window.renderEditorPage = renderEditorPage;
-window.renderPageAnnotations = renderPageAnnotations;
-window.handleOverlayCanvasMouseDown = handleOverlayCanvasMouseDown;
-window.selectAnnotation = selectAnnotation;
-window.deleteSelectedAnnotation = deleteSelectedAnnotation;
-window.setEditorTool = setEditorTool;
-window.insertStamp = insertStamp;
-window.insertDateStamp = insertDateStamp;
-window.insertSignatureStamp = insertSignatureStamp;
-window.setEditorFontFamily = setEditorFontFamily;
-window.setEditorFontSize = setEditorFontSize;
-window.toggleEditorBold = toggleEditorBold;
-window.toggleEditorItalic = toggleEditorItalic;
-window.setEditorTextColor = setEditorTextColor;
-window.setEditorTextBg = setEditorTextBg;
-window.setEditorShapeType = setEditorShapeType;
-window.setEditorStrokeColor = setEditorStrokeColor;
-window.setEditorStrokeWidth = setEditorStrokeWidth;
-window.zoomEditor = zoomEditor;
-window.undoEditor = undoEditor;
-window.redoEditor = redoEditor;
-window.exportEditedPdf = exportEditedPdf;
-window.setEditorWhiteoutColor = setEditorWhiteoutColor;
-window.redactAndTypeOverSelected = redactAndTypeOverSelected;
-window.handleEditorImageUpload = handleEditorImageUpload;
-window.insertImageAnnotation = insertImageAnnotation;
-window.setupEditorKeyboardAndPaste = setupEditorKeyboardAndPaste;
-
 function resolveToolKey(path) {
-  // Normalize underscores to hyphens (e.g. /draw_signature → draw-signature)
   const raw = (path || '').replace(/^\//, '').replace(/_/g, '-') || 'merge-pdf';
   return CLIENT_ROUTE_ALIASES[raw] || raw;
 }
+
+// ── Initialize Global Window Bindings ───────────────────────────────────────
+initWindowBindings({
+  switchTool,
+  resetWorkspace,
+  filterCategory,
+  setBillingCycle,
+  executeDocumentOperation,
+  generateAndDownloadGstInvoicePdf: handleGenerateGstInvoice,
+  generatePosReceiptPdf: handleGeneratePosReceipt,
+  generateTaxReceiptPdf: handleGenerateTaxReceipt,
+  generateEstimatePdf: handleGenerateEstimate
+});
 
 // ── Lifecycle Initialization ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -1565,4 +914,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
