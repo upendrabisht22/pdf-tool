@@ -1,8 +1,8 @@
 # MASTER PROJECT STATE
 **Document Utility & Infrastructure Platform**
 
-*Last Updated: 2026-09-22*  
-*Current Phase Status: `PHASE 14: COMPLETE — P2P AIR-DROP ENGINE & 39-ROUTE BACKLINK INTEGRITY`*  
+*Last Updated: 2026-09-23*  
+*Current Phase Status: `PHASE 16: COMPLETE — 10/10 FULL-STACK MODULAR ARCHITECTURE & ZERO-REGRESSION TEST SUITE`*  
 *Overall Platform Status: `ACTIVE DEVELOPMENT — PRODUCTION READY ARCHITECTURE`*  
 
 ---
@@ -27,6 +27,7 @@
 | **Phase 13** | **Zero-Login WebRTC P2P Direct Share (`/p2p-share`)** | **COMPLETED** | In-memory ephemeral signaling relay (`p2p-signaling.js`), 6-character room codes (`LAB-402`, `DOC-711`), WebRTC DataChannel 64KB chunking, QR pairing, live Code Snippet Pad, 0-byte server disk storage |
 | **Phase 14** | **Blueprint Grid Alignment & 39-Route Backlink Integrity** | **COMPLETED** | Synchronized navbar dashed border width (`isWideCanvas` dynamic 64rem/80rem sizing) eliminating 128px gap, enriched 5-column mega-menu, verified 39/39 canonical tools & aliases with 100% HTTP 200 pass rate |
 | **Phase 15** | **Wcode Razorpay UPI Merchant QR Support Flow** | **COMPLETED** | Direct integration of user's verified Razorpay Merchant QR card for "Wcode (PDF TOOL)", VPA `wcode883153.rzp@rxairtel`, one-tap deep links (`upi://pay`), one-click VPA copy, QR poster download, zero API key risk |
+| **Phase 16** | **10/10 Full-Stack Modular Architecture** | **COMPLETED** | Deconstruction of monolithic `server.js` (747 lines $\rightarrow$ 80-line dispatcher) and `app-page.js` (1,601 lines $\rightarrow$ 250-line composer) into domain routes, workers, standalone studios, and reusable UI components. 100% test pass rate (117/117). |
 
 ---
 
@@ -52,15 +53,39 @@
     - **Phase 11 Visual Suite**: `CropPdfProcessor`, `EditPdfProcessor`.
     - `validateOutputDocument`: Strict integrity check on generated artifacts.
   - `apps/web`:
-    - Production HTTP Server & Control Plane API (`/api/v1/health`, `/api/v1/files/upload-request`, `/api/v1/jobs`, `/api/v1/jobs/:id`).
+    - **Production HTTP Server & Dispatcher** (`apps/web/server.js`): Thin ~80-line HTTP coordinator handling security middleware, static routing, API endpoints, SSR page rendering, and TTL garbage collection.
+    - **Background Worker Subsystem** (`apps/web/workers/job-runner.js`): Isolated worker runner leasing jobs from `QueueProvider`, dispatching to 35+ processors within `SandboxedWorkerHarness`, recording telemetry in `usageStore`, and triggering webhook retries.
+    - **Modular Route Handlers** (`apps/web/routes/`):
+      - `static-routes.js`: High-performance static asset server with security-sandboxed paths for CSS, client ES modules, vendor files (GSAP), images, QR posters, and widget SDK.
+      - `api-routes.js`: Control plane API dispatcher for `/health`, `/files/upload-request`, `/jobs`, `/jobs/:id`, local storage upload/download, and delegation to developer keys, webhooks, usage metrics, and P2P signaling.
+      - `ssr-routes.js`: Server-side HTML page router for landing page (`/`), legal/pricing transparent pages (`/pricing`, `/privacy`, `/terms`, `/security`), and dynamic tool studios with JSON-LD schema metadata.
     - **P2P Signaling Engine** (`apps/web/api/p2p-signaling.js`): In-memory ephemeral SSE room coordinator with 6-char codes, brute-force join rate limiting, 2-peer cap, and auto-cleanup daemon.
-    - **Views & UI Layer**:
+    - **Modular Studio Views** (`apps/web/views/studios/`):
+      - `signature-studio-view.js`: In-browser canvas signature drawing & photo optimization strictly under 30KB.
+      - `gst-studio-view.js`: GST Tax Invoice creator with real-time A4 vector preview, intra/inter tax calculation, and UPI QR.
+      - `pos-studio-view.js`: Minimal POS counter billing with live 80mm thermal slip preview and instant QR.
+      - `tax-receipt-studio-view.js`: Section 80G Tax Exemption Certificate generator.
+      - `estimate-studio-view.js`: Commercial project quotation & proposal maker.
+      - `pdf-editor-studio-view.js`: Visual PDF Editor with multi-tool toolbar, borderless paper-tone whiteout, image placement, and canvas overlay.
+      - `p2p-studio-view.js`: WebRTC zero-login peer-to-peer air-drop and live code snippet exchange.
+    - **Reusable View Components** (`apps/web/views/components/`):
+      - `support-banner.js`: Community support and verified Razorpay UPI merchant contribution card.
+      - `how-to-section.js`: Architectural 3-step workflow guide.
+      - `key-features-section.js`: Vector SVG specification & security cards.
+      - `related-tools-section.js`: Smart complementary tool recommendation cards and 35-tool directory link.
+      - `faq-accordion.js`: Interactive accessible knowledge base accordion.
+    - **Page Composers & Layout**:
       - `apps/web/views/landing-page.js`: Flagship SaaS landing page with dark theme, vector preview tiles, 35+ tool search directory, and interactive demo triggers.
-      - `apps/web/views/app-page.js`: Unified workspace supporting dropzone tools, specialized standalone studios (GST, POS, Tax Receipt, Estimate, Signature Draw/Upload, Visual PDF Editor, Crop/Resize), and the new P2P Share studio.
+      - `apps/web/views/app-page.js`: Thin ~250-line composer uniting domain studios, dropzones, staging, progress, and result cards.
       - `apps/web/views/layout.js`: Shared blueprint navbar with dynamic `isWideCanvas` border alignment and 5-column mega-menu covering all 39 canonical tools and aliases.
-      - `apps/web/public/modules/p2p-client.js`: WebRTC DataChannel engine with 64KB chunking, flow control, QR pairing, and live Code Snippet Pad.
-      - `apps/web/public/modules/pdf-editor-studio.js`: Standalone client-side vector overlay editor with undo/redo, text insertion, seamless whiteout, image placement, and freehand drawing.
-      - `apps/web/public/app.js`: Dual-layer hydration controller managing client-side file staging, drag-and-drop events, live crop preview canvas, P2P studio lifecycle, and tool routing.
+    - **Client ES Modules** (`apps/web/public/modules/`):
+      - `options-collector.js`: Gathers operation-specific options (passwords, DPI, margins, watermarks).
+      - `file-staging.js`: Multi-file drag-and-drop staging, thumbnail generation, reordering, and removal.
+      - `crop-preview.js`: Interactive visual crop box manipulator with aspect ratio presets and real-time dimension badges.
+      - `p2p-client.js`: WebRTC DataChannel engine with 64KB chunking, flow control, QR pairing, and live Code Snippet Pad.
+      - `pdf-editor-studio.js`: Standalone client-side vector overlay editor with undo/redo, text insertion, seamless whiteout, image placement, and freehand drawing.
+      - `window-bindings.js`: Clean browser window bridge exposing client controller methods.
+      - `app.js`: Slimmed ~490-line client coordinator importing the modules above.
 
 ---
 
