@@ -60,9 +60,17 @@ From the user-provided Razorpay QR standee image (`media_1790175168727.jpg`), Op
   - *"Direct settlement to verified merchant Wcode (PDF Tool)"*
   - CTA button: `☕ Support with Any Amount` opening the verified Razorpay UPI QR modal.
 
+### F. Post-Processing Support Banner & Toast (`apps/web/views/app-page.js`, `progress-tracker.js`, `styles.css`)
+- **In-Page Banner**: Added the dedicated `[ COMMUNITY SUPPORTED • RUNNING 100% FREE FOR YOU ]` card inside the `#result-card` right above `NEXT RECOMMENDED ACTIONS`. Explains that edge servers run 100% free with zero ads and provides a direct `☕ Support via UPI (Pay What You Want)` button opening the Razorpay modal.
+- **Floating Notification Toast**: Whenever a document finishes processing in any tool, a subtle bottom-right toast (`#support-toast-notification`) slides in:
+  - *"Document Ready! ⚡ Servers run 100% free with zero ads. Help support edge hosting with a quick tip."*
+  - Action button: `☕ Tip via UPI` triggers the verified merchant modal.
+  - Auto-dismisses after 10 seconds or on manual close / workspace reset.
+
 ---
 
 ## 4. Verification & Quality Gates
 - **Backlink Audit**: Ran `node apps/web/test/backlink-audit.js` — 39 / 39 routes HTTP 200, 100% catalog/mega-menu alignment.
-- **Unit & Integration Tests**: Ran `npm test` — **117 tests passing, 0 failures**.
+- **Image & Download Endpoints**: Tested `/images/wcode-upi-qr.png` (200), `/images/wcode-razorpay-qr.jpg` (200), and `/download-qr` (200 with attachment header).
+- **Post-Process Support Callouts**: Verified banner presence in `#result-card` above recommended actions and dynamic toast invocation in `showResult()`.
 - **Zero API Risk**: Verified no server secrets or environment variables were added or altered.

@@ -628,6 +628,7 @@ export function resetWorkspace() {
   stopLiveProgressTracking(false);
   stagedFiles = [];
   perPageRotations = {};
+  if (typeof window.dismissSupportToast === 'function') window.dismissSupportToast();
 
   const resultCard = document.getElementById('result-card');
   if (resultCard) resultCard.style.display = 'none';

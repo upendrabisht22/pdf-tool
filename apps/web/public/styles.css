@@ -5427,3 +5427,109 @@ body.theme-blueprint-dark::before {
   margin: 0;
 }
 
+/* ── Post-Processing Community Support & Server Cost Banner ───────────────── */
+.result-support-banner {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.result-support-banner:hover {
+  border-color: rgba(123, 97, 255, 0.45);
+}
+
+/* ── Post-Process Community Support Floating Toast ────────────────────────── */
+.support-toast-notification {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 8990;
+  max-width: 440px;
+  width: calc(100vw - 3rem);
+  background: var(--bg-elevated);
+  border: 1px dashed #7b61ff;
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(123, 97, 255, 0.15);
+  padding: 0.85rem 1rem;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease;
+  pointer-events: none;
+}
+.support-toast-notification.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+.support-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.support-toast-icon {
+  width: 32px;
+  height: 32px;
+  border: 1px dashed #7b61ff;
+  background: rgba(123, 97, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #7b61ff;
+}
+.support-toast-text {
+  flex: 1;
+  min-width: 0;
+}
+.support-toast-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.15rem;
+}
+.support-toast-desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.64rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+.support-toast-btn {
+  background: rgba(123, 97, 255, 0.15);
+  border: 1px solid #7b61ff;
+  color: #7b61ff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.support-toast-btn:hover {
+  background: #7b61ff;
+  color: #fff;
+}
+.support-toast-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.support-toast-close:hover {
+  color: var(--text-primary);
+}
+@media (max-width: 640px) {
+  .support-toast-notification {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+  }
+}
+

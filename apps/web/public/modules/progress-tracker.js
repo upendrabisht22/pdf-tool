@@ -426,7 +426,57 @@ export function renderSuccessDownload(url, filename, { activeTool, stagedFiles }
       </a>
     `).join('');
   }
+
+  // Trigger non-intrusive community support toast notification
+  showSupportToastNotification();
 }
+
+/**
+ * Floating Post-Processing Community Support Toast
+ */
+export function showSupportToastNotification() {
+  const existing = document.getElementById('support-toast-notification');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'support-toast-notification';
+  toast.className = 'support-toast-notification';
+  toast.innerHTML = `
+    <div class="support-toast-content">
+      <div class="support-toast-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+      </div>
+      <div class="support-toast-text">
+        <div class="support-toast-title">Document Ready! ⚡</div>
+        <div class="support-toast-desc">Servers run 100% free with zero ads. Help support edge hosting with a quick tip.</div>
+      </div>
+      <button type="button" class="support-toast-btn" onclick="if(window.openSupportModal) window.openSupportModal(); dismissSupportToast();">☕ Tip via UPI</button>
+      <button type="button" class="support-toast-close" onclick="dismissSupportToast()" aria-label="Dismiss">✕</button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  // Trigger smooth enter animation
+  requestAnimationFrame(() => {
+    toast.classList.add('visible');
+  });
+
+  // Auto-dismiss after 10 seconds
+  if (window._supportToastTimer) clearTimeout(window._supportToastTimer);
+  window._supportToastTimer = setTimeout(() => {
+    dismissSupportToast();
+  }, 10000);
+}
+
+export function dismissSupportToast() {
+  const toast = document.getElementById('support-toast-notification');
+  if (toast) {
+    toast.classList.remove('visible');
+    setTimeout(() => { if (toast && toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+  }
+}
+window.dismissSupportToast = dismissSupportToast;
+window.showSupportToastNotification = showSupportToastNotification;
 
 // CommonJS fallback
 if (typeof module !== 'undefined' && module.exports) {
