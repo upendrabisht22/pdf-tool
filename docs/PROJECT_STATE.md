@@ -26,6 +26,7 @@
 | **Phase 12** | **Dual-Layer SSR/Hydration UX & Tool Registry Integrity** | **COMPLETED** | Universal server-side & client-side dropzone label synchronization across all 37 tools (Images, Office documents, Markdown, PDFs), fixed flexbox icon centering, resolved syntax scope redeclaration |
 | **Phase 13** | **Zero-Login WebRTC P2P Direct Share (`/p2p-share`)** | **COMPLETED** | In-memory ephemeral signaling relay (`p2p-signaling.js`), 6-character room codes (`LAB-402`, `DOC-711`), WebRTC DataChannel 64KB chunking, QR pairing, live Code Snippet Pad, 0-byte server disk storage |
 | **Phase 14** | **Blueprint Grid Alignment & 39-Route Backlink Integrity** | **COMPLETED** | Synchronized navbar dashed border width (`isWideCanvas` dynamic 64rem/80rem sizing) eliminating 128px gap, enriched 5-column mega-menu, verified 39/39 canonical tools & aliases with 100% HTTP 200 pass rate |
+| **Phase 15** | **Wcode Razorpay UPI Merchant QR Support Flow** | **COMPLETED** | Direct integration of user's verified Razorpay Merchant QR card for "Wcode (PDF TOOL)", VPA `wcode883153.rzp@rxairtel`, one-tap deep links (`upi://pay`), one-click VPA copy, QR poster download, zero API key risk |
 
 ---
 

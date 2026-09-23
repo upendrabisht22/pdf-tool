@@ -260,50 +260,70 @@ export const renderNavbar = (activeItem = '', isWideCanvas = false) => `
     </div>
   </header>
 
-  <!-- Support & Donation Modal -->
+  <!-- Support & Donation Modal (Official Wcode Razorpay UPI Merchant) -->
   <div class="support-modal-backdrop" id="support-modal-backdrop" onclick="closeSupportModal()"></div>
   <div class="support-modal" id="support-modal" role="dialog" aria-modal="true" aria-label="Support DocPlatform">
     <button class="modal-close-btn" onclick="closeSupportModal()" aria-label="Close">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <div class="support-modal-header">
+    <div class="support-modal-header" style="margin-bottom: 0.85rem;">
       <div class="mono-copy" style="font-size: 0.68rem; color: #7b61ff; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.4rem;">
-        [ COMMUNITY TIP JAR ]
+        [ COMMUNITY SUPPORT • UPI MERCHANT ]
       </div>
-      <h2 class="hero-display" style="font-size: 1.85rem; font-weight: 400; color: var(--text-primary); margin-bottom: 0.35rem;">Support DocPlatform</h2>
-      <p class="mono-copy" style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
-        DocPlatform is <strong>100% free with zero paywalls & zero tracking</strong>. If this tool saved you hours or software license fees, consider supporting edge hosting & independent development.
+      <h2 class="hero-display" style="font-size: 1.75rem; font-weight: 400; color: var(--text-primary); margin-bottom: 0.35rem;">Support Wcode PDF Tool</h2>
+      <p class="mono-copy" style="font-size: 0.74rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+        DocPlatform is <strong>100% free with zero paywalls & zero tracking</strong>. If this tool saved you software license fees or hours of work, support edge development by scanning the official verified merchant QR below.
       </p>
     </div>
-    
-    <div class="tip-tiers-grid">
-      <button type="button" class="tip-tier-card" onclick="selectTipAmount(3, this)">
-        <span class="mono-copy" style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">TIER_01</span>
-        <span class="mono-copy" style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">$3</span>
-        <span class="mono-copy" style="font-size: 0.68rem; color: var(--text-secondary);">Coffee Tip</span>
-      </button>
-      <button type="button" class="tip-tier-card active" onclick="selectTipAmount(5, this)">
-        <span class="mono-copy" style="font-size: 0.65rem; color: #7b61ff; text-transform: uppercase;">TIER_02 • POPULAR</span>
-        <span class="mono-copy" style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">$5</span>
-        <span class="mono-copy" style="font-size: 0.68rem; color: var(--text-secondary);">Supporter</span>
-      </button>
-      <button type="button" class="tip-tier-card" onclick="selectTipAmount(15, this)">
-        <span class="mono-copy" style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">TIER_03</span>
-        <span class="mono-copy" style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">$15</span>
-        <span class="mono-copy" style="font-size: 0.68rem; color: var(--text-secondary);">Sponsor</span>
-      </button>
+
+    <!-- Official Razorpay Merchant Poster Card -->
+    <div class="upi-merchant-container" style="background: var(--bg); border: 1px dashed var(--border); padding: 1rem; text-align: center; margin-bottom: 0.85rem;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin-bottom: 0.75rem;">
+        <span class="mono-copy" style="font-size: 0.65rem; color: #10b981; background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.3); padding: 0.2rem 0.55rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          VERIFIED MERCHANT: <strong>WCODE (PDF TOOL)</strong>
+        </span>
+        <span class="mono-copy" style="font-size: 0.65rem; color: #3b82f6; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(59, 130, 246, 0.3); padding: 0.2rem 0.55rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+          POWERED BY RAZORPAY UPI
+        </span>
+      </div>
+
+      <div class="upi-poster-wrapper" style="display: inline-block; position: relative; margin: 0 auto 0.65rem; max-width: 200px; width: 100%;">
+        <img src="/images/wcode-upi-qr.png" alt="Wcode PDF Tool Official Razorpay UPI QR Code" id="upi-qr-image" style="width: 100%; height: auto; display: block; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); margin: 0 auto;" />
+      </div>
+
+      <!-- VPA Copy Bar -->
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; background: var(--bg-elevated); border: 1px dashed var(--border); padding: 0.45rem 0.65rem; text-align: left; margin-top: 0.4rem;">
+        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <span class="mono-copy" style="font-size: 0.6rem; color: var(--text-muted); display: block; text-transform: uppercase; letter-spacing: 0.05em;">UPI ID / VPA</span>
+          <span class="mono-copy" id="merchant-vpa-text" style="font-size: 0.76rem; font-weight: 600; color: var(--text-primary); letter-spacing: 0.02em;">wcode883153.rzp@rxairtel</span>
+        </div>
+        <button type="button" class="mono-copy" id="copy-vpa-btn" onclick="copyMerchantVpa()" style="background: rgba(123, 97, 255, 0.12); border: 1px solid #7b61ff; color: #7b61ff; padding: 0.28rem 0.6rem; font-size: 0.68rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0; transition: all 0.15s;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <span id="copy-vpa-label">Copy VPA</span>
+        </button>
+      </div>
     </div>
 
+    <!-- Modal CTAs -->
     <div class="support-cta-box">
-      <a href="https://buymeacoffee.com" target="_blank" rel="noopener" class="support-submit-btn paper-cta-btn group" id="support-submit-btn" style="width: 100%; justify-content: center; text-decoration: none;">
+      <a href="upi://pay?cu=INR&mc=8241&mode=19&pa=wcode883153.rzp@rxairtel&tn=Payment%20To%20Wcode&tr=TfWAYAYsmincbzqrv2" class="support-submit-btn paper-cta-btn group" id="support-submit-btn" style="width: 100%; justify-content: center; text-decoration: none;">
         <span class="cta-fill"></span>
-        <span class="relative z-10 flex items-center justify-center gap-2" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">
-          <span>Tip $5 on BuyMeACoffee</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        <span class="relative z-10 flex items-center justify-center gap-2" style="font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Open Any UPI App (Mobile)</span>
         </span>
       </a>
-      <p class="mono-copy" style="font-size: 0.68rem; color: var(--text-muted); text-align: center; margin: 0.4rem 0 0;">
-        🔒 Direct secure external tip jar • Zero recurring commitment • Voluntary gratitude
+      
+      <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.15rem;">
+        <a href="/images/wcode-razorpay-qr.jpg" download="wcode-pdf-tool-upi-qr.jpg" class="mono-copy" style="font-size: 0.65rem; color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.55rem; border: 1px dashed var(--border); background: var(--bg); transition: all 0.15s;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Save Official QR Poster</span>
+        </a>
+      </div>
+
+      <p class="mono-copy" style="font-size: 0.64rem; color: var(--text-muted); text-align: center; margin: 0.35rem 0 0; line-height: 1.4;">
+        🔒 Direct settlement to verified merchant Wcode • Works with Google Pay, PhonePe, Paytm, BHIM & all banking apps
       </p>
     </div>
   </div>
@@ -507,14 +527,51 @@ export const renderNavbar = (activeItem = '', isWideCanvas = false) => `
       }
     }
 
-    function selectTipAmount(amount, btnEl) {
-      selectedTip = amount;
-      document.querySelectorAll('.tip-tier-card').forEach(b => b.classList.remove('active'));
-      if (btnEl) btnEl.classList.add('active');
-      const cta = document.getElementById('support-submit-btn');
-      if (cta) {
-        cta.innerHTML = '<span>Tip $' + amount + ' on BuyMeACoffee</span> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+    function copyMerchantVpa() {
+      const vpa = 'wcode883153.rzp@rxairtel';
+      const fallbackCopy = (text) => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(vpa).then(onSuccess).catch(() => {
+          fallbackCopy(vpa);
+          onSuccess();
+        });
+      } else {
+        fallbackCopy(vpa);
+        onSuccess();
       }
+
+      function onSuccess() {
+        const label = document.getElementById('copy-vpa-label');
+        const btn = document.getElementById('copy-vpa-btn');
+        if (label) label.textContent = 'Copied!';
+        if (btn) {
+          btn.style.background = 'rgba(16, 185, 129, 0.18)';
+          btn.style.borderColor = '#10b981';
+          btn.style.color = '#10b981';
+        }
+        setTimeout(() => {
+          if (label) label.textContent = 'Copy VPA';
+          if (btn) {
+            btn.style.background = 'rgba(123, 97, 255, 0.12)';
+            btn.style.borderColor = '#7b61ff';
+            btn.style.color = '#7b61ff';
+          }
+        }, 2200);
+      }
+    }
+
+    function selectTipAmount(amount, btnEl) {
+      // Retained for backward-compatibility if invoked from any legacy view
     }
 
     // ── Mega-Menu Navigation & Hover Handlers ────────────────────────────────

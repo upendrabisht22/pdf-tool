@@ -1809,6 +1809,8 @@ body {
   left: 50%;
   transform: translate(-50%, -46%);
   width: min(520px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
   background: var(--bg-elevated);
   border: 1px dashed var(--border);
   border-radius: 0px;
@@ -1818,6 +1820,14 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.support-modal::-webkit-scrollbar,
+.byok-modal::-webkit-scrollbar {
+  width: 4px;
+}
+.support-modal::-webkit-scrollbar-thumb,
+.byok-modal::-webkit-scrollbar-thumb {
+  background: var(--border);
 }
 .support-modal.open,
 .byok-modal.open {

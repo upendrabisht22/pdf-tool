@@ -204,7 +204,7 @@ export function renderPricingPage({ renderNavbar, renderFooter, renderGsapScript
               <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Direct support for independent privacy dev</span></li>
               <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Priority feedback & feature suggestions</span></li>
               <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Voluntary gratitude — no locked features</span></li>
-              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Tip directly via BuyMeACoffee or UPI</span></li>
+              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Tip directly via official Razorpay UPI Merchant QR</span></li>
             </ul>
           </div>
 
@@ -212,7 +212,7 @@ export function renderPricingPage({ renderNavbar, renderFooter, renderGsapScript
             <button type="button" onclick="openSupportModal()" class="paper-cta-btn group w-full justify-center">
               <span class="cta-fill"></span>
               <span class="relative z-10 flex items-center gap-1.5">
-                <span>☕ Tip on BuyMeACoffee</span>
+                <span>☕ Scan UPI Merchant QR</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </span>
             </button>
