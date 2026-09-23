@@ -90,7 +90,7 @@ export function renderPricingPage({ renderNavbar, renderFooter, renderGsapScript
           </h1>
 
           <p class="mono-copy mt-2 text-xs leading-relaxed text-text-secondary max-w-xl">
-            Zero subscriptions, no credit cards, zero forced signups. All core PDF tools run in your browser WebAssembly sandbox. Use AI tools with your own free Gemini key (BYOK), or support the project with a coffee tip.
+            Zero subscriptions, no credit cards, zero forced signups. All core PDF tools run in your browser WebAssembly sandbox. Use AI tools with your own free Gemini key (BYOK), or support the project with whatever voluntary tip you wish.
           </p>
         </div>
       </div>
@@ -179,7 +179,7 @@ export function renderPricingPage({ renderNavbar, renderFooter, renderGsapScript
           </div>
         </div>
 
-        <!-- Tier 3: Community Supporter -->
+        <!-- Tier 3: Community Supporter (Pay What You Wish) -->
         <div class="p-7 sm:p-8 bg-bg flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between">
@@ -189,22 +189,22 @@ export function renderPricingPage({ renderNavbar, renderFooter, renderGsapScript
               </span>
             </div>
             <p class="mono-copy text-[11px] text-text-secondary mt-1.5 leading-normal">
-              Help us fund edge CDN bandwidth, domain hosting, and open maintenance.
+              Help fund edge infrastructure, high-speed CDN, and keep all document tools free & open forever.
             </p>
 
-            <div class="mt-5 flex items-baseline gap-1.5">
-              <span class="hero-display text-5xl text-text-primary font-bold">$3+</span>
-              <span class="mono-copy text-xs text-text-muted">/ voluntary tip</span>
+            <div class="mt-5 flex items-baseline gap-2">
+              <span class="hero-display text-4xl sm:text-5xl text-text-primary font-bold">Any</span>
+              <span class="mono-copy text-xs text-text-muted">/ pay what you wish</span>
             </div>
-            <div class="mono-copy text-[10px] text-amber-400 mt-1">One-Time Coffee Tip • Zero Recurring</div>
+            <div class="mono-copy text-[10px] text-emerald-400 mt-1">100% Voluntary • Direct UPI Merchant • Zero Pressure</div>
 
             <ul class="mono-copy text-xs text-text-secondary space-y-2.5 mt-6">
-              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Keeps platform 100% free for everyone</span></li>
-              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Funds edge CDN speed and server costs</span></li>
-              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Direct support for independent privacy dev</span></li>
-              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Priority feedback & feature suggestions</span></li>
-              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Voluntary gratitude — no locked features</span></li>
-              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Tip directly via official Razorpay UPI Merchant QR</span></li>
+              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Pay whatever amount feels right — zero minimums</span></li>
+              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Keeps 100% of PDF & document tools free for all users</span></li>
+              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Direct settlement to verified merchant Wcode (PDF Tool)</span></li>
+              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Supports independent privacy engineering & zero tracking</span></li>
+              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Funds edge CDN speeds, servers & ongoing maintenance</span></li>
+              <li class="flex items-center gap-2"><span class="text-[#7b61ff]">✓</span> <span>Works with Google Pay, PhonePe, Paytm & any UPI app</span></li>
             </ul>
           </div>
 
@@ -212,7 +212,7 @@ export function renderPricingPage({ renderNavbar, renderFooter, renderGsapScript
             <button type="button" onclick="openSupportModal()" class="paper-cta-btn group w-full justify-center">
               <span class="cta-fill"></span>
               <span class="relative z-10 flex items-center gap-1.5">
-                <span>☕ Scan UPI Merchant QR</span>
+                <span>☕ Support with Any Amount</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </span>
             </button>

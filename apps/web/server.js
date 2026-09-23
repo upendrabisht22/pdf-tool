@@ -558,6 +558,72 @@ const server = http.createServer(async (req, res) => {
       }
     }
   }
+
+  // Serve Direct QR Download Endpoint
+  if (pathname === '/download-qr' || pathname === '/images/download-qr') {
+    try {
+      const file = await fs.readFile(path.join(__dirname, 'public', 'images', 'wcode-razorpay-qr.jpg'));
+      res.writeHead(200, {
+        'Content-Type': 'image/jpeg',
+        'Content-Disposition': 'attachment; filename="wcode-pdf-tool-upi-qr.jpg"',
+        'Cache-Control': 'public, max-age=86400',
+      });
+      res.end(file);
+      return;
+    } catch {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('QR Poster Not Found');
+      return;
+    }
+  }
+
+  // Serve Static Images (QR Codes, Brand Badges, Posters)
+  if (pathname.startsWith('/images/')) {
+    const safePath = path.normalize(path.join(__dirname, 'public', pathname));
+    if (safePath.startsWith(path.join(__dirname, 'public', 'images'))) {
+      try {
+        const file = await fs.readFile(safePath);
+        const ext = path.extname(safePath).toLowerCase();
+        const mimeTypes = {
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.webp': 'image/webp',
+          '.svg': 'image/svg+xml',
+          '.ico': 'image/x-icon',
+          '.gif': 'image/gif'
+        };
+        const contentType = mimeTypes[ext] || 'application/octet-stream';
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400',
+        });
+        res.end(file);
+        return;
+      } catch {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Image Not Found');
+        return;
+      }
+    }
+  }
+
+  // Serve Static Widget SDK
+  if (pathname === '/widget.js') {
+    try {
+      const widget = await fs.readFile(path.join(__dirname, 'public', 'widget.js'));
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Cache-Control': 'public, max-age=86400',
+      });
+      res.end(widget);
+      return;
+    } catch {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Widget Not Found');
+      return;
+    }
+  }
   // Route: Dedicated /pricing Page (100% Free & Community Supported Transparency Page)
   if (pathname === '/pricing') {
     const pricingHtml = renderPricingPage({ renderNavbar, renderFooter, renderGsapScripts });

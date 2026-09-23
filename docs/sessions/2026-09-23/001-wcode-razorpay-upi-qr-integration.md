@@ -8,7 +8,7 @@
 ## 1. Executive Summary & User Directive
 - **Context**: The user requested removing external tip jar links (BuyMeACoffee) and third-party fee models, replacing them with their official verified Razorpay UPI Merchant QR poster issued for **"Wcode - PDF TOOL"**.
 - **Crucial Safety Guardrail**:
-  - The user explicitly instructed **not** to touch or configure live Razorpay server API keys (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`), which could jeopardize or cause conflict with their active SaaS product (`wcode.in` / `devocode.in`).
+  - The user explicitly instructed **not** to touch or configure live Razorpay server API keys (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`), which could jeopardize or cause conflict with their active SaaS product (`wcode.in`).
   - Instead, the platform directly embeds the official verified merchant QR standee provided by Razorpay, with an extracted high-intent UPI URI deep link for smartphone users.
 
 ---
@@ -46,8 +46,19 @@ From the user-provided Razorpay QR standee image (`media_1790175168727.jpg`), Op
 ### C. Responsive Modal Layout (`apps/web/public/styles.css`)
 - Added `max-height: 90vh; overflow-y: auto;` with slim blueprint scrollbars to `.support-modal` and `.byok-modal` to ensure zero vertical clipping on compact laptop screens or mobile devices.
 
-### D. Pricing Section Alignment (`apps/web/views/static-pages.js`)
-- Updated the community donation CTA and feature list on `/pricing` to reference the verified Razorpay UPI Merchant QR.
+### D. Static Image Routing & Download Attachment (`apps/web/server.js`)
+- Added explicit static routes for:
+  - `/images/*` (`.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`) with proper MIME types.
+  - `/download-qr` endpoint returning `Content-Disposition: attachment; filename="wcode-pdf-tool-upi-qr.jpg"` ensuring instant browser download without 404 or popup blocking.
+  - `/widget.js` static SDK endpoint.
+
+### E. Pricing Section Alignment (`apps/web/views/static-pages.js`)
+- Completely removed `$3+` fixed tip mention from the Community Supporter card.
+- Replaced with open **"Any / pay what you wish"** and clear messaging:
+  - *"Pay whatever amount feels right — zero minimums, zero limits"*
+  - *"Keeps all 39 PDF & document tools 100% free with zero paywalls"*
+  - *"Direct settlement to verified merchant Wcode (PDF Tool)"*
+  - CTA button: `☕ Support with Any Amount` opening the verified Razorpay UPI QR modal.
 
 ---
 

@@ -316,7 +316,7 @@ export const renderNavbar = (activeItem = '', isWideCanvas = false) => `
       </a>
       
       <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.15rem;">
-        <a href="/images/wcode-razorpay-qr.jpg" download="wcode-pdf-tool-upi-qr.jpg" class="mono-copy" style="font-size: 0.65rem; color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.55rem; border: 1px dashed var(--border); background: var(--bg); transition: all 0.15s;">
+        <a href="/download-qr" download="wcode-pdf-tool-upi-qr.jpg" class="mono-copy" style="font-size: 0.65rem; color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.55rem; border: 1px dashed var(--border); background: var(--bg); transition: all 0.15s;">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Save Official QR Poster</span>
         </a>
